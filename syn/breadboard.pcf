@@ -1,0 +1,14 @@
+set_io led_o_0 B5
+set_io led_o_1 B4
+set_io led_o_2 A2
+set_io led_o_3 A1
+set_io led_o_4 C5
+set_io led_o_5 C4
+set_io led_o_6 B3
+set_io led_o_7 C3
+
+set_io clock_i J3
+
+
+
+
