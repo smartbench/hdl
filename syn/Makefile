@@ -28,6 +28,9 @@ $(TOP).bin: $(TOP).asc
 prog:
 	iceprog $(TOP).bin
 
+load-cram:
+	iceprog -S $(TOP).bin
+
 clean:
 	rm $(TOP).bin $(TOP).asc $(TOP).blif --force
 
