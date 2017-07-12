@@ -1,0 +1,26 @@
+
+module ft245_input ( 
+
+    // ft245 rx interface
+    input [7:0] in_245,
+    input rxf_245,
+    output reg rx_245,
+
+    // 
+    input clk,
+    input rst,
+
+    // simple interface
+    output reg [7:0] data,
+    output reg rdy,
+    input ack
+);
+    
+    always @(posedge clk) begin
+        rx_245 <= ~rx_245;
+        if (rxf_245 == 1'b0) begin
+            data <= in_245;
+        end
+    end
+
+endmodule
