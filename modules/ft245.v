@@ -4,7 +4,7 @@ module ft245_input (
     // ft245 rx interface
     input [7:0] in_245,
     input rxf_245,
-    output reg rx_245,
+    output reg rx_245 = 1'b0,
 
     // 
     input clk,
@@ -22,5 +22,13 @@ module ft245_input (
             data <= in_245;
         end
     end
+
+`ifdef COCOTB_SIM
+initial begin
+  $dumpfile ("waveform.vcd");
+  $dumpvars (0,ft245_input);
+  #1;
+end
+`endif
 
 endmodule
