@@ -1,10 +1,11 @@
 
+`timescale 1ns/1ps
 module ft245_input ( 
 
     // ft245 rx interface
     input [7:0] in_245,
     input rxf_245,
-    output reg rx_245 = 1'b0,
+    output reg rx_245,
 
     // 
     input clk,
@@ -17,7 +18,7 @@ module ft245_input (
 );
     
     always @(posedge clk) begin
-        rx_245 <= ~rx_245;
+        rx_245 <= rxf_245;
         if (rxf_245 == 1'b0) begin
             data <= in_245;
         end
