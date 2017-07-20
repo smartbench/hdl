@@ -40,16 +40,14 @@
 
 module trigger_detection  (
     clk,                // clock
-    reset,              // synchronous reset
-    enable,             // enable crossing detection
+    reset,              // asynchronous reset
     input_sample,       // input samples of the trigger source
     trigger_edge,       // positive or negative edge
     trigger_value,      // trigger value
     triggered,          // trigger detected
 );
-    input clk, reset, enable;
-    input [7:0] input_sample;
-    input [7:0] trigger_value;
+    input clk, reset;
+    input [7:0] input_sample, trigger_value;
     input trigger_edge;
     output triggered;
     //input [1:0]src;
@@ -65,44 +63,40 @@ module trigger_detection  (
                 validating=2,   // First contition met: signal under (over) trigger value, when searching for positive (negative) edge
                 found=3;        // Second condition met: Signal crossed the trigger value.
 
-     always @(posedge clk) begin
+     always @(posedge clk or posedge reset) begin
         triggered <= 1'b0;
         if (reset)
-            state <= searching;
+            state <= disabled;
         else begin
-            if (enable==1'b0)
-                state <= disabled;
-            else begin
-                case (state)
+            case (state)
 
-                    disabled:
-                        state <= searching;
+                disabled:
+                    state <= searching;
 
-                    searching:
-                        case (trigger_edge)
-                         positive_edge:
-                             if(input_sample < trigger_value) state <= validating;
-                         negative_edge:
-                             if(input_sample > trigger_value) state <= validating;
-                        endcase
+                searching:
+                    case (trigger_edge)
+                     positive_edge:
+                         if(input_sample < trigger_value) state <= validating;
+                     negative_edge:
+                         if(input_sample > trigger_value) state <= validating;
+                    endcase
 
-                    validating:
-                        case (trigger_edge)
-                         positive_edge:
-                             if(input_sample >= trigger_value) state <= found;
-                         negative_edge:
-                             if(input_sample <= trigger_value) state <= found;
-                        endcase
+                validating:
+                    case (trigger_edge)
+                     positive_edge:
+                         if(input_sample >= trigger_value) state <= found;
+                     negative_edge:
+                         if(input_sample <= trigger_value) state <= found;
+                    endcase
 
-                    found: begin
-                        triggered <= 1'b1;
-                        state <= searching;
-                    end
+                found: begin
+                    triggered <= 1'b1;
+                    state <= searching;
+                end
 
-                    default:
-                        state <= searching;
-                endcase
-            end
+                default:
+                    state <= searching;
+            endcase
         end
     end
 
