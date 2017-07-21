@@ -118,7 +118,7 @@ def test (dut):
     si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
-    for i in range(300): si_tx.write(i)
+    for i in range(150): si_tx.write(i)
     cocotb.fork(ft245.rx_driver() )
     cocotb.fork(si_rx.monitor() )
     cocotb.fork(si_tx.driver() )
