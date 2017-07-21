@@ -21,8 +21,8 @@ module breadboard_top (
             .FEEDBACK_PATH("SIMPLE"),
             .PLLOUT_SELECT("GENCLK"),
             .DIVR(4'd0),
-            .DIVF(7'd44),
-            .DIVQ(3'd4),
+            .DIVF(7'd63),
+            .DIVQ(3'd3),
             .FILTER_RANGE(3'b001)
         )uut(
             .RESETB(1'b1),
@@ -31,20 +31,22 @@ module breadboard_top (
             .PLLOUTCORE(clk_30M)
         );
 
-    ft245_input #245_recv( 
-    
-        // ft245 rx interface
-        .in_245(in_245),
-        .rxf_245(rxf_245),
-        .rx_245(rx_245),
-    
-        .clk(clk_30M),
-        .rst(1'b0),
-    
-        // simple interface
-        .data(leds),
-        .rdy(),
-        .ack()
-    );
+    ft245_input #(
+                .CLOCK_PERIOD_NS(10)
+        ) ft245_test (    
+            .rx_data_245(in_245),
+            .rxf_245(rxf_245),
+            .rx_245(rx_245),
+            .tx_data_245(),
+            .txe_245(),
+            .tx_245(),
+            .tx_oe_245(),
+            .clk(clk_30M),
+            .rst(1'b0),
+            .rx_data_si(leds),
+            .rx_rdy_si(),
+            .rx_ack_si(1'b1)
+        );
+
 
 endmodule

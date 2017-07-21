@@ -1,3 +1,5 @@
+
+from random import randint
 import cocotb
 # from ft245 import Ft245
 from cocotb.clock import Clock
@@ -9,13 +11,38 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 
+class SI_Slave:
+    def __init__ ( self, clk, rst , data, rdy, ack):
+        self.data = data
+        self.rdy = rdy
+        self.ack = ack
+        self.fifo = []
+        self.clk = clk
+        self.rst = rst
+        self.ack <= 0
+
+
+    @cocotb.coroutine
+    def monitor ( self):
+        while True:
+            self.ack <= 0
+            yield RisingEdge(self.rdy)
+            for i in range(randint(0,15)): yield RisingEdge(self.clk)
+            self.ack <= 1
+            yield RisingEdge(self.clk)
+            self.fifo.append(self.data.value.integer)
+
+
+
+
+
 class Ft245:
     def __init__ (self,dut):
         self.dut = dut
         self.fifo = []
         self.rxing = False
         self.dut.rxf_245 <= 1
-        self.dut.in_245 <= 0
+        self.dut.rx_data_245 <= 0
 
     def write (self,val):
         self.fifo.append(val)
@@ -31,7 +58,7 @@ class Ft245:
             if self.dut.rxf_245.value.integer == 1:
                 raise TestFailure("FT245 Reading failure: There is not value in the fifo")
             yield nsTimer(14)
-            self.dut.in_245 = self.fifo.pop(0)
+            self.dut.rx_data_245 = self.fifo.pop(0)
             yield nsTimer(16)
             if self.dut.rx_245.value.integer == 1:
                 raise TestFailure("FT245 Timming Failure: You must wait at least 30ns ")
@@ -43,13 +70,29 @@ class Ft245:
             if self.dut.rx_245.value.integer == 0:
                 raise TestFailure("FT245 Timming Failure: Fifo is inactive ")
 
-
+@cocotb.coroutine
+def Reset (dut):
+    dut.rst <= 0
+    for i in range(10): yield RisingEdge(dut.clk)
+    dut.rst <= 1
+    yield RisingEdge(dut.clk)
+    dut.rst <= 0
+    yield RisingEdge(dut.clk)
 
 @cocotb.test()
 def test (dut):
     ft245 = Ft245(dut)
+    si_rx = SI_Slave(dut.clk,dut.rst,dut.rx_data_si,dut.rx_rdy_si,dut.rx_ack_si)
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
+    yield Reset(dut)
     cocotb.fork(ft245.rx_driver() )
+    cocotb.fork(si_rx.monitor() )
     for i in range(10): yield RisingEdge(dut.clk)
-    ft245.write(255)
-    for i in range(10): yield RisingEdge(dut.clk)
+    for i in range(50): ft245.write(i)
+    for i in range(10*130): yield RisingEdge(dut.clk)
+    for i in range(50): ft245.write(i+50)
+    for i in range(10*130): yield RisingEdge(dut.clk)
+
+    if ( si_rx.fifo != [ i for i in range(100)]):
+        TestFailure("Simple Interface data != FT245 data")
+
