@@ -11,6 +11,36 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 
+class SI_Master:
+    def __init__ ( self, clk, rst , data, rdy, ack):
+        self.data = data
+        self.rdy = rdy
+        self.ack = ack
+        self.fifo = []
+        self.clk = clk
+        self.rst = rst
+        self.rdy <= 0
+        self.data <= 0 
+
+    def write(self,val):
+        self.fifo.append(val)
+
+    @cocotb.coroutine
+    def driver (self):
+        while True:
+            yield RisingEdge(self.clk)
+            if len(self.fifo) > 0 :
+                self.rdy <= 1
+                self.data <= self.fifo.pop(0)
+                while self.ack.value.integer != 1 : yield RisingEdge(self.clk)
+                self.rdy <= 0
+
+
+
+
+
+
+
 class SI_Slave:
     def __init__ ( self, clk, rst , data, rdy, ack):
         self.data = data
@@ -43,6 +73,8 @@ class Ft245:
         self.rxing = False
         self.dut.rxf_245 <= 1
         self.dut.rx_data_245 <= 0
+        self.dut.tx_data_245 <= 0
+        self.dut.txe_245 <= 0
 
     def write (self,val):
         self.fifo.append(val)
@@ -83,10 +115,13 @@ def Reset (dut):
 def test (dut):
     ft245 = Ft245(dut)
     si_rx = SI_Slave(dut.clk,dut.rst,dut.rx_data_si,dut.rx_rdy_si,dut.rx_ack_si)
+    si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
+    for i in range(300): si_tx.write(i)
     cocotb.fork(ft245.rx_driver() )
     cocotb.fork(si_rx.monitor() )
+    cocotb.fork(si_tx.driver() )
     for i in range(10): yield RisingEdge(dut.clk)
     for i in range(50): ft245.write(i)
     for i in range(10*130): yield RisingEdge(dut.clk)

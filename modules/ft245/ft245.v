@@ -9,7 +9,7 @@ module ft245_interface
     output reg rx_245=1'b1,
 
     // ft245 tx interface
-    input [7:0] tx_data_245,
+    output reg [7:0] tx_data_245= 8'b0,
     input txe_245,
     output reg tx_245= 1'b1,
     output reg tx_oe_245=1'b0,
@@ -25,7 +25,7 @@ module ft245_interface
 
     input [7:0] tx_data_si,
     input tx_rdy_si,
-    output reg tx_ack_si
+    output reg tx_ack_si=0
 );
 
     parameter CLOCK_PERIOD_NS = 10;
@@ -51,10 +51,10 @@ module ft245_interface
     localparam ST_SETUP_TX = 3;
     localparam ST_WAIT_TX = 4;
 
-    reg [1:0] state =0;
+    reg [2:0] state =0;
     reg [$clog2(MAX_CNT)-1:0] cnt=0;
 
-    always @* tx_ack_si <= (state==ST_IDLE)? tx_rdy_si & ~txe_245 : 1'b0;
+    always @* tx_ack_si <= (state==ST_IDLE)? tx_rdy_si & ~txe_245 & rxf_245 : 1'b0;
     
     always @(posedge clk) begin
         if (rst == 1'b1) begin
@@ -123,7 +123,7 @@ module ft245_interface
 `ifdef COCOTB_SIM
 initial begin
   $dumpfile ("waveform.vcd");
-  $dumpvars (0,ft245_input);
+  $dumpvars (0,ft245_interface);
   #1;
 end
 `endif
