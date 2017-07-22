@@ -89,19 +89,19 @@ module adc_interface  (
 
     always @(posedge clk_i) begin
         if (reset == 1'b1) begin
-            err = 1'b0;
-            counter = 0;
-            SI_rdy = 1'b0;
-            clk_o = 1'b0;
+            err <= 1'b0;
+            counter <= 0;
+            SI_rdy <= 1'b0;
+            clk_o <= 1'b0;
         end else begin
             if ( counter == decimation_factor ) begin
-                clk_o = clk_o ^ 1'b1;
-                counter = 0;
+                clk_o <= clk_o ^ 1'b1;
+                counter <= 0;
             end else begin
-                counter = counter + 1;
+                counter <= counter + 1;
             end
             if ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) begin
-                SI_rdy = 1'b0;
+                SI_rdy <= 1'b0;
             end
         end
     end
@@ -109,9 +109,9 @@ module adc_interface  (
     always @(posedge clk_o) begin
         SI_data <= ADC_data;
         if ( SI_rdy == 1'b1 && SI_ack != 1'b0 ) begin
-            err = 1'b1;
+            err <= 1'b1;
         end
-        SI_rdy = 1'b1;
+        SI_rdy <= 1'b1;
     end
 
 
