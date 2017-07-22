@@ -75,12 +75,12 @@ module edge_detector  (
         end
     end
 
-    `ifdef COCOTB_SIM
-    initial begin
-      $dumpfile ("waveform.vcd");
-      $dumpvars (0,edge_detector);
-      #1;
-    end
-    `endif
+`ifdef COCOTB_SIM
+initial begin
+  $dumpfile ("waveform.vcd");
+  $dumpvars (0,edge_detector);
+  #1;
+end
+`endif
 
 endmodule

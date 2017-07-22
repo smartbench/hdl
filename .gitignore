@@ -3,3 +3,8 @@
 *.asc
 *.blif
 *.bin
+*.pyc
+*.xml
+*sim_build*
+*.vcd
+
