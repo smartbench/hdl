@@ -1,0 +1,10 @@
+*no_pushear/*
+*~
+*.asc
+*.blif
+*.bin
+*.pyc
+*.xml
+*.vcd
+sim_build/
+*.vvp
