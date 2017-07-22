@@ -15,12 +15,18 @@
     Version:
                 Date            Number          Name            Modified by     Comment
                 2017/07/22      0.1             saturday        IP              Starting development
+                2017/07/22      0.1             saturday        IP              Ended module and testing.
+                                                                                This module decimates the clock at least in a factor of 2.
 
     ToDo:
                 Date            Suggested by    Priority    Activity                Description
-
+                2017/07/22      IP              High        Decimation = 1 option   Bypass clk_i to clk_o when decimation_factor=0.
+                                                                                    Real decimation factor should be decimation_factor+1 with
+                                                                                    this modification.
     Releases:   In development ...
 */
+
+`timescale 1ns/1ps
 
 module adc_interface  (
                                 // Description                  Type            Width
@@ -39,9 +45,9 @@ module adc_interface  (
     SI_ack,                     // acknowledgment               input           1
 
     // Configuration
-    decimation_factor,          // frec_clk_o/frec_clock_i-1                input           DF_WIDTH (def. 32)
-                                // actual decimation_factor is decimation_factor+1 !!!!
-                                // example: decimation_factor=0 then frec_clk_o=frec_clk_i
+    decimation_factor,          // frec_clk_i/frec_clock_o-2    input           DF_WIDTH (def. 32)
+                                // actual decimation_factor is decimation_factor+2 !!!!
+                                // example: decimation_factor=0 then frec_clk_o/2=frec_clk_i
 
     // Error detection
     err,                        //                              output          1
@@ -87,25 +93,27 @@ module adc_interface  (
             counter = 0;
             SI_rdy = 1'b0;
             clk_o = 1'b0;
-            //ADC_oe = 0;
         end else begin
-        if ( counter == decimation_factor ) begin
-            clk_o = clk_o ^ 1'b1;
-            if ( clk_o == 1 ) begin
-                SI_data <= ADC_data;
-                if ( SI_rdy == 1'b1 && SI_ack != 1'b0 ) begin
-                    err = 1'b1;
-                end
-                SI_rdy = 1'b1;
+            if ( counter == decimation_factor ) begin
+                clk_o = clk_o ^ 1'b1;
+                counter = 0;
+            end else begin
+                counter = counter + 1;
             end
-            counter = 0;
-        end else begin
-            counter = counter + 1;
-            if ( SI_rdy == 1 && SI_ack == 1 )
-                SI_rdy = 0;
+            if ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) begin
+                SI_rdy = 1'b0;
             end
         end
     end
+
+    always @(posedge clk_o) begin
+        SI_data <= ADC_data;
+        if ( SI_rdy == 1'b1 && SI_ack != 1'b0 ) begin
+            err = 1'b1;
+        end
+        SI_rdy = 1'b1;
+    end
+
 
     `ifdef COCOTB_SIM
         initial begin

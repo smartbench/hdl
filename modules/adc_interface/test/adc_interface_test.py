@@ -20,6 +20,14 @@ class SI_Slave:
 
     @cocotb.coroutine
     def monitor ( self):
+        # Skip first sampled data
+        self.ack <= 0
+        yield RisingEdge(self.rdy)
+        yield RisingEdge(self.clk)
+        self.ack <= 1
+        yield RisingEdge(self.clk)
+
+        # Real data
         while True:
             self.ack <= 0
             yield RisingEdge(self.rdy)
@@ -28,6 +36,7 @@ class SI_Slave:
             self.ack <= 1
             #yield RisingEdge(self.clk)
             self.fifo.append(self.data.value.integer)
+            yield RisingEdge(self.clk)
 
 class Adc:
     def __init__ ( self, dut ):
@@ -36,6 +45,8 @@ class Adc:
         # self.clk = clk
         # self.oe = oe
         self.fifo = []
+        self.dut.ADC_data <= 0
+        self.dut.SI_data <= 0
 
     def takeSample(self,val):
         self.fifo.append(val)
@@ -43,21 +54,21 @@ class Adc:
     @cocotb.coroutine
     def driver (self):
         while True:
-            yield RisingEdge(self.clk_i)
+            yield RisingEdge(self.dut.clk_o)
             nsTimer(10)
-            self.data= "invalid"
+            self.dut.ADC_data <= 0 # invalid data here
             nsTimer(9.5)
-            self.data=self.fifo.pop(0)
+            self.dut.ADC_data = self.fifo.pop(0)
 
 @cocotb.coroutine
 def Reset (dut):
-    self.dut.reset <= 0
-    for i in range(10): yield RisingEdge(self.dut.clk_i)
-    self.dut.reset <= 1
-    yield RisingEdge(self.dut.clk_i)
-    self.dut.reset <= 0
-    self.dut.decimation_factor <= 0
-    yield RisingEdge(self.dut.clk_i)
+    dut.reset <= 0
+    for i in range(10): yield RisingEdge(dut.clk_i)
+    dut.reset <= 1
+    yield RisingEdge(dut.clk_i)
+    dut.reset <= 0
+    dut.decimation_factor <= 0
+    yield RisingEdge(dut.clk_i)
 
 
 @cocotb.test()
@@ -66,10 +77,21 @@ def adc_interface_test (dut):
     si_adc = SI_Slave( dut.clk_i, dut.reset, dut.SI_data, dut.SI_rdy, dut.SI_ack )
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
-    for i in range(150): adc.takeSample(i)
+
+    for i in range(302): adc.takeSample(i)
     cocotb.fork( adc.driver() )
     cocotb.fork( si_adc.monitor() )
 
-    for i in range(150): yield RisingEdge(dut.clk_i)
+    for i in range(152): yield RisingEdge(dut.clk_o)
     if( si_adc.fifo != [i for i in range(150)]):
-        TestFailure("Simple Interface data != ADC samples")
+        print si_adc.fifo
+        raise TestFailure("Simple Interface data != ADC samples")
+
+    dut.decimation_factor <= 1
+
+    #for i in range(152): adc.takeSample(i)
+    for i in range(150): yield RisingEdge(dut.clk_o)
+
+    if( si_adc.fifo != [i%256 for i in range(300)]):
+        print si_adc.fifo
+        raise TestFailure("Simple Interface data != ADC samples")
