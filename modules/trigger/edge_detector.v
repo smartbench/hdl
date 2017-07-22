@@ -1,6 +1,6 @@
 
 /*
-    Trigger detection module
+    Edge detector module
 
     This module detects when the input signal crosses a determinated value.
     It can be configured to detect positive and negative edges.
@@ -38,61 +38,36 @@
 
 */
 `timescale 1ns/1ps
-module trigger_detection  (
+module edge_detector  (
     input       clk,                // clock
-    input       reset,              // asynchronous reset
-    input       trigger_edge,       // positive or negative edge
+    input       rst,                // asynchronous reset
     input [7:0] trigger_value,      // trigger value
     input [7:0] input_sample,       // input samples of the trigger source
     input       in_ena,             // sample available for read
-    output      out_ena=0,          // valid output sample
-    output      triggered=0         // trigger detected
+    output      triggered=0         // trigger detected (delays ONE clock)
 );
     parameter CLOCK_PERIOD_NS = 10;
 
-    // Configured edge
-    localparam positive_edge=1'b0, negative_edge=1'b1;
-
     // Finite State Machine
     reg [1:0] state;            // State register
-    localparam  disabled=0,     // Detection disabled.
-                searching=1,    // First condition not met: waiting for signal to be under (over) trigger value, when searching for positive (negative) edge
-                validating=2,   // First contition met: signal under (over) trigger value, when searching for positive (negative) edge
-                found=3;        // Second condition met: Signal crossed the trigger value.
+    localparam  searching=0,    // First condition not met: waiting for signal to be under (over) trigger value, when searching for positive (negative) edge
+                validating=1;   // First contition met: signal under (over) trigger value, when searching for positive (negative) edge
 
-     always @(posedge clk or posedge reset) begin
+     always @(posedge clk or posedge rst) begin
         triggered <= 1'b0;
-        if (reset) begin
-            state <= disabled;
-            out_ena <= 1'b0;
-        end else begin
-            out_ena <= in_ena;
+        if (rst)
+            state <= searching;
+        else begin
             case (state)
 
-                disabled:
-                    state <= searching;
-
                 searching:
-                    case (trigger_edge)
-                     positive_edge:
-                         if(input_sample < trigger_value) state <= validating;
-                     negative_edge:
-                         if(input_sample > trigger_value) state <= validating;
-                    endcase
+                    if(input_sample < trigger_value) state <= validating;
 
                 validating:
-                    case (trigger_edge)
-                     positive_edge:
-                        if(input_sample >= trigger_value) begin
-                            state <= searching;
-                            triggered <= 1'b1;
-                        end
-                     negative_edge:
-                        if(input_sample <= trigger_value) begin
-                            state <= searching;
-                            triggered <= 1'b1;
-                        end
-                    endcase
+                    if(input_sample >= trigger_value) begin
+                        state <= searching;
+                        triggered <= 1'b1;
+                    end
 
                 default:
                     state <= searching;
@@ -103,7 +78,7 @@ module trigger_detection  (
     `ifdef COCOTB_SIM
     initial begin
       $dumpfile ("waveform.vcd");
-      $dumpvars (0,trigger_detection);
+      $dumpvars (0,edge_detector);
       #1;
     end
     `endif
