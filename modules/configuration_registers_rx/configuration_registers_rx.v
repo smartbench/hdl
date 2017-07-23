@@ -81,15 +81,15 @@ module configuration_registers_rx  (
     // State register
     reg [$clog2(ST_NUMBER)-1:0] state;
 
-    // acknowledgment is assigned in a asynch way equal to rdy
-    assign rx_ack = rx_rdy;
-
-    // Flattened the array of packets in the data bits (this is why register_data and register_addr are wires)
+    // Flattened the arrays of packets in the data bits (this is why register_data and register_addr are wires)
     genvar i;
     generate
         for( i=0; i<REG_DATA_PACKETS; i=i+1 ) assign register_data[(i+1)*RX_DATA_WIDTH-1:i*RX_DATA_WIDTH] = register_data_pck[i];
         for( i=0; i<REG_ADDR_PACKETS; i=i+1 ) assign register_addr[ ((i+1)*RX_DATA_WIDTH-1): i*RX_DATA_WIDTH ] = register_addr_pck[i];
     endgenerate
+
+    // Asynch assigment of rx_ack; equal rx_rdy except we are waiting to be acknowledged
+    assign rx_ack = ( state != ST_WAITING_ACK )? rx_rdy : 1'b0 ;
 
     always @(posedge(clk)) begin
         if ( rst == 1'b1 ) begin
@@ -97,10 +97,10 @@ module configuration_registers_rx  (
             state <= ST_RECEIVING_ADDR;
             count <= 0;
         end else begin
-            if ( rx_rdy == 1'b1 ) begin
-                case (state)
-                    ST_RECEIVING_ADDR:
-                    begin
+            case (state)
+                ST_RECEIVING_ADDR:
+                begin
+                    if ( rx_rdy == 1'b1 ) begin
                         register_addr_pck[count] <= rx_data;
                         if( count == REG_ADDR_PACKETS-1 ) begin
                             state <= ST_RECEIVING_DATA;
@@ -109,8 +109,10 @@ module configuration_registers_rx  (
                             count <= count + 1;
                         end
                     end
-                    ST_RECEIVING_DATA:
-                    begin
+                end
+                ST_RECEIVING_DATA:
+                begin
+                    if ( rx_rdy == 1'b1 ) begin
                         register_data_pck[count] <= rx_data;
                         if( count == REG_DATA_PACKETS-1 ) begin
                             register_rdy <= 1;
@@ -120,15 +122,15 @@ module configuration_registers_rx  (
                             count <= count + 1;
                         end
                     end
-                    ST_WAITING_ACK:
-                    begin
-                        if( register_ack == 1'b1 ) begin
-                            register_rdy <= 1'b0;
-                            state <= ST_RECEIVING_ADDR;
-                        end
+                end
+                ST_WAITING_ACK:
+                begin
+                    if( register_ack == 1'b1 ) begin
+                        register_rdy <= 1'b0;
+                        state <= ST_RECEIVING_ADDR;
                     end
-                endcase
-            end
+                end
+            endcase
         end
     end
 
