@@ -27,7 +27,7 @@
 
 `timescale 1ns/1ps
 
-module adc_interface  (
+module conf_regs  (
                                 // Description                  Type            Width
     // Basic
     input clk,                  // fpga clock                   input           1
