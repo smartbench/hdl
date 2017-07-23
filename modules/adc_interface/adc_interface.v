@@ -45,9 +45,9 @@ module adc_interface  (
     SI_ack,                     // acknowledgment               input           1
 
     // Configuration
-    decimation_factor,          // frec_clk_i/frec_clock_o-2    input           DF_WIDTH (def. 32)
-                                // actual decimation_factor is decimation_factor+2 !!!!
-                                // example: decimation_factor=0 then frec_clk_o/2=frec_clk_i
+    decimation_factor,          // frec_clk_i/frec_clock_o-1    input           DF_WIDTH (def. 32)
+                                // actual decimation_factor is decimation_factor+1 !!!!
+                                // example: decimation_factor=0 then frec_clk_o=frec_clk_i
 
     // Error detection
     err,                        //                              output          1
@@ -69,6 +69,7 @@ module adc_interface  (
     input [DATA_WIDTH-1:0] ADC_data;
     output ADC_oe;
     output reg clk_o;
+    //output wire clk_o;
 
     // Simple interface
     output reg [DATA_WIDTH-1:0] SI_data;
@@ -84,38 +85,55 @@ module adc_interface  (
     // Decimation counter. Counts up to decimation_factor-1.
     reg [DF_WIDTH-1:0]  counter;
 
-    //ADC_oe <= 0;
+    // Divided clock. If decimation_factor!=0 then clk_o is assigned to clk_o_divided
+    reg clk_o_divided;
+
+    //ADC_oe is always 0
     assign ADC_oe = 0;
 
+
+    always @( decimation_factor or clk_i or clk_o_divided ) begin           // Mux selecting between clk_i and clk_o_divided
+        if ( decimation_factor == 0 ) begin
+            clk_o = clk_i;
+        end else begin
+            clk_o = clk_o_divided;
+        end
+    end
+
     always @(posedge clk_i) begin
-        if (reset == 1'b1) begin
+        if (reset == 1'b1) begin                                            // RESET
             err <= 1'b0;
             counter <= 0;
             SI_rdy <= 1'b0;
-            clk_o <= 1'b0;
+            clk_o_divided <= 1'b0;
         end else begin
-            if ( counter == decimation_factor ) begin
-                clk_o <= clk_o ^ 1'b1;
-                counter <= 0;
-            end else begin
-                counter <= counter + 1;
+            if ( decimation_factor != 0 ) begin                             // Clock division
+                if ( counter == (decimation_factor-1 ) ) begin
+                    clk_o_divided <= clk_o_divided ^ 1'b1;
+                    counter <= 0;
+                end else begin
+                    counter <= counter + 1;
+                end
             end
-            if ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) begin
+            if ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) begin                   // Acknowledge checking
                 SI_rdy <= 1'b0;
             end
         end
     end
 
-    always @(posedge clk_o) begin
-        SI_data <= ADC_data;
-        if ( SI_rdy == 1'b1 && SI_ack != 1'b0 ) begin
-            err <= 1'b1;
+    always @(posedge clk_i) begin                                           // ADC_data reading
+        // checking posedge(clk_o), without using clk_o as a clk resource.
+        if ( ( counter == (decimation_factor-1) && clk_o_divided == 0 ) || decimation_factor == 0 ) begin
+            SI_data <= ADC_data;
+            if ( SI_rdy == 1'b1 && SI_ack != 1'b0 ) begin
+                err <= 1'b1;
+            end
+            SI_rdy <= 1'b1;
         end
-        SI_rdy <= 1'b1;
     end
 
 
-    `ifdef COCOTB_SIM
+    `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,adc_interface);
