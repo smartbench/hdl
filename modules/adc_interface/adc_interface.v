@@ -52,7 +52,7 @@ module adc_interface  (
     // Error detection
     err,                        //                              output          1
                                 // if after reset some data hasn't been acknowledge, then err=1.
-                                // Data will be sent no matter if previous data has been acknowledge or not.
+                                // Data will be sent no matter if previous data has been acknowledged or not.
 );
     // Parameters
     parameter DATA_WIDTH = 8;   // TI ADC1175 data width
@@ -125,7 +125,7 @@ module adc_interface  (
         // checking posedge(clk_o), without using clk_o as a clk resource.
         if ( ( counter == (decimation_factor-1) && clk_o_divided == 0 ) || decimation_factor == 0 ) begin
             SI_data <= ADC_data;
-            if ( SI_rdy == 1'b1 && SI_ack != 1'b0 ) begin
+            if ( SI_rdy == 1'b1 && SI_ack == 1'b0 ) begin
                 err <= 1'b1;
             end
             SI_rdy <= 1'b1;
