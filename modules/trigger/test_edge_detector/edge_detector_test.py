@@ -70,8 +70,8 @@ def test (dut):
     freq = 1000000
     dut.trigger_value <= 50
     #dut.edge_type <= 0
-    generator = Generator(dut.clk, dut.rst, dut.input_sample, dut.in_ena, freq, amp)
-    detector = Detector(dut.clk, dut.rst, dut.in_ena, dut.triggered)
+    generator = Generator(dut.clk, dut.rst, dut.input_sample, dut.input_rdy, freq, amp)
+    detector = Detector(dut.clk, dut.rst, dut.input_rdy, dut.triggered)
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
     cocotb.fork(detector.monitor())

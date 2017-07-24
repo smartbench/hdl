@@ -32,18 +32,35 @@ class RAM_Controller:
                 self.write(self.ch1,self.ch2)
             yield RisingEdge(self.clk)
 
+class COMM:
+    def __init__ (self, clk, data_rdy, data_ack):
+        self.clk = clk
+        self.data_rdy = data_rdy
+        self.data_ack = data_ack
+
+        self.data_ack <= 0
+
+    @cocotb.coroutine
+    def run(self):
+        while True:
+            if(self.data_rdy == 1):
+                for i in range(29): yield RisingEdge(self.clk)
+                self.data_ack <= 1
+                yield RisingEdge(self.clk)
+                self.data_ack <= 0
+
 class ADC:
-    def __init__ (self, clk, ch1=0, ch2=0, in_ena=0):
+    def __init__ (self, clk, input_rdy, ch1, ch2):
         self.clk = clk
         self.ch1 = ch1
         self.ch2 = ch2
-        self.in_ena = in_ena
+        self.input_rdy = input_rdy
         self.fifo_ch1 = []
         self.fifo_ch2 = []
 
         self.ch1 <= 0
         self.ch2 <= 0
-        self.in_ena <= 0
+        self.input_rdy <= 0
 
     def write(self,input_1,input_2):
         self.fifo_ch1.append(input_1)
@@ -55,9 +72,9 @@ class ADC:
             if (len(self.fifo_ch1) > 0 and len(self.fifo_ch2) > 0):
                 self.ch1 <= self.fifo_ch1.pop(0)
                 self.ch2 <= self.fifo_ch2.pop(0)
-                self.in_ena <= 1
+                self.input_rdy <= 1
             yield RisingEdge(self.clk)
-            self.in_ena <= 0
+            self.input_rdy <= 0
             for i in range(3): yield RisingEdge(self.clk)
 
 
@@ -71,6 +88,7 @@ def Start(dut):
 @cocotb.coroutine
 def Reset (dut):
     dut.rst <= 0
+    dut.start <= 0
     for i in range(10): yield RisingEdge(dut.clk)
     dut.rst <= 1
     yield RisingEdge(dut.clk)
@@ -79,15 +97,16 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
-    dut.num_samples <= 16       # number of samples
+    dut.num_samples <= 24       # number of samples
     dut.pre_trigger <= 8        # number of samples before trigger
-    dut.trigger_source <= 1     # CH1
     dut.trigger_conf <= 0       # single
-    dut.edge_type <= 0          # positive edge
     dut.trigger_value <= 170    # trigger value
 
-    ram = RAM_Controller(dut.clk, dut.write_enable, dut.ch1_out, dut.ch2_out)
-    adc = ADC(dut.clk, dut.ch1_in, dut.ch2_in, dut.in_ena)
+    ch1 = dut.input_sample
+    ch2 = 0
+    ram = RAM_Controller(dut.clk, dut.write_enable, ch1, ch2)
+    adc = ADC(dut.clk, dut.input_rdy, ch1, ch2)
+    comm = COMM(dut.clk, dut.send_data_rdy, dut.send_data_ack)
 
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
@@ -99,6 +118,7 @@ def test (dut):
 
     cocotb.fork(ram.run())
     cocotb.fork(adc.sampling())
+    cocotb.fork(comm.run())
 
     yield Start(dut)
 

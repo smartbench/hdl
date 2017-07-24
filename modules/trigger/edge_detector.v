@@ -38,39 +38,40 @@
 
 */
 `timescale 1ns/1ps
-module edge_detector  (
+module edge_detector #( parameter BITS_ADC = 8
+)(
     input       clk,                // clock
     input       rst,                // asynchronous reset
-    input [7:0] trigger_value,      // trigger value
-    input [7:0] input_sample,       // input samples of the trigger source
-    input       in_ena,             // sample available for read
-    output      triggered=0         // trigger detected (delays ONE clock)
+    input [BITS_ADC-1:0] trigger_value,      // trigger value
+    input [BITS_ADC-1:0] input_sample,       // input samples of the trigger source
+    input       input_rdy,          // sample available for read
+    output reg  triggered=0         // trigger detected (delays ONE clock)
 );
     parameter CLOCK_PERIOD_NS = 10;
 
     // Finite State Machine
     reg [1:0] state;            // State register
-    localparam  searching=0,    // First condition not met: waiting for signal to be under (over) trigger value, when searching for positive (negative) edge
-                validating=1;   // First contition met: signal under (over) trigger value, when searching for positive (negative) edge
+    localparam  ST_SEARCHING=0,    // First condition not met: waiting for signal to be under (over) trigger value, when ST_SEARCHING for positive (negative) edge
+                ST_VALIDATING=1;   // First contition met: signal under (over) trigger value, when ST_SEARCHING for positive (negative) edge
 
      always @(posedge clk or posedge rst) begin
         triggered <= 1'b0;
-        if (rst)
-            state <= searching;
-        else begin
+        if (rst) begin
+            state <= ST_SEARCHING;
+        end else if(input_rdy == 1'b1) begin
             case (state)
 
-                searching:
-                    if(input_sample < trigger_value) state <= validating;
+                ST_SEARCHING:
+                    if(input_sample < trigger_value) state <= ST_VALIDATING;
 
-                validating:
+                ST_VALIDATING:
                     if(input_sample >= trigger_value) begin
-                        state <= searching;
                         triggered <= 1'b1;
+                        state <= ST_SEARCHING;
                     end
 
                 default:
-                    state <= searching;
+                    state <= ST_SEARCHING;
             endcase
         end
     end
