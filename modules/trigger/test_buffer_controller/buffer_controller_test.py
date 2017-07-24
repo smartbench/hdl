@@ -43,6 +43,7 @@ class COMM:
     @cocotb.coroutine
     def run(self):
         while True:
+            yield RisingEdge(self.clk)
             if(self.data_rdy == 1):
                 for i in range(29): yield RisingEdge(self.clk)
                 self.data_ack <= 1
