@@ -49,10 +49,6 @@ module adc_interface  (
                                 // actual decimation_factor is decimation_factor+1 !!!!
                                 // example: decimation_factor=0 then frec_clk_o=frec_clk_i
 
-    // Error detection
-    err,                        //                              output          1
-                                // if after reset some data hasn't been acknowledge, then err=1.
-                                // Data will be sent no matter if previous data has been acknowledged or not.
 );
     // Parameters
     parameter DATA_WIDTH = 8;   // TI ADC1175 data width
@@ -79,9 +75,6 @@ module adc_interface  (
     // Configuration
     input [DF_WIDTH-1:0] decimation_factor;
 
-    // Error detection
-    output reg err;
-
     // Decimation counter. Counts up to decimation_factor-1.
     reg [DF_WIDTH-1:0]  counter;
 
@@ -102,33 +95,31 @@ module adc_interface  (
 
     always @(posedge clk_i) begin
         if (reset == 1'b1) begin                                            // RESET
-            err <= 1'b0;
             counter <= 0;
             SI_rdy <= 1'b0;
             clk_o_divided <= 1'b0;
         end else begin
-            if ( decimation_factor != 0 ) begin                             // Clock division
+            if ( decimation_factor != 0 ) begin                                         // Clock division
                 if ( counter == (decimation_factor-1 ) ) begin
-                    clk_o_divided <= clk_o_divided ^ 1'b1;
+                    clk_o_divided <= ~clk_o_divided;
                     counter <= 0;
                 end else begin
                     counter <= counter + 1;
                 end
             end
-            if ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) begin                   // Acknowledge checking
+
+            if ( SI_rdy == 1'b1 && SI_ack == 1'b1 && decimation_factor != 0 ) begin     // Checking if last data was acknowledge
                 SI_rdy <= 1'b0;
             end
-        end
-    end
 
-    always @(posedge clk_i) begin                                           // ADC_data reading
-        // checking posedge(clk_o), without using clk_o as a clk resource.
-        if ( ( counter == (decimation_factor-1) && clk_o_divided == 0 ) || decimation_factor == 0 ) begin
-            SI_data <= ADC_data;
-            if ( SI_rdy == 1'b1 && SI_ack == 1'b0 ) begin
-                err <= 1'b1;
+            // checking posedge(clk_o), without using clk_o as a clk resource.
+            if ( ( counter == (decimation_factor-1) && clk_o_divided == 0 ) || decimation_factor == 0 ) begin
+                if( SI_rdy == 1'b0 || ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) ) begin
+                //if we were not sending or last data sended has been acknowledged
+                    SI_data <= ADC_data; //send new data
+                    SI_rdy <= 1'b1;
+                end
             end
-            SI_rdy <= 1'b1;
         end
     end
 
