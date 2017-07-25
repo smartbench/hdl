@@ -30,34 +30,30 @@ module conf_shift_register #(
 
     // SI Interface (Read)
     input read_enable,              // request read
-    output [ADDR_WIDTH-1:0] register_addr_r,
+    output reg [ADDR_WIDTH-1:0] register_addr_r,
                                     // address                  input           ADDR_WIDTH (def. 8)
     output [DATA_WIDTH-1:0] register_data_r,
                                     // data                     output          DATA_WIDTH (def. 8)
     output reg read_available,            // data available           output          1
 
 );
-
-    localparam  ST_INACTIVE = 0,
+    
+    // Finite State Machine
+    localparam  ST_IDLE = 0,
                 ST_SENDING = 1;
+    reg [1:0] state = ST_IDLE;
 
     // Registers
     reg [DATA_WIDTH-1:0] array_registers [0:NUM_REGS-1] = 0;
     
     // Shift Register
     reg [DATA_WIDTH * NUM_REGS-1:0] shift_register = 0;
-    reg [ADDR_WIDTH-1:0] rd_addr_i = 0;
-    
-    // Current State of the FSM
-    reg [1:0] state = ST_INACTIVE;
     
     // Lower bits of the shift register connected to the output port.
     assign register_data_r = shift_register[DATA_WIDTH-1:0];
     
-    assign register_addr_r = rd_addr_i;
-
     // write with comparators, avoiding giant mux.
-    // guácala ;)
+    // guácala ;) but it suits our needs well
     genvar c;
     generate
         for (c = 0; c < NUM_REGS; c = c + 1) begin:
@@ -71,14 +67,14 @@ module conf_shift_register #(
     always @( posedge(clk) ) begin
         read_available <= 1'b0;
         if ( rst == 1'b1 ) begin
-            // ...
+            // ... meh
         end else begin
             // ...
             case(state)
-                ST_INACTIVE:
+                ST_IDLE:
                 begin
                     if(read_enable == 1'b1 && NUM_REGS != 0) begin  // the NUM_REGS condition simplifies in synthesis.
-                        rd_addr_i <= 0;
+                        register_addr_r <= 0;
                         read_available <= 1'b1;
                         state <= ST_READING;
                     end
@@ -87,11 +83,11 @@ module conf_shift_register #(
                 ST_READING:
                 begin
                     shift_register <= (shift_register >> DATA_WIDTH);
-                    if(rd_addr_i != NUM_REGS-1) begin
-                        rd_addr_i <= rd_addr_i + 1;
+                    if(register_addr_r != NUM_REGS-1) begin
+                        register_addr_r <= register_addr_r + 1;
                     end else begin
                         read_available <= 1'b0;
-                        state <= ST_INACTIVE;
+                        state <= ST_IDLE;
                     end
                 end
             endcase
