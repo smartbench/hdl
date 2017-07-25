@@ -41,7 +41,7 @@ module fully_associative_register #(
     output si_ack,
 
     // Register value
-    output reg [DATA_WIDTH-1:0] data
+    output reg [DATA_WIDTH-1:0] data = MY_RESET_VALUE
 );
 
     // Asynchronous acknowledge.
