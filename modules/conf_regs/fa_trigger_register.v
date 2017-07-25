@@ -42,7 +42,7 @@ module fa_trigger_register #(
 
     // Register value
     input data_ack,
-    output reg [ADDR_WIDTH-1:0] data
+    output reg [DATA_WIDTH-1:0] data
 );
 
     // Asynchronous acknowledge.
