@@ -34,7 +34,7 @@ module ram #(
 `ifdef COCOTB_SIM
 initial begin
   $dumpfile ("waveform.vcd");
-  $dumpvars (0,ft245_interface);
+  $dumpvars (0,ram);
   #1;
 end
 `endif
