@@ -1,6 +1,6 @@
 
 /*
-    A simple fully associative trigger register.
+    A simple fully associative request register.
 
     The module checks if the addr bus is equal to the register addr.
     Value is updated when the condition is true.
@@ -14,7 +14,7 @@
 
     Version:
                 Date            Number          Name                Modified by         Comment
-                2017/07/23      0.1             trigger_reg         IP                  Module created.
+                2017/07/23      0.1             request_reg         IP                  Module created.
 
     ToDo:
                 Date            Suggested by    Priority    Activity                Description
@@ -24,7 +24,7 @@
 
 `timescale 1ns/1ps
 
-module fa_trigger_register #(
+module fa_request_register #(
     parameter ADDR_WIDTH = 16,
     parameter DATA_WIDTH = 16,
     parameter MY_ADDR = 4'ha,
