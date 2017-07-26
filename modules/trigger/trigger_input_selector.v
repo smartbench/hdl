@@ -5,6 +5,7 @@
     
     This module connencts the corresponding trigger's source and trigger value to the buffer controller according to the
     configuration stored in the trigger configuration registers.
+    Only combinational logic here!
     
     The trigger configuration inputs are:
 
