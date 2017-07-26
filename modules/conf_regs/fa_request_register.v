@@ -38,7 +38,6 @@ module fa_request_register #(
     input [ADDR_WIDTH-1:0] si_addr,
     input [DATA_WIDTH-1:0] si_data,
     input si_rdy,
-    output si_ack,
 
     // Register value
     input data_ack,
