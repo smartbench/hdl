@@ -1,8 +1,14 @@
 
 /*
+    Configuration Register Module
+
     A module to send the data alocated in registers.
     When it receives a request to send the data (bit rqst_regs), it saves the current status of
-    all of them in a shift register, and shifts 8 bits with every clock to sends all the bytes.
+    the array of registers' bits in a shift register.
+    Then, with each ACK, shifts TX_WIDTH bits to the right.
+    The output tx_data is wired to the TX_WIDTH lowest bits of the shift register.
+    The empty bit is set to 1 when the shift register is empty, to notify that there is
+    no more data to read from it.
 
     NOTE: it has to access the entire matrix containing all the registers data.
 
@@ -14,10 +20,12 @@
 
     Version:
                 Date            Number          Name                Modified by         Comment
-
+                2017/07/26      0.1             conf_shift_reg      AK                  First version
+                2017/07/26      0.2             conf_shift_reg      AK                  The shifting is controlled with ACK
 
     ToDo:
                 Date            Suggested by    Priority    Activity                Description
+                2017/07/26      AK              HIGH        TEST                    TEST!!
 
     Releases:   In development ...
 */
@@ -38,9 +46,10 @@ module conf_shift_register #(
                           // registers      output      DATA_WIDTH * NUM_REGS (2D array)
 
     // Address and data simple interface
-    input request,
-    output tx_data[TX_WIDTH-1:0],
-    output reg tx_rdy = 1'b0,
+    input request,                  // This bit loads the current array in the shift register
+    input ack,                      // This bit forces a shift: >> TX_WIDTH
+    output tx_data[TX_WIDTH-1:0],   // This is wired to the TX_WIDTH lowest bits of the shift register
+    output reg empty = 1'b1;        // This notifies when all the data was already shifted.
 
 );
 
@@ -57,6 +66,7 @@ module conf_shift_register #(
 
     always @( posedge(clk) ) begin
         if ( rst == 1'b1 ) begin
+            empty <= 1'b0;
             counter = SHIFT_COUNT;
         end else begin
             case (state)
@@ -65,23 +75,26 @@ module conf_shift_register #(
                     if(request == 1'b1) begin
                         // Load registers data in shift register
                         shift_register <= registers;
-                        // Enables output
-                        tx_rdy <= 1'b1;
+                        empty <= 1'b0;
+                        counter <= SHIFT_COUNT;
                         state <= ST_SENDING;
                     end                
                 end
             
                 ST_SENDING:
                 begin
-                    if(counter != 0) begin
-                        // send next packet
-                        shift_register = (shift_register >> TX_WIDTH);
-                        counter <= counter - 1;
-                    end else begin
-                        // End
-                        tx_rdy <= 1'b0;
-                        counter <= SHIFT_COUNT;
-                        state <= ST_INACTIVE;
+                    if(ack == 1'b1) begin   // only shifts when last
+                                            // data was ACKed
+                        if(counter != 0) begin
+                            // send next packet
+                            shift_register = (shift_register >> TX_WIDTH);
+                            counter <= counter - 1;
+                        end else begin
+                            // End
+                            empty <= 1'b1;
+                            counter <= SHIFT_COUNT;
+                            state <= ST_INACTIVE;
+                        end
                     end
                 end
             

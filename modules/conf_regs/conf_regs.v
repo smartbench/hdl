@@ -46,7 +46,7 @@ module conf_regs  #(
     output register_ack,            // Acknowledge              output          1
 
     output [DATA_WIDTH * NUM_REGS-1:0] registers
-                                    // registers                    output          DATA_WIDTH * NUM_REGS (2D array)
+                                    // registers                output          DATA_WIDTH * NUM_REGS (2D array)
 
 );
 
