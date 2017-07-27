@@ -30,12 +30,13 @@
     Releases:   In development ...
 */
 
+`include "conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module conf_shift_register #(
-    parameter NUM_REGS = 20,
-    parameter DATA_WIDTH = 16,
-    parameter TX_WIDTH = 8,
+    parameter NUM_REGS = `__NUM_REGS,
+    parameter DATA_WIDTH = `__DATA_WIDTH,
+    parameter TX_WIDTH = `__TX_WIDTH
 ) (
     // Basic signals
     input clk,
@@ -48,26 +49,26 @@ module conf_shift_register #(
     // Address and data simple interface
     input request,                  // This bit loads the current array in the shift register
     input ack,                      // This bit forces a shift: >> TX_WIDTH
-    output tx_data[TX_WIDTH-1:0],   // This is wired to the TX_WIDTH lowest bits of the shift register
-    output reg empty = 1'b1;        // This notifies when all the data was already shifted.
+    output [TX_WIDTH-1:0] tx_data,   // This is wired to the TX_WIDTH lowest bits of the shift register
+    output reg empty = 1'b1        // This notifies when all the data was already shifted.
 
 );
 
     localparam  SHIFT_COUNT = DATA_WIDTH * NUM_REGS / TX_WIDTH - 1;
-    
+
     localparam  ST_INACTIVE = 0,
                 ST_SENDING = 1;
 
     reg [DATA_WIDTH * NUM_REGS-1:0] shift_register = 0;
     reg [1:0] state = ST_INACTIVE;
     reg [15:0] counter = SHIFT_COUNT;
-    
+
     assign tx_data = shift_register[TX_WIDTH-1:0];
 
     always @( posedge(clk) ) begin
         if ( rst == 1'b1 ) begin
             empty <= 1'b0;
-            counter = SHIFT_COUNT;
+            counter <= SHIFT_COUNT;
         end else begin
             case (state)
                 ST_INACTIVE:
@@ -78,16 +79,16 @@ module conf_shift_register #(
                         empty <= 1'b0;
                         counter <= SHIFT_COUNT;
                         state <= ST_SENDING;
-                    end                
+                    end
                 end
-            
+
                 ST_SENDING:
                 begin
                     if(ack == 1'b1) begin   // only shifts when last
                                             // data was ACKed
                         if(counter != 0) begin
                             // send next packet
-                            shift_register = (shift_register >> TX_WIDTH);
+                            shift_register <= (shift_register >> TX_WIDTH);
                             counter <= counter - 1;
                         end else begin
                             // End
@@ -97,7 +98,7 @@ module conf_shift_register #(
                         end
                     end
                 end
-            
+            endcase
         end
     end
 

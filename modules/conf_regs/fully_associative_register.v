@@ -22,11 +22,12 @@
     Releases:   In development ...
 */
 
+`include "conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module fully_associative_register #(
-    parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 16,
+    parameter ADDR_WIDTH = `__ADDR_WIDTH,
+    parameter DATA_WIDTH = `__DATA_WIDTH,
     parameter MY_ADDR = 4'ha,
     parameter MY_RESET_VALUE = 4'h0
 ) (

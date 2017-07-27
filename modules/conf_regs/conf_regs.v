@@ -23,14 +23,16 @@
     Releases:   In development ...
 */
 
+`include "conf_regs_defines.v"
 `include "fully_associative_register.v"
+
 `timescale 1ns/1ps
 
 module conf_regs  #(
-    parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 16,
-    parameter NUM_REGS = 20,
-    parameter REGISTERS_RESET_VALUES = { NUM_REGS*DATA_WIDTH{1'b0} }
+    parameter ADDR_WIDTH = `__ADDR_WIDTH,
+    parameter DATA_WIDTH = `__DATA_WIDTH,
+    parameter NUM_REGS = `__NUM_REGS,
+    parameter REGISTERS_RESET_VALUES = `__IV_ARRAY
 ) (
                                     // Description                  Type            Width
     // Basic
@@ -70,9 +72,9 @@ module conf_regs  #(
     generate
         for(h = 0 ; h < NUM_REGS ; h = h + 1) begin: __REGISTER_INSTANTIATION
             fully_associative_register #(
-                .ADDR_WIDTH     (16)                            ,
-                .DATA_WIDTH     (16)                            ,
-                .MY_ADDR        ( h[ADDR_WIDTH-1:0] )           ,
+                .ADDR_WIDTH     ( ADDR_WIDTH )                      ,
+                .DATA_WIDTH     ( DATA_WIDTH )                      ,
+                .MY_ADDR        ( h+`__REGS_STARTING_ADDR )         ,
                 .MY_RESET_VALUE ( REGISTERS_RESET_VALUES[h] )
                 ) register (
                     .clk        (clk)                   ,
