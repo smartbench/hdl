@@ -23,8 +23,15 @@
     Releases:   In development ...
 */
 
-`include "conf_regs_defines.v"
-`include "fully_associative_register.v"
+`define __FULLY_ASSOCIATIVE_REGISTER_INCLUDED
+
+`ifndef COCOTB_SIM
+    `include "conf_regs_defines.v"
+    `include "fully_associative_register.v"
+`else
+    `include "../conf_regs_defines.v"
+    `include "../fully_associative_register.v"
+`endif
 
 `timescale 1ns/1ps
 

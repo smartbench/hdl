@@ -6,3 +6,4 @@
 *.pyc
 sim_build/
 *.vcd
+*.xml

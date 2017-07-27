@@ -22,7 +22,12 @@
     Releases:   In development ...
 */
 
-`include "conf_regs_defines.v"
+`ifndef COCOTB_SIM
+    `include "conf_regs_defines.v"
+`else
+    `include "../conf_regs_defines.v"
+`endif
+
 `timescale 1ns/1ps
 
 module fully_associative_register #(
@@ -58,12 +63,14 @@ module fully_associative_register #(
         end
     end
 
+    `ifndef __FULLY_ASSOCIATIVE_REGISTER_INCLUDED
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,fully_associative_register);
             #1;
         end
+    `endif
     `endif
 
 endmodule
