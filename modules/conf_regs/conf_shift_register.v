@@ -30,7 +30,12 @@
     Releases:   In development ...
 */
 
-`include "conf_regs_defines.v"
+`ifndef COCOTB_SIM
+    `include "conf_regs_defines.v"
+`else
+    `include "../conf_regs_defines.v"
+`endif
+
 `timescale 1ns/1ps
 
 module conf_shift_register #(
@@ -54,7 +59,7 @@ module conf_shift_register #(
 
 );
 
-    localparam  SHIFT_COUNT = DATA_WIDTH * NUM_REGS / TX_WIDTH - 1;
+    localparam  SHIFT_COUNT = DATA_WIDTH/TX_WIDTH * NUM_REGS  - 1 ;
 
     localparam  ST_INACTIVE = 0,
                 ST_SENDING = 1;
