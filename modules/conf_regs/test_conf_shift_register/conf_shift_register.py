@@ -13,6 +13,8 @@ class ShiftRegister:
         self.dut = dut
         self.registers_fifo = []
         self.txbyte_fifo = []
+        self.dut.ack <= 0
+        self.dut.request <= 0
 
     def next_register_value( self, reg ):
         self.registers_fifo.append( reg )
@@ -26,9 +28,10 @@ class ShiftRegister:
             yield RisingEdge( self.dut.clk )
             self.dut.request <= 0
             self.dut.ack <= 1
-            yield RisingEdge( self.dut.clk )
+            #yield RisingEdge( self.dut.clk )
 
             while self.dut.empty.value.integer != 1:
+                #print format(self.dut.shift_register.value.integer,'0x')
                 self.txbyte_fifo.append( self.dut.tx_data.value.integer )
                 yield RisingEdge( self.dut.clk )
 
@@ -50,7 +53,7 @@ def conf_shift_register_test (dut):
     cocotb.fork( Clock(dut.clk,10,units='ns').start() )
     yield Reset(dut)
 
-    shift_reg.next_register_value( 0x9999888877776666555544443333222211110000 )
+    shift_reg.next_register_value( 0xaaaa999988887777666655554444333322221111 )
 
     cocotb.fork( shift_reg.driverAndMonitor() )
 
