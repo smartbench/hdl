@@ -3,7 +3,7 @@
 This repository is part of the Smartbench project (https://github.com/smartbench), and contains the FPGA related files.
 That includes the verilog files to configure the FPGA, with their respective testbenchs.
 
-## Tools needed
+## Tools
 
 ### FPGA Tools (iCEstorm flow)
 * Synthesis: yosys
@@ -68,9 +68,10 @@ That includes the verilog files to configure the FPGA, with their respective tes
     # for building 32bit python on 64 bit systems
     sudo yum install glibc.i686 glibc-devel.i386 libgcc.i686 libstdc++-devel.i686
     ```
-* Enviromental variable
+* Enviroment variable
     ```
     export COCOTB=<path>
+    # add to /etc/enviroment to save it permanently
     ```
 
 ### Gtkwave
