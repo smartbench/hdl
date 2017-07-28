@@ -32,8 +32,11 @@ class ShiftRegister:
 
             while self.dut.empty.value.integer != 1:
                 #print format(self.dut.shift_register.value.integer,'0x')
+                yield Timer(1,units='ps')
                 self.txbyte_fifo.append( self.dut.tx_data.value.integer )
                 yield RisingEdge( self.dut.clk )
+                yield Timer(1,units='ps')
+
 
             self.dut.ack <=0
 
@@ -60,6 +63,6 @@ def conf_shift_register_test (dut):
     for i in range(50): yield RisingEdge( dut.clk )
 
     print shift_reg.txbyte_fifo
-    if shift_reg.txbyte_fifo != [   0x00, 0x00, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33, 0x44, 0x44,
-                                    0x55, 0x55, 0x66, 0x66, 0x77, 0x77, 0x88, 0x88, 0x99, 0x99 ]:
+    if shift_reg.txbyte_fifo != [   0x11, 0x11, 0x22, 0x22, 0x33, 0x33, 0x44, 0x44, 0x55, 0x55,
+                                    0x66, 0x66, 0x77, 0x77, 0x88, 0x88, 0x99, 0x99, 0xaa, 0xaa ]:
         raise TestFailure("Houston, we have a problem here...")
