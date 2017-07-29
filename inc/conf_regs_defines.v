@@ -7,12 +7,11 @@
     REGS_TOTAL/.. reefers to both.
 */
 
-`ifndef __CONF_REGS_DEFINES__V
-`define __CONF_REGS_DEFINES__V
-
 /*******************************************************************************
                             BASIC REGISTER DEFINITIONS
 *******************************************************************************/
+`ifndef __CONF_REGS_DEFINES_V
+`define __CONF_REGS_DEFINES_V
 
 `define __RX_WIDTH                  8                                           // Register and address width are a multiple of __RX_WIDTH
 `define __TX_WIDTH                  8                                           // Shift register out width
@@ -87,4 +86,4 @@
                         `__IV_DECIMATION_H       \
                     }
 
-`endif // __CONF_REGS_DEFINES__V
+`endif

@@ -22,16 +22,7 @@
     Releases:   In development ...
 */
 
-`ifdef COCOTB_SIM
-    `define PARENT_DIR
-`endif
-
-`ifndef PARENT_DIR
-    `include "conf_regs_defines.v"
-`else
-    `include "../conf_regs_defines.v"
-`endif
-
+`include "conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module fully_associative_register #(

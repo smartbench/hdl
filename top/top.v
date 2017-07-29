@@ -19,22 +19,7 @@
     Releases:   In development ...
 */
 
-`ifdef COCOTB_SIM
-    `define COCOTB_SIB_TOP
-    `undef COCOTB_SIM                           // We don´t want included modules to create a dumpfile
-`endif
-
-`define PARENT_DIR
-`include "../conf_regs.v"
-`include "../conf_reg_wrapper.v"
-`include "../conf_shift_register.v"
-`include "../conf_regs_defines.v"
-
-
-`ifdef COCOTB_SIB_TOP
-    `define COCOTB_SIM
-`endif
-
+`include "conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module top #(

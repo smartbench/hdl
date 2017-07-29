@@ -8,12 +8,7 @@
 
 */
 
-`ifndef PARENT_DIR                              // Files are in actual directory (not using cocotb)
-    `include "conf_regs_defines.v"
-`else                                           // Files are in parent directory
-    `include "../conf_regs_defines.v"
-`endif
-
+`include "conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module conf_reg_wrapper  #(
