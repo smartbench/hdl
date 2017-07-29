@@ -8,7 +8,11 @@
 
 */
 
-`include "conf_regs_defines.v"
+`ifndef PARENT_DIR                              // Files are in actual directory (not using cocotb)
+    `include "conf_regs_defines.v"
+`else                                           // Files are in parent directory
+    `include "../conf_regs_defines.v"
+`endif
 
 `timescale 1ns/1ps
 
@@ -16,6 +20,7 @@ module conf_reg_wrapper  #(
     parameter ADDR_WIDTH = `__ADDR_WIDTH,
     parameter DATA_WIDTH = `__DATA_WIDTH,
     parameter NUM_REGS = `__NUM_REGS ,
+    parameter REGS_STARTING_ADDR = `__REGS_STARTING_ADDR,
     parameter BITS_DAC = 8,
     parameter BITS_ADC = 8
 ) (
@@ -55,11 +60,11 @@ module conf_reg_wrapper  #(
 );
 
     // Reads registers as a 2D matrix to perform a less confusing assignation.
-    wire [DATA_WIDTH-1:0] array_registers [0:NUM_REGS-1];
+    wire [DATA_WIDTH-1:0] array_registers [REGS_STARTING_ADDR:REGS_STARTING_ADDR+NUM_REGS-1];
     genvar h;
     generate
         for(h = 0 ; h < NUM_REGS ; h = h + 1)
-            assign array_registers [h] [DATA_WIDTH-1:0] = registers [ (h + 1) * DATA_WIDTH - 1  : h * DATA_WIDTH ] ;
+            assign array_registers [h+REGS_STARTING_ADDR] [DATA_WIDTH-1:0] = registers [ (h + 1) * DATA_WIDTH - 1  : h * DATA_WIDTH ] ;
     endgenerate
 
     // Addr 0x0000 (REQUESTS)

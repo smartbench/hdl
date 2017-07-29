@@ -23,15 +23,26 @@
     Releases:   In development ...
 */
 
-`define __FULLY_ASSOCIATIVE_REGISTER_INCLUDED
 
-`ifndef COCOTB_SIM
+
+`ifdef COCOTB_SIM
+    `define PARENT_DIR
+    `define COCOTB_SIB_CONF_REGS
+    `undef COCOTB_SIM                           // We don´t want included modules to create a dumpfile
+`endif
+
+`ifndef PARENT_DIR                              // Files are in actual directory (not using cocotb)
     `include "conf_regs_defines.v"
     `include "fully_associative_register.v"
-`else
+`else                                           // Files are in parent directory
     `include "../conf_regs_defines.v"
     `include "../fully_associative_register.v"
 `endif
+
+`ifdef COCOTB_SIB_CONF_REGS
+    `define COCOTB_SIM
+`endif
+
 
 `timescale 1ns/1ps
 

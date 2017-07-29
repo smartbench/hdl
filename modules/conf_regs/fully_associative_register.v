@@ -22,7 +22,11 @@
     Releases:   In development ...
 */
 
-`ifndef COCOTB_SIM
+`ifdef COCOTB_SIM
+    `define PARENT_DIR
+`endif
+
+`ifndef PARENT_DIR
     `include "conf_regs_defines.v"
 `else
     `include "../conf_regs_defines.v"
