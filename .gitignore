@@ -7,4 +7,3 @@
 sim_build/
 *.vcd
 *.xml
-*.pcf
