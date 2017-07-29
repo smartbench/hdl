@@ -1,4 +1,3 @@
-
 /*
     Top level insatantiating all register related modules.
 
@@ -131,5 +130,13 @@ module top #(
         .trigger_edge           (trigger_edge)          ,
         .trigger_source_sel     (trigger_source_sel)
     );
+
+    `ifdef COCOTB_SIM                                                        // COCOTB macro
+        initial begin
+            $dumpfile ("waveform.vcd");
+            $dumpvars (0,top);
+            #1;
+        end
+    `endif
 
 endmodule
