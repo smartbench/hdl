@@ -26,6 +26,7 @@ class ShiftRegister:
     def driverAndMonitor( self ):
         while True:
             yield RisingEdge( self.dut.request )
+            yield RisingEdge( self.dut.clk )
             self.dut.ack <= 1
 
             while self.dut.empty.value.integer != 1:

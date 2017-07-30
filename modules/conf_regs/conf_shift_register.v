@@ -49,7 +49,7 @@ module conf_shift_register #(
     input request,                  // This bit loads the current array in the shift register
     input ack,                      // This bit forces a shift: >> TX_WIDTH
     output [TX_WIDTH-1:0] tx_data,   // This is wired to the TX_WIDTH lowest bits of the shift register
-    output reg empty = 1'b1        // This notifies when all the data was already shifted.
+    output reg empty                // This notifies when all the data was already shifted.
 
 );
 
@@ -58,7 +58,7 @@ module conf_shift_register #(
     localparam  ST_INACTIVE = 0,
                 ST_SENDING = 1;
 
-    reg [DATA_WIDTH * NUM_REGS-1:0] shift_register = 0;
+    reg [DATA_WIDTH * NUM_REGS-1:0] shift_register;
     reg [1:0] state = ST_INACTIVE;
     reg [15:0] counter = SHIFT_COUNT;
 
@@ -69,35 +69,27 @@ module conf_shift_register #(
             empty <= 1'b0;
             counter <= SHIFT_COUNT;
         end else begin
-            case (state)
-                ST_INACTIVE:
-                begin
-                    if(request == 1'b1) begin
-                        // Load registers data in shift register
-                        shift_register <= registers;
-                        empty <= 1'b0;
-                        counter <= SHIFT_COUNT;
-                        state <= ST_SENDING;
-                    end
-                end
+            if( state == ST_INACTIVE && request == 1'b1) begin
+                // Load registers data in shift register
+                shift_register <= registers;
+                empty <= 1'b0;
+                counter <= SHIFT_COUNT;
+                state <= ST_SENDING;
+            end
 
-                ST_SENDING:
-                begin
-                    if(ack == 1'b1) begin   // only shifts when last
-                                            // data was ACKed
-                        if(counter != 0) begin
-                            // send next packet
-                            shift_register <= (shift_register >> TX_WIDTH);
-                            counter <= counter - 1;
-                        end else begin
-                            // End
-                            empty <= 1'b1;
-                            counter <= SHIFT_COUNT;
-                            state <= ST_INACTIVE;
-                        end
-                    end
+            if( state == ST_SENDING && ack == 1'b1 ) begin   // only shifts when last
+                                    // data was ACKed
+                shift_register <= (shift_register >> TX_WIDTH);
+                if(counter != 0) begin
+                    // send next packet
+                    counter <= counter - 1;
+                end else begin
+                    // End
+                    empty <= 1'b1;
+                    counter <= SHIFT_COUNT;
+                    state <= ST_INACTIVE;
                 end
-            endcase
+            end
         end
     end
 
