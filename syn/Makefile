@@ -16,7 +16,7 @@ pack: $(TOP).bin
 $(TOP).blif: $(SRC)
 	yosys -p "read_verilog -I$(INC) $(SRC); synth_ice40 -blif $(TOP).blif"
 
-$(TOP).asc: $(TOP).blif
+$(TOP).asc: $(TOP).blif $(PCF)
 	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
 
 $(TOP).bin: $(TOP).asc
