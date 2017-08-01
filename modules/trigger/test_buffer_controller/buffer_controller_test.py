@@ -32,24 +32,6 @@ class RAM_Controller:
                 self.write(self.ch1,self.ch2)
             yield RisingEdge(self.clk)
 
-class COMM:
-    def __init__ (self, clk, data_rdy, data_ack):
-        self.clk = clk
-        self.data_rdy = data_rdy
-        self.data_ack = data_ack
-
-        self.data_ack <= 0
-
-    @cocotb.coroutine
-    def run(self):
-        while True:
-            yield RisingEdge(self.clk)
-            if(self.data_rdy == 1):
-                for i in range(29): yield RisingEdge(self.clk)
-                self.data_ack <= 1
-                yield RisingEdge(self.clk)
-                self.data_ack <= 0
-
 class ADC:
     def __init__ (self, clk, input_rdy, ch1, ch2):
         self.clk = clk
@@ -63,6 +45,11 @@ class ADC:
         self.ch2 <= 0
         self.input_rdy <= 0
 
+        #self.t = 0
+    def clear(self):
+        self.fifo_ch1 = []
+        self.fifo_ch2 = []
+
     def write(self,input_1,input_2):
         self.fifo_ch1.append(input_1)
         self.fifo_ch2.append(input_2)
@@ -74,6 +61,9 @@ class ADC:
                 self.ch1 <= self.fifo_ch1.pop(0)
                 self.ch2 <= self.fifo_ch2.pop(0)
                 self.input_rdy <= 1
+            #self.ch1 <= 128 + int(100 * sin(2*pi*1e6*self.t*20e-9))
+            #self.ch2 <= 128 - int(050 * sin(2*pi*1e6*self.t*20e-9))
+            #self.t = self.t + 1
             yield RisingEdge(self.clk)
             self.input_rdy <= 0
             for i in range(3): yield RisingEdge(self.clk)
@@ -100,27 +90,38 @@ def Reset (dut):
 def test (dut):
     dut.num_samples <= 24       # number of samples
     dut.pre_trigger <= 8        # number of samples before trigger
-    dut.trigger_conf <= 0       # single
     dut.trigger_value <= 170    # trigger value
 
     ch1 = dut.input_sample
     ch2 = 0
     ram = RAM_Controller(dut.clk, dut.write_enable, ch1, ch2)
     adc = ADC(dut.clk, dut.input_rdy, ch1, ch2)
-    comm = COMM(dut.clk, dut.send_data_rdy, dut.send_data_ack)
 
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
 
-    for t in range(200):
+    # Testing triggered
+    for t in range(100):
         x1 = 128 + int(100 * sin(2*pi*1e6*t*20e-9))
         x2 = 128 - int(050 * sin(2*pi*1e6*t*20e-9))
         adc.write(x1, x2)
 
     cocotb.fork(ram.run())
     cocotb.fork(adc.sampling())
-    cocotb.fork(comm.run())
 
     yield Start(dut)
+    while ( dut.triggered_o.value.integer == 0 or dut.buffer_full_o.value.integer == 0 ): yield RisingEdge(dut.clk)
+    for i in range(10): yield RisingEdge(dut.clk)
 
-    for i in range(1000): yield RisingEdge(dut.clk)
+    # Testing trigger
+    adc.clear()
+    for t in range(100):
+        x1 = 128 + int(10 * sin(2*pi*1e6*t*20e-9))
+        x2 = 128 - int(5 * sin(2*pi*1e6*t*20e-9))
+        adc.write(x1, x2)
+    yield Start(dut)
+    while ( dut.buffer_full_o.value.integer == 0 ): yield RisingEdge(dut.clk)
+    for i in range(20): yield RisingEdge(dut.clk)
+
+
+    # Testing when there it doesn't trigger
