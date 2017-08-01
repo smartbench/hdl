@@ -62,10 +62,10 @@ module buffer_controller  #( parameter BITS_ADC = 8
     // Communication with RAM Controller
     output write_enable,
 
-    // Communication with PC_Communication Controller
-    output reg triggered_o = 1'b0,
-    output reg buffer_full_o = 1'b0
-
+    // Communication with tx_control
+    input rqst_trigger_status,              //
+    output reg [7:0] trigger_status = 8'd0, // output frame [7:0] = {x,x,x,x,x,x,triggered_o,buffer_full_o}
+    output reg EOF = 1'b0                   // end of frame
 );
 
     localparam  ST_IDLE = 0,
@@ -75,6 +75,9 @@ module buffer_controller  #( parameter BITS_ADC = 8
 
     reg [1:0]  state = 2'd0;       // State register
     reg [17:0] counter = 18'd0;    // samples counter
+
+    reg triggered_o = 1'b0;
+    reg buffer_full_o = 1'b0;
 
     wire edge_detector_rst;
     wire triggered;
@@ -152,6 +155,14 @@ module buffer_controller  #( parameter BITS_ADC = 8
                 end
             endcase
         end
+    end
+
+    // comm with tx_control
+    always @(posedge clk) begin
+        trigger_status[0] <= buffer_full_o;
+        trigger_status[1] <= triggered_o;
+        EOF <= 1'b0;
+        if(rqst_trigger_status == 1'b1) EOF <= 1'b1;
     end
 
 `ifdef COCOTB_SIM
