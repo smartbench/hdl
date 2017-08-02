@@ -1,7 +1,16 @@
+''' toDo:
+    * Read and write at the same time -> OK
+    * Write the full length and read back
+    * Instantiate a block ram with WR_DATA_WIDTH=8bits and RD_DATA_WIDTH=16/32bits
+    to make multiple reads in one clock
+
+    * Get the interface right
+'''
+
+
 
 from random import randint
 import cocotb
-# from ft245 import Ft245
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge, FallingEdge, Edge
 from cocotb.result import TestFailure, TestError
@@ -11,122 +20,82 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 
-class SI_Master:
-    def __init__ ( self, clk, rst , data, rdy, ack):
-        self.data = data
-        self.rdy = rdy
-        self.ack = ack
+class MEM_WRITE:
+    def __init__ (self, wr_clk, wr_data, wr_addr, wr_en ):
+        self.wr_clk = wr_clk
+        self.wr_data = wr_data
+        self.wr_addr = wr_addr
+        self.wr_en = wr_en
+        self.wr_cont_addr = 0
         self.fifo = []
-        self.clk = clk
-        self.rst = rst
-        self.rdy <= 0
-        self.data <= 0
 
     def write(self,val):
         self.fifo.append(val)
 
     @cocotb.coroutine
-    def driver (self):
+    def wr_driver (self):
         while True:
-            yield RisingEdge(self.clk)
+            yield RisingEdge(self.wr_clk)
             if len(self.fifo) > 0 :
-                self.rdy <= 1
-                self.data <= self.fifo.pop(0)
-                while self.ack.value.integer != 1 : yield RisingEdge(self.clk)
-                self.rdy <= 0
+                self.wr_en <= 1
+                self.wr_addr <= self.wr_cont_addr
+                # check below line, maybe
+                self.wr_cont_addr += 1
+                #self.wr_cont_addr.value.integer <= self.wr_cont_addr.value.integer + 1
+                self.wr_data <= self.fifo.pop(0)
+            else:
+                self.wr_en <= 0
 
 
-
-
-
-
-
-class SI_Slave:
-    def __init__ ( self, clk, rst , data, rdy, ack):
-        self.data = data
-        self.rdy = rdy
-        self.ack = ack
+class MEM_READ:
+    def __init__ (self, rd_clk, rd_data, rd_addr): #without rd_enable
+        self.rd_clk = rd_clk
+        self.rd_data = rd_data
+        self.rd_addr = rd_addr
+        self.rd_cont_addr = 0
+        self.reading = False
         self.fifo = []
-        self.clk = clk
-        self.rst = rst
-        self.ack <= 0
+
+    def start_reading (self):
+        self.reading = True
+
+    @cocotb.coroutine
+    def rd_driver (self):
+        while True:
+            yield RisingEdge(self.rd_clk)
+            if self.reading == True:
+                self.rd_addr <= self.rd_cont_addr
+                self.rd_cont_addr += 1
+
 
 
     @cocotb.coroutine
-    def monitor ( self):
+    def monitor (self):
         while True:
-            self.ack <= 0
-            yield RisingEdge(self.rdy)
-            for i in range(randint(0,15)): yield RisingEdge(self.clk)
-            self.ack <= 1
-            yield RisingEdge(self.clk)
-            self.fifo.append(self.data.value.integer)
+            yield RisingEdge(self.rd_clk)
+            if self.reading == True:
+                self.fifo.append(self.rd_data.value)
+                # self.fifo.append(self.rd_data.value.integer) <- Not working
 
-
-
-
-
-class Ft245:
-    def __init__ (self,dut):
-        self.dut = dut
-        self.fifo = []
-        self.rxing = False
-        self.dut.rxf_245 <= 1
-        self.dut.rx_data_245 <= 0
-        self.dut.tx_data_245 <= 0
-        self.dut.txe_245 <= 0
-
-    def write (self,val):
-        self.fifo.append(val)
-        if self.rxing == False:
-            self.dut.rxf_245 <= 0
-
-    @cocotb.coroutine
-    def rx_driver (self):
-        while True:
-            self.rxing = False
-            yield FallingEdge(self.dut.rx_245)
-            self.rxing = True
-            if self.dut.rxf_245.value.integer == 1:
-                raise TestFailure("FT245 Reading failure: There is not value in the fifo")
-            yield nsTimer(14)
-            self.dut.rx_data_245 = self.fifo.pop(0)
-            yield nsTimer(16)
-            if self.dut.rx_245.value.integer == 1:
-                raise TestFailure("FT245 Timming Failure: You must wait at least 30ns ")
-            yield RisingEdge(self.dut.rx_245)
-            yield nsTimer(14)
-            self.dut.rxf_245 <= 1
-            yield nsTimer(49)
-            self.dut.rxf_245 <=  int(len(self.fifo) == 0)
-            if self.dut.rx_245.value.integer == 0:
-                raise TestFailure("FT245 Timming Failure: Fifo is inactive ")
-
-@cocotb.coroutine
-def Reset (dut):
-    dut.rst <= 0
-    for i in range(10): yield RisingEdge(dut.clk)
-    dut.rst <= 1
-    yield RisingEdge(dut.clk)
-    dut.rst <= 0
-    yield RisingEdge(dut.clk)
-
+# RD and WR simultaneous
+# Can perform simultaneous RD and WR (but not in the same address)
 @cocotb.test()
 def test (dut):
-    ft245 = Ft245(dut)
-    si_rx = SI_Slave(dut.clk,dut.rst,dut.rx_data_si,dut.rx_rdy_si,dut.rx_ack_si)
-    si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
-    cocotb.fork(Clock(dut.clk,10,units='ns').start())
-    yield Reset(dut)
-    for i in range(150): si_tx.write(i)
-    cocotb.fork(ft245.rx_driver() )
-    cocotb.fork(si_rx.monitor() )
-    cocotb.fork(si_tx.driver() )
-    for i in range(10): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i)
-    for i in range(10*130): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i+50)
-    for i in range(10*130): yield RisingEdge(dut.clk)
+    # RD and WR operations connected to the same clock
+    # fifo_test = []
+    mem_write = MEM_WRITE(dut.wclk, dut.din, dut.waddr, dut.write_en )
+    mem_read = MEM_READ(dut.wclk, dut.dout, dut.raddr)
+    cocotb.fork(Clock(dut.wclk, 10, units='ns').start())
+    cocotb.fork(Clock(dut.rclk, 10, units='ns').start())
+    for i in range(10): mem_write.write(randint(0,15))
+    # for i in range(10):
+    #     aux = i
+    #     fifo_test.append(aux)
+    #     mem_write.write(aux)
 
-    if ( si_rx.fifo != [ i for i in range(100)]):
-        TestFailure("Simple Interface data != FT245 data")
+    cocotb.fork(mem_write.wr_driver() )
+    cocotb.fork(mem_read.rd_driver() )
+    cocotb.fork(mem_read.monitor() )
+    yield RisingEdge(dut.wclk)
+    mem_read.start_reading()
+    for i in range (12): yield RisingEdge(dut.wclk)

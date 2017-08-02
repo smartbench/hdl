@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
-module ram #(
-  parameter ADDR_WIDTH = 9,
-  parameter DATA_WIDTH = 8,
+module SB_RAM512x8 #(
+  parameter ADDR_WIDTH = 11,
+  parameter DATA_WIDTH = 8
 )(
   input [ADDR_WIDTH-1:0] waddr,
   input [ADDR_WIDTH-1:0] raddr,
@@ -13,13 +13,12 @@ module ram #(
   output reg [DATA_WIDTH-1:0] dout
 );//512x8
 
-
   reg [DATA_WIDTH-1:0] mem [(1<<ADDR_WIDTH)-1:0];
 
   always @(posedge wclk) // Write memory.
   begin
-  if (write_en)
-    mem[waddr] <= din; // Using write address bus.
+    if (write_en)
+      mem[waddr] <= din; // Using write address bus.
   end
 
   always @(posedge rclk) // Read memory.
@@ -29,12 +28,10 @@ module ram #(
 
 
 
-
-
 `ifdef COCOTB_SIM
 initial begin
   $dumpfile ("waveform.vcd");
-  $dumpvars (0,ram);
+  $dumpvars (0,SB_RAM512x8);
   #1;
 end
 `endif
