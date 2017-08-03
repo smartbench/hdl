@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
-`include "SB_RAM512x8.v"
+// `include "SB_RAM512x8.v"
+// `include "/usr/local/share/yosys/ice40/brams_map.v"
 
 module ram_interface #(
   parameter RAM_DEPTH = 2048,
@@ -28,8 +29,8 @@ module ram_interface #(
   reg [RAM_ADDR_WIDTH-1:0] wr_addr = 0;
   reg [RAM_ADDR_WIDTH-1:0] rd_addr = 0;
 
-  // wire [RAM_DATA_WIDTH-1:0] din_array [0:RAM_NUM_OF_SB_RAM512x8_BLOCKS-1];
-  // wire [RAM_DATA_WIDTH-1:0] dout_array [0:RAM_NUM_OF_SB_RAM512x8_BLOCKS-1];
+  wire [RAM_DATA_WIDTH-1:0] din_array [0:RAM_NUM_OF_SB_RAM512x8_BLOCKS-1];
+  wire [RAM_DATA_WIDTH-1:0] dout_array [0:RAM_NUM_OF_SB_RAM512x8_BLOCKS-1];
   reg [RAM_ADDR_WIDTH-1:0] wr_cont_addr = (RAM_ADDR_WIDTH)'b0;
   reg [RAM_ADDR_WIDTH-1:0] rd_cont_addr = (RAM_ADDR_WIDTH)'b0;
   //reg [$clog2(RAM_NUM_OF_SB_RAM512x8_BLOCKS)-1:0] wr_blk = ($clog2(RAM_NUM_OF_SB_RAM512x8_BLOCKS))'b0;
@@ -42,8 +43,35 @@ module ram_interface #(
 
   reg [$clog2(RAM_NUM_OF_SB_RAM512x8_BLOCKS)-1:0] wr_blk_ram_sel = 0;
   reg [$clog2(RAM_NUM_OF_SB_RAM512x8_BLOCKS)-1:0] rd_blk_ram_sel = 0;
-  reg [$clog2(RAM_NUM_OF_SB_RAM512x8_BLOCKS)-1:0] j = 0;
+  // reg [$clog2(RAM_NUM_OF_SB_RAM512x8_BLOCKS)-1:0] j = 0;
 
+  localparam  READ_MODE = 1;
+  localparam  WRITE_MODE = 1;
+
+  // Esto NO anda
+  genvar i;
+  generate
+    for (i=0; i<RAM_NUM_OF_SB_RAM512x8_BLOCKS ; i=i+1)  begin : ram_label
+      SB_RAM40_4K #(
+  			.READ_MODE(READ_MODE),
+  			.WRITE_MODE(WRITE_MODE)
+  		) block_ram (
+  			.RDATA(dout_array[i]),
+  			.RCLK (clk ),
+  			.RCLKE(rclke), // shouldn't be available for 512x8 ram
+  			.RE   (rclke), // shouldn't be available for 512x8 ram
+  			.RADDR(rd_cont_addr [ADDR_WIDTH-1:0]),
+  			.WCLK (clk ),
+  			.WCLKE(wr_en),
+  			.WE   (wr_en),
+  			.WADDR(wr_cont_addr [ADDR_WIDTH-1:0]),
+  			.MASK (0),
+  			.WDATA(din_array[i])
+  		);
+   end
+  endgenerate
+
+  assign dout = dout_array[0];
 
 
 
@@ -51,10 +79,10 @@ module ram_interface #(
   // Esto NO anda
   // genvar i;
   // generate
-  //   for (i=0; i<RAM_NUM_OF_SB_RAM512x8_BLOCKS ; i++)
+  //   for (i=0; i<4 ; i++)
   //   begin : label
   //       SB_RAM40_4K #(
-  //     		.READ_MODE(0),
+  //     		.READ_MODE(1),
   //     		.WRITE_MODE(1)
   //     	) ram40_00 (
   //     		.WADDR  (wr_cont_addr),
@@ -67,7 +95,7 @@ module ram_interface #(
   //     		.WCLK   (clk),
   //     		.RE     (1'b1),
   //     		.RCLKE  (1'b1),
-  //     		.RCLK   (clk)
+  //     		.RCLK   (clk),
   //     );
   //   end
   // endgenerate
@@ -111,18 +139,18 @@ module ram_interface #(
 
 
 
-  SB_RAM512x8 #(
-    .ADDR_WIDTH (11),
-    .DATA_WIDTH (8)
-  )ram512x8_inst (
-    .dout       (dout[RAM_DATA_WIDTH-1:0]),
-    .raddr      (rd_cont_addr[RAM_BLOCK_ADDR_WIDTH-1:0]), // Less significative bits of rd_cont_addr
-    .rclk       (clk),
-    .waddr      (wr_cont_addr[RAM_BLOCK_ADDR_WIDTH-1:0]), // Less significative bits of wr_cont_addr
-    .wclk       (clk),
-    .din        (din[RAM_DATA_WIDTH-1:0]),
-    .write_en   (wr_en)
-  );
+  // SB_RAM512x8 #(
+  //   .ADDR_WIDTH (11),
+  //   .DATA_WIDTH (8)
+  // )ram512x8_inst (
+  //   .dout       (dout[RAM_DATA_WIDTH-1:0]),
+  //   .raddr      (rd_cont_addr[RAM_BLOCK_ADDR_WIDTH-1:0]), // Less significative bits of rd_cont_addr
+  //   .rclk       (clk),
+  //   .waddr      (wr_cont_addr[RAM_BLOCK_ADDR_WIDTH-1:0]), // Less significative bits of wr_cont_addr
+  //   .wclk       (clk),
+  //   .din        (din[RAM_DATA_WIDTH-1:0]),
+  //   .write_en   (wr_en)
+  // );
 
 
 

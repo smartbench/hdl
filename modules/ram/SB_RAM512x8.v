@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 
+// When infering RAM cascading is supported
 module SB_RAM512x8 #(
-  parameter ADDR_WIDTH = 11,
+  parameter ADDR_WIDTH = 10,
   parameter DATA_WIDTH = 8
 )(
   input [ADDR_WIDTH-1:0] waddr,
@@ -21,7 +22,7 @@ module SB_RAM512x8 #(
       mem[waddr] <= din; // Using write address bus.
   end
 
-  always @(posedge rclk) // Read memory.
+  always @(posedge wclk) // Read memory.
   begin
     dout <= mem[raddr]; // Using read address bus.
   end
