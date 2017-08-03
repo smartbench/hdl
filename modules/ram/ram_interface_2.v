@@ -46,7 +46,7 @@ module ram_interface_2 #(
         .write_en   (WE)
     );
 
-    assign WE = (si_rdy_adcX && wr_en && state == ST_IDLE);
+    assign WE = (si_rdy_adcX && wr_en && state == ST_WRITING);
 
     assign si_ack_adcX = WE;
     
