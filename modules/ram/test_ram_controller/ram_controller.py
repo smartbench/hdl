@@ -1,10 +1,10 @@
 ''' toDo:
-    * Read and write at the same time -> OK
-    * Write the full length and read back -> OK
+    * Read and write at the same time -> DONE!
+    * Write the full length and read back -> DONE!
     * Instantiate a block ram with WR_DATA_WIDTH=8bits and RD_DATA_WIDTH=16bits
-    to make multiple reads in one clock
-
-    * Get the interface right
+    to make multiple reads in one clock -> NO.
+    * Get the interface right -> DONE!
+    * Controller that writes on consecutive addresses, and reads the last N samples when requested -> DONE!
 '''
 
 from random import randint

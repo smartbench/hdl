@@ -1,9 +1,6 @@
 `timescale 1ns/1ps
-// `include "SB_RAM512x8.v"
-// `include "/usr/local/share/yosys/ice40/brams_map.v"
-// `define EBR_SIZE (8*512)
 
-module ram_interface_2 #(
+module ram_controller #(
     parameter RAM_DATA_WIDTH = 8,
     parameter RAM_SIZE = (4096*4),    // 1 bloque de 4Kbit (cambiar después...)
     parameter RAM_ADDR_WIDTH = $clog2(RAM_SIZE/8)
@@ -20,7 +17,7 @@ module ram_interface_2 #(
     input [15:0] n_samples,  // Number of samples to be retrieved after a Request Buffer
     input rqst_buff,                                    // Request buffer
     input rd_en,                                        // Read enable
-    output reg [RAM_DATA_WIDTH-1:0] dout,                   // Data output
+    output reg [RAM_DATA_WIDTH-1:0] dout,               // Data output
     output reg EOF = 1'b0
 );
 
@@ -34,32 +31,15 @@ module ram_interface_2 #(
 
     wire WE;
 
-    reg [RAM_DATA_WIDTH-1:0] mem [(1<<RAM_ADDR_WIDTH)-1:0];
-
-    // Write memory.
-    always @(posedge clk)
-        if (WE) mem[wr_addr] <= din; // Using write address bus.
-
-    // Read memory.
-    always @(posedge clk) dout <= mem[rd_addr]; // Using read address bus.
-
-    /*
-    SB_RAM512x8 #(
-        .ADDR_WIDTH (RAM_ADDR_WIDTH),
-        .DATA_WIDTH (RAM_DATA_WIDTH)
-    )ram512x8_inst (
-        .dout       (dout),
-        .raddr      (rd_addr), // Less significative bits of rd_cont_addr
-        .rclk       (clk),
-        .waddr      (wr_addr), // Less significative bits of wr_cont_addr
-        .wclk       (clk),
-        .din        (din),
-        .write_en   (WE)
-    );*/
-
     assign WE = (si_rdy_adc == 1'b1 && wr_en == 1'b1 && state == ST_WRITING) ? 1'b1 : 1'b0;
-
     assign si_ack_adc = WE;
+
+    // RAM Instantiation:
+    reg [RAM_DATA_WIDTH-1:0] mem [(1<<RAM_ADDR_WIDTH)-1:0];
+    always @(posedge clk)   // Write memory.
+        if (WE) mem[wr_addr] <= din; // Using write address bus.
+    always @(posedge clk)   // Read memory.
+        dout <= mem[rd_addr]; // Using read address bus.
 
     // writing
     always @(posedge clk) begin
@@ -106,7 +86,7 @@ module ram_interface_2 #(
     `ifdef COCOTB_SIM
     initial begin
       $dumpfile ("waveform.vcd");
-      $dumpvars (0,ram_interface_2);
+      $dumpvars (0,ram_controller);
       #1;
     end
     `endif
