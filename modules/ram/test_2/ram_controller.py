@@ -73,8 +73,9 @@ class TX_PROTOCOL:
             self.read_enable <= 1
             yield RisingEdge(self.clk)
             self.read_enable <= 0
-            if(self.eof.value.integer == 1): break
-            for i in range(3): yield RisingEdge(self.clk) # simulando demora en lectura
+            for i in range(3):
+                if(self.eof.value.integer == 1): break
+                yield RisingEdge(self.clk) # simulando demora en lectura
 
 @cocotb.coroutine
 def Reset (dut):
@@ -113,12 +114,16 @@ def test (dut):
     for i in range (len(tx_protocol.fifo)):
         a = tx_protocol.fifo[i]
         b = fifo_test[datos_cant-1-i]
-        #a=1
-        #b=2
         if (a == b):
             print (repr(a) + ' == ' + repr(b) )
         else:
 	        print (repr(a) + ' != ' + repr(b) )
 	        err = 1
 
-    if(err==1): raise TestFailure("Error, reading isn't equal to writing")
+    if(err==1):
+        raise TestFailure("Error, reading isn't equal to writing")
+    else:
+        print "______________________________"
+        print " The CHAAAAAMPIONSHIP-POINT !!"
+        print "______________________________"
+        print ""
