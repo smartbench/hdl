@@ -36,11 +36,6 @@ class SI_Master:
                 self.rdy <= 0
 
 
-
-
-
-
-
 class SI_Slave:
     def __init__ ( self, clk, rst , data, rdy, ack):
         self.data = data
@@ -63,9 +58,6 @@ class SI_Slave:
             self.fifo.append(self.data.value.integer)
 
 
-
-
-
 class Ft245:
     def __init__ (self,dut):
         self.dut = dut
@@ -75,11 +67,21 @@ class Ft245:
         self.dut.rx_data_245 <= 0
         self.dut.tx_data_245 <= 0
         self.dut.txe_245 <= 0
+        self.tx_fifo = []
 
     def write (self,val):
         self.fifo.append(val)
         if self.rxing == False:
             self.dut.rxf_245 <= 0
+
+    @cocotb.coroutine
+    def tx_monitor (self):
+        while True:
+            while self.dut.wr_245.value.integer == 1: yield RisingEdge(self.dut.clk)
+            if (self.dut.txe_245.value.integer == 0):
+                self.tx_fifo.append(self.dut.tx_data_245.value.integer)
+            while self.dut.wr_245.value.integer == 0: yield RisingEdge(self.dut.clk)
+
 
     @cocotb.coroutine
     def rx_driver (self):
@@ -111,6 +113,7 @@ def Reset (dut):
     dut.rst <= 0
     yield RisingEdge(dut.clk)
 
+
 @cocotb.test()
 def test (dut):
     ft245 = Ft245(dut)
@@ -120,6 +123,7 @@ def test (dut):
     yield Reset(dut)
     for i in range(150): si_tx.write(i)
     cocotb.fork(ft245.rx_driver() )
+    cocotb.fork(ft245.tx_monitor() )
     cocotb.fork(si_rx.monitor() )
     cocotb.fork(si_tx.driver() )
     for i in range(10): yield RisingEdge(dut.clk)
@@ -128,6 +132,9 @@ def test (dut):
     for i in range(50): ft245.write(i+50)
     for i in range(10*130): yield RisingEdge(dut.clk)
 
+    if (ft245.tx_fifo != [i for i in range(150)]):
+        raise TestFailure("Simple Interface data != FT245 data (TX)")
+
     if ( si_rx.fifo != [ i for i in range(100)]):
-        TestFailure("Simple Interface data != FT245 data")
+        raise TestFailure("Simple Interface data != FT245 data (RX)")
 

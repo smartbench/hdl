@@ -11,7 +11,7 @@ module ft245_interface
     // ft245 tx interface
     output reg [7:0] tx_data_245= 8'b0,
     input txe_245,
-    output reg tx_245= 1'b1,
+    output reg wr_245= 1'b1,
     output reg tx_oe_245=1'b0,
 
     // 
@@ -63,7 +63,7 @@ module ft245_interface
             cnt <= 3'd0;
         end else begin
             rx_rdy_si <= (rx_rdy_si == 1'b0)? 1'b0 : rx_rdy_si ^ rx_ack_si;
-            tx_245 <= 1'b1;
+            wr_245 <= 1'b1;
             case (state)
                 ST_IDLE: 
                 begin
@@ -71,7 +71,7 @@ module ft245_interface
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
-                    end else if ( tx_rdy_si == 1'b1  && txe_245 == 1'b0 ) begin
+                    end else if ( tx_ack_si == 1'b1 ) begin
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         state <= ST_SETUP_TX;
@@ -100,18 +100,18 @@ module ft245_interface
                 ST_SETUP_TX:
                 begin
                     state <= ST_WAIT_TX;
-                    tx_245 <= 1'b0;
+                    wr_245 <= 1'b0;
                     cnt <= 0;
                 end
                 
                 ST_WAIT_TX: // Espera ACTIVE_TIME_TX
                 begin
                     cnt <= cnt + 1;
-                    tx_245 <= 1'b0;
+                    wr_245 <= 1'b0;
                     if (cnt == CNT_ACTIVE_TX-1) begin
                         tx_oe_245 <= 1'b0;
                         state <= ST_IDLE;
-                        tx_245 <= 1'b1;
+                        wr_245 <= 1'b1;
                     end
                 end
                 
