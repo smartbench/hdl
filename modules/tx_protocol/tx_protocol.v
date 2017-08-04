@@ -9,7 +9,7 @@
                 NC      Nahuel Carducci
     Version:
                 Date           Modified by         Comment
-                2017/07/31     IP                  Module created. Only IO signals writen. Behavioural haven't been done.
+                2017/07/31     IP                  Module created. Only IO signals writen. Behavioural test hasn't been done.
     ToDo:
                 Date           Suggested by        Comment
                 2017/08/02     IP                  Package all input interfaces in a flattened 2D array ??
@@ -56,12 +56,12 @@ module tx_protocol #(
 
     reg [COUNTER_BITS-1:0] cnt;
 
-    // The state machine have to simple status.
-    // It's in iddle state when it's no data to send.
+    // The state machine have two simple status.
+    // It's on idle state when there is no data to send.
     // When one of the three input interfaces are ready, state changes to sending and source interface is stored.
-    // When this interface indicates eof, status changes to iddle.
+    // When this interface indicates eof, status changes to IDLE.
 
-    parameter ST_IDDLE = 0;
+    parameter ST_IDLE = 0;
     parameter ST_SENDING = 1;
 
     reg state;
@@ -96,9 +96,9 @@ module tx_protocol #(
     always @( posedge(clk) ) begin
         if ( rst ) begin
             cnt <= MAX_COUNT;
-            state <= ST_IDDLE;
+            state <= ST_IDLE;
         end else begin
-            if( ( state == ST_IDDLE ) && ( |input_ack == 1'b1 ) ) begin
+            if( ( state == ST_IDLE ) && ( |input_ack == 1'b1 ) ) begin
                 state <= ST_SENDING;
 
                 // A better way to write this ???
@@ -119,7 +119,7 @@ module tx_protocol #(
                     tx_rdy <= input_rdy[source_interface];
                     tx_ack <= input_ack[source_interface];
                 end else begin
-                    state <= ST_IDDLE;
+                    state <= ST_IDLE;
                 end
             end
         end
