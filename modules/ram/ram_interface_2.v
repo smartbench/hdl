@@ -20,20 +20,30 @@ module ram_interface_2 #(
     input [15:0] n_samples,  // Number of samples to be retrieved after a Request Buffer
     input rqst_buff,                                    // Request buffer
     input rd_en,                                        // Read enable
-    output [RAM_DATA_WIDTH-1:0] dout,                   // Data output
+    output reg [RAM_DATA_WIDTH-1:0] dout,                   // Data output
     output reg EOF = 1'b0
 );
-
-    wire WE;
-
-    reg [RAM_ADDR_WIDTH-1:0] wr_addr = 0;
-    reg [RAM_ADDR_WIDTH-1:0] rd_addr = 0;
-    reg [1:0] state = 0;
-    reg [15:0] counter = 0;
 
     localparam  ST_WRITING=0,
                 ST_SENDING_DATA=1;
 
+    reg [RAM_ADDR_WIDTH-1:0] wr_addr = 0;
+    reg [RAM_ADDR_WIDTH-1:0] rd_addr = 0;
+    reg [1:0] state = ST_WRITING;
+    reg [15:0] counter = 0;
+
+    wire WE;
+
+    reg [RAM_DATA_WIDTH-1:0] mem [(1<<RAM_ADDR_WIDTH)-1:0];
+
+    // Write memory.
+    always @(posedge clk)
+        if (WE) mem[wr_addr] <= din; // Using write address bus.
+
+    // Read memory.
+    always @(posedge clk) dout <= mem[rd_addr]; // Using read address bus.
+
+    /*
     SB_RAM512x8 #(
         .ADDR_WIDTH (RAM_ADDR_WIDTH),
         .DATA_WIDTH (RAM_DATA_WIDTH)
@@ -45,9 +55,9 @@ module ram_interface_2 #(
         .wclk       (clk),
         .din        (din),
         .write_en   (WE)
-    );
+    );*/
 
-    assign WE = (si_rdy_adc && wr_en && state == ST_WRITING);
+    assign WE = (si_rdy_adc == 1'b1 && wr_en == 1'b1 && state == ST_WRITING) ? 1'b1 : 1'b0;
 
     assign si_ack_adc = WE;
 
@@ -63,14 +73,14 @@ module ram_interface_2 #(
 
                 ST_WRITING:
                 begin
-                    if(si_rdy_adc == 1'b1) begin
-                        wr_addr <= wr_addr + 1;
-                        rd_addr <= wr_addr; // last written addr
-                    end
                     if(rqst_buff == 1'b1) begin
                         counter <= n_samples;
                         state <= ST_SENDING_DATA;
+                    end else if(WE == 1'b1) begin
+                        wr_addr <= wr_addr + 1;
+                        rd_addr <= wr_addr; // last written addr
                     end
+
                 end
 
                 ST_SENDING_DATA:
