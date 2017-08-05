@@ -2,22 +2,29 @@
     Tx protocol module.
     This module sends sampled data, or trigger status.
 
+
+    The state machine have two possible states.
+    It's on ST_IDLE state when there is no data to send.
+    When one of the input interfaces are ready, the state changes to ST_SENDING
+    and {_data, _rdy and _ack} of the selected source are connected to the Output SI,
+    so this module will remain transparent until EOF is detected.
+    When EOF is detected, status changes back to IDLE.
+
     Authors:
                 AD      Andres Demski
                 AK      Ariel Kukulanski
                 IP      Ivan Paunovic
                 NC      Nahuel Carducci
     Version:
-                Date           Modified by         Comment
-                2017/07/31     IP                  Module created. Only IO signals writen. Behavioural test hasn't been done.
+                Date            Modified by         Comment
+                2017/07/31      IP                  Module created. Only IO signals writen. Behavioural test hasn't been done.
+                2017/08/05      AK                  Completing module, adding testbench.
     ToDo:
-                Date           Suggested by        Comment
-                2017/08/02     IP                  Package all input interfaces in a flattened 2D array ??
+                Date            Suggested by        Comment
+                2017/08/02      IP                  Package all input interfaces in a flattened 2D array ??
 */
 
-/* WAITING FOR DEFINES:
-    TRIGGER STATUS requested
-    SAMPLED DATA requested */
+`timescale 1ns/1ps
 
 module tx_protocol #(
     parameter DATA_WIDTH = 8,
@@ -27,44 +34,36 @@ module tx_protocol #(
     input clk,
     input rst,
 
-    // Output interface
+    // SI - Output (FT245)
     output reg [TX_WIDTH-1:0] tx_data,
     output reg tx_rdy,
-    output reg tx_ack,
+    input tx_ack,
 
-    // SI interface for channel 1
+    // SI - Channel 1
     input [DATA_WIDTH-1:0] ch1_data,    // Data bus
     input ch1_rdy,                      // Valid data in the bus
     output ch1_ack,                     // Ack
     input ch1_eof,                      // No more channel 1 data avalaible
 
-    // SI interface for channel 2
+    // SI - Channel 2
     input [DATA_WIDTH-1:0] ch2_data,    // Data bus
     input ch2_rdy,                      // Valid data in the bus
     output ch2_ack,                     // Ack
     input ch2_eof,                      // No more channel 1 data avalaible
 
-    // SI interface for trigger status
+    // SI - Trigger status
     input [DATA_WIDTH-1:0] tr_data,     // Data bus
     input tr_rdy,                       // Valid data in the bus
     output tr_ack,                      // Ack
     input tr_eof                        // No more channel 1 data avalaible
 );
 
-    parameter MAX_COUNT =  $rtoi($ceil($itor(DATA_WIDTH)/TX_WIDTH)) - 1;
-    parameter COUNTER_BITS = (MAX_COUNT == 0) ? 1 : $clog2( MAX_COUNT );
+    reg [$clog2(SOURCES)-1:0] i = 0;
 
-    reg [COUNTER_BITS-1:0] cnt;
+    localparam  ST_IDLE = 0,
+                ST_SENDING = 1;
 
-    // The state machine have two simple status.
-    // It's on idle state when there is no data to send.
-    // When one of the three input interfaces are ready, state changes to sending and source interface is stored.
-    // When this interface indicates eof, status changes to IDLE.
-
-    parameter ST_IDLE = 0;
-    parameter ST_SENDING = 1;
-
-    reg state;
+    reg state = 0;
 
     reg [1:0] source_interface;
 
@@ -74,54 +73,60 @@ module tx_protocol #(
     reg [0:2] input_ack;
     reg [0:2] input_eof;
 
+    assign input_data[0] = tr_data;
+    assign input_data[1] = ch1_data;
+    assign input_data[2] = ch2_data;
+
+    assign input_rdy[0] = tr_rdy;
+    assign input_rdy[1] = ch1_rdy;
+    assign input_rdy[2] = ch2_rdy;
+
+    assign tr_ack = input_ack[0];
+    assign ch1_ack = input_ack[1];
+    assign ch2_ack = input_ack[2];
+
+    assign input_eof[0] = tr_eof;
+    assign input_eof[1] = ch1_eof;
+    assign input_eof[2] = ch2_eof;
 
     always @* begin
-        input_data[0] <= tr_data;
-        input_data[1] <= ch1_data;
-        input_data[2] <= ch2_data;
-
-        input_rdy[0] <= tr_rdy;
-        input_rdy[1] <= ch1_rdy;
-        input_rdy[2] <= ch2_rdy;
-
-        input_ack[0] <= tr_ack;
-        input_ack[1] <= ch1_ack;
-        input_ack[2] <= ch2_ack;
-
-        input_eof[0] <= tr_eof;
-        input_eof[1] <= ch1_eof;
-        input_eof[2] <= ch2_eof;
+        // Default value
+        for (i = 0; i < SOURCES; i = i +1) begin
+            input_ack[i] = 1'b0;
+        end
+        // MUXES
+        tx_data = 0;
+        tx_rdy = 0;
+        if(state == ST_SENDING) begin
+            tx_data = input_data[source_interface];
+            tx_rdy = input_rdy[source_interface];
+            input_ack[source_interface] = tx_ack;
+        end
     end
 
     always @( posedge(clk) ) begin
         if ( rst ) begin
-            cnt <= MAX_COUNT;
             state <= ST_IDLE;
+            source_interface <= 0;
         end else begin
-            if( ( state == ST_IDLE ) && ( |input_ack == 1'b1 ) ) begin
+            if( ( state == ST_IDLE ) && ( |input_rdy == 1'b1 ) ) begin
                 state <= ST_SENDING;
-
-                // A better way to write this ???
-                if( input_ack[0] == 1'b1 ) begin
-                    source_interface <= 0;
-                end else begin
-                    if( input_ack[1] == 1'b1 ) begin
-                        source_interface <= 1;
-                    end else begin
-                        source_interface <= 2;
-                    end
-                end
+                for (i = 0; i<SOURCES ; i=i+1) if(input_rdy[i] == 1'b1) source_interface <= i;
             end
-
             if( ( state == ST_SENDING ) ) begin
-                if( input_eof != 1'b1 ) begin
-                    tx_data <= input_data[source_interface];
-                    tx_rdy <= input_rdy[source_interface];
-                    tx_ack <= input_ack[source_interface];
-                end else begin
+                if( input_eof[source_interface] == 1'b1 ) begin
                     state <= ST_IDLE;
                 end
             end
         end
     end
+
+    `ifdef COCOTB_SIM
+    initial begin
+      $dumpfile ("waveform.vcd");
+      $dumpvars (0,tx_protocol);
+      #1;
+    end
+    `endif
+
 endmodule
