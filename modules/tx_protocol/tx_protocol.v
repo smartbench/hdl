@@ -28,7 +28,8 @@
 
 module tx_protocol #(
     parameter DATA_WIDTH = 8,
-    parameter TX_WIDTH = 8
+    parameter TX_WIDTH = 8,
+    parameter SOURCES = 3
 ) (
     // Basic synchronous signals
     input clk,
@@ -68,10 +69,10 @@ module tx_protocol #(
     reg [1:0] source_interface;
 
     // 2D array packing input interfaces.
-    reg [DATA_WIDTH-1:0] input_data [0:2];
-    reg [0:2] input_rdy;
-    reg [0:2] input_ack;
-    reg [0:2] input_eof;
+    wire [DATA_WIDTH-1:0] input_data [0:2];
+    wire [0:2] input_rdy;
+    wire [0:2] input_ack;
+    wire [0:2] input_eof;
 
     assign input_data[0] = tr_data;
     assign input_data[1] = ch1_data;
@@ -89,14 +90,11 @@ module tx_protocol #(
     assign input_eof[1] = ch1_eof;
     assign input_eof[2] = ch2_eof;
 
+    // Default value & MUXES
     always @* begin
-        // Default value
-        for (i = 0; i < SOURCES; i = i +1) begin
-            input_ack[i] = 1'b0;
-        end
-        // MUXES
         tx_data = 0;
         tx_rdy = 0;
+        for (i = 0; i < SOURCES; i = i +1) input_ack[i] = 1'b0;
         if(state == ST_SENDING) begin
             tx_data = input_data[source_interface];
             tx_rdy = input_rdy[source_interface];
@@ -104,6 +102,7 @@ module tx_protocol #(
         end
     end
 
+    // State machine
     always @( posedge(clk) ) begin
         if ( rst ) begin
             state <= ST_IDLE;
