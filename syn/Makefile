@@ -3,7 +3,7 @@
 
 
 TOP = breadboard_top
-SRC = $(wildcard ../modules/*.v) ../top/$(TOP).v
+SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
 
 # PNR OPT
 PACKAGE = ct256
