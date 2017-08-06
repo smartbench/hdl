@@ -2,8 +2,7 @@
 
 module ram_controller #(
     parameter RAM_DATA_WIDTH = 8,
-    parameter RAM_SIZE = (4096*4),    // 1 bloque de 4Kbit (cambiar después...)
-    parameter RAM_ADDR_WIDTH = $clog2(RAM_SIZE/8)
+    parameter RAM_SIZE = (4096*4)    // 1 bloque de 4Kbit (cambiar después...)
 )(
     input clk,
     input rst,
@@ -16,10 +15,13 @@ module ram_controller #(
 
     input [15:0] n_samples,  // Number of samples to be retrieved after a Request Buffer
     input rqst_buff,                                    // Request buffer
-    input rd_en,                                        // Read enable
-    output reg [RAM_DATA_WIDTH-1:0] dout,               // Data output
-    output reg EOF = 1'b0
+    input data_ack,                                     // Data acknowledge
+    output reg [RAM_DATA_WIDTH-1:0] data_out = 0,       // Data output
+    output reg data_rdy = 1'b0,                         // Data ready
+    output reg data_eof = 1'b1                          // Data End of Frame
 );
+
+    localparam  RAM_ADDR_WIDTH = $clog2(RAM_SIZE/8);
 
     localparam  ST_WRITING=0,
                 ST_SENDING_DATA=1;
@@ -39,14 +41,16 @@ module ram_controller #(
     always @(posedge clk)   // Write memory.
         if (WE) mem[wr_addr] <= din; // Using write address bus.
     always @(posedge clk)   // Read memory.
-        dout <= mem[rd_addr]; // Using read address bus.
+        data_out <= mem[rd_addr]; // Using read address bus.
 
     // writing
     always @(posedge clk) begin
-        EOF <= 1'b0;
+        //data_eof <= 1'b0;
         if(rst == 1'b1) begin
             wr_addr <= 0;
             rd_addr <= 0;
+            data_rdy <= 1'b0;
+            data_eof <= 1'b1;
             state <= ST_WRITING;
         end else begin
             case(state)
@@ -65,11 +69,14 @@ module ram_controller #(
 
                 ST_SENDING_DATA:
                 begin
-                    if(rd_en == 1'b1) begin
+                    data_eof <= 1'b0;
+                    data_rdy <= 1'b1;        // always ready, ram reading never delays.
+                    if(data_ack == 1'b1) begin
                         rd_addr <= rd_addr - 1;
                         counter <= counter - 1;
                         if(counter == 1) begin
-                            EOF <= 1'b1;
+                            data_rdy <= 1'b0;
+                            data_eof <= 1'b1;
                             rd_addr <= wr_addr - 1; // last written addr
                             state <= ST_WRITING;
                         end
@@ -78,7 +85,6 @@ module ram_controller #(
 
             endcase
 
-            // ...
         end
     end
 
