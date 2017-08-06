@@ -1,8 +1,5 @@
 /*
-    ADC interface module
-    This module is an interface for TI ADC1175 chip.
-    ADC1175 timing diagrams and other data in:
-                        http://www.ti.com/lit/ds/symlink/adc1175.pdf
+
     Authors:
                 AD      Andres Demski
                 AK      Ariel Kukulanski
@@ -21,56 +18,43 @@
 
 `timescale 1ns/1ps
 
-module configuration_registers_rx  (
-                                // Description                  Type            Width
+module configuration_registers_rx #(
+    parameter RX_DATA_WIDTH = 8,        // FIFO data width
+    parameter REG_ADDR_WIDTH = 16,
+    parameter REG_DATA_WIDTH = 16
+) (
+
     // Basic
-    clk,                        // fpga clock                   input           1
-    rst,                      // synch reset                  input           1
+    input clk,                                      // fpga clock
+    input rst,                                      // synch reset
 
     // Simple interface rx data
-    rx_data,                    // data                         input           RX_DATA_WIDTH (def. 8)
-    rx_rdy,                     // ready                        input           1
-    rx_ack,                     // acknowledgment               output          1
+    input [RX_DATA_WIDTH-1:0] rx_data,              // data
+    input rx_rdy,                                   // ready
+    output rx_ack,                                  // acknowledgment
 
     // Simple interface register data
-    register_data,              // data                         output          REG_DATA_WIDTH
-    register_addr,              // ready                        output          REG_ADDR_WIDTH
-    register_rdy,               // ready                        output          1
-    register_ack,               // acknowledgment               input           1
+    output [REG_DATA_WIDTH-1:0] register_data,      // data
+    output [REG_ADDR_WIDTH-1:0] register_addr,      // ready
+    output reg register_rdy,                        // ready
+    input register_ack                              // acknowledgment
 );
 
-    // Parameters
-    parameter RX_DATA_WIDTH = 8;        // FIFO data width
-    parameter REG_ADDR_WIDTH = 64;
-    parameter REG_DATA_WIDTH = 32;
-    parameter REG_DATA_PACKETS = 4;     // Register data is formed by REG_DATA_PACKETS number of  FIFO data
-    parameter REG_ADDR_PACKETS = 8;     // Register width is formed by REG_DATA_PACKETS number of  FIFO data
+    // Register data is formed by REG_DATA_PACKETS number of  FIFO data
+    localparam REG_DATA_PACKETS = REG_DATA_WIDTH / RX_DATA_WIDTH;
+    // Register width is formed by REG_DATA_PACKETS number of  FIFO data
+    localparam REG_ADDR_PACKETS = REG_ADDR_WIDTH / RX_DATA_WIDTH;
     //
     // // Local parameters
     // local parameter REG_ADDR_WIDTH = REG_ADDR_PACKETS * RX_DATA_WIDTH ;
     // local parameter REG_DATA_WIDTH = REG_DATA_PACKETS * RX_DATA_WIDTH ;
-
-    // Basic
-    input clk;
-    input rst;
-
-    // Simple interface rx data
-    input [RX_DATA_WIDTH-1:0] rx_data;
-    input rx_rdy;
-    output wire rx_ack;
-
-    // Simple interface register data
-    output wire [REG_DATA_WIDTH-1:0] register_data;     // This is a wire because a workaround used later. Keep it as a wire.
-    output wire [REG_ADDR_WIDTH-1:0] register_addr;     // The same.
-    output reg register_rdy;
-    input register_ack;
 
     // Data and address divided by packets. This is easier to read.
     reg [RX_DATA_WIDTH-1:0] register_data_pck [REG_DATA_PACKETS-1:0];
     reg [RX_DATA_WIDTH-1:0] register_addr_pck [REG_ADDR_PACKETS-1:0];
 
     // Packet counter
-    reg [$clog2(REG_ADDR_PACKETS)-1:0 ] count;
+    reg [$clog2(REG_ADDR_PACKETS)-1:0 ] count = 0;
 
     // States local parameters
     localparam ST_RECEIVING_ADDR = 0;
@@ -79,7 +63,7 @@ module configuration_registers_rx  (
     localparam ST_NUMBER = 3;
 
     // State register
-    reg [$clog2(ST_NUMBER)-1:0] state;
+    reg [$clog2(ST_NUMBER)-1:0] state = ST_RECEIVING_ADDR;
 
     // Flattened the arrays of packets in the data bits (this is why register_data and register_addr are wires)
     genvar i;
@@ -134,7 +118,7 @@ module configuration_registers_rx  (
         end
     end
 
-    `ifdef COCOTB_SIM                                                        // COCOTB macro
+    `ifdef COCOTB_SIM           // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,configuration_registers_rx);
