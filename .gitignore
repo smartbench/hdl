@@ -6,5 +6,6 @@
 *.pyc
 *.xml
 *.vcd
-sim_build/
+*sim_build/
 *.vvp
+
