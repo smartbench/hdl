@@ -44,7 +44,7 @@ module trigger_block  #(
 
     // Request handler
     input start,
-    input stop,     // must be ORed with rqst_ch1 and rqst_ch2
+    input stop,     // must be ORed with rqst_ch1 and rqst_ch2!!
     input rqst_trigger_status,
     // NO //input rqst_ch1, rqst_
 
