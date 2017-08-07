@@ -35,30 +35,44 @@ class SI_Master:
                 self.rdy <= 0
 
 class REG_SI_Slave:
-    def __init__ ( self, clk, rst, addr, data, rdy, ack):
+    def __init__ ( self, clk, rst, addr, data, rdy, my_addr):
+        self.clk = clk
+        self.rst = rst
         self.addr = addr
         self.data = data
         self.rdy = rdy
-        self.ack = ack
-        self.fifoaddr = []
-        self.fifodata = []
-        self.clk = clk
-        self.rst = rst
-        self.ack <= 0
 
+        self.fifo = []
+        self.my_addr = my_addr
 
     @cocotb.coroutine
     def monitor ( self):
         while True:
-            self.ack <= 0
-            yield RisingEdge(self.rdy)
+            yield FallingEdge(self.clk)
+            if( self.rdy.value.integer == 1 and self.addr.value.integer == self.my_addr):
+                self.fifo.append(self.data.value.integer)
             yield RisingEdge(self.clk)
-            #for i in range(randint(0,15)): yield RisingEdge(self.clk)
-            self.ack <= 1
-            #yield RisingEdge(self.clk) # IP: don't like it
-            self.fifodata.append(self.data.value.integer)
-            self.fifoaddr.append(self.addr.value.integer)
-            yield RisingEdge(self.clk)  # IP: like it
+
+class REG_SI_MON:
+    def __init__ ( self, clk, rst, addr, data, rdy):
+        self.clk = clk
+        self.rst = rst
+        self.addr = addr
+        self.data = data
+        self.rdy = rdy
+
+        self.fifo_data = []
+        self.fifo_addr = []
+
+    @cocotb.coroutine
+    def bus_monitor ( self):
+        while True:
+            yield FallingEdge(self.clk)
+            if( self.rdy.value.integer == 1):
+                self.fifo_data.append(self.data.value.integer)
+                self.fifo_addr.append(self.addr.value.integer)
+            yield RisingEdge(self.clk)
+
 
 @cocotb.coroutine
 def Reset (dut):
@@ -71,21 +85,45 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
-    si_rx = SI_Master(dut.clk,dut.rst,dut.rx_data,dut.rx_rdy,dut.rx_ack)
-    si_reg = REG_SI_Slave(dut.clk,dut.rst,dut.register_addr,dut.register_data,dut.register_rdy,dut.register_ack)
+    si_rx = SI_Master(dut.clk, dut.rst, dut.rx_data, dut.rx_rdy, dut.rx_ack)
+    reg_10 = REG_SI_Slave(dut.clk, dut.rst, dut.register_addr, dut.register_data, dut.register_rdy, 10)
+    reg_13 = REG_SI_Slave(dut.clk, dut.rst, dut.register_addr, dut.register_data, dut.register_rdy, 13)
+    reg_200 = REG_SI_Slave(dut.clk, dut.rst, dut.register_addr, dut.register_data, dut.register_rdy, 200)
+
+    reg_mon = REG_SI_MON(dut.clk, dut.rst, dut.register_addr, dut.register_data, dut.register_rdy)
+
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
 
     print "I'm writing the fifo"
-    for i in range(150): si_rx.write(i)
-    cocotb.fork(si_rx.driver() )
-    cocotb.fork(si_reg.monitor() )
+
+    si_rx.write(13)
+    si_rx.write(0xFF)
+    si_rx.write(0xEE)
+    si_rx.write(10)
+    si_rx.write(0xDD)
+    si_rx.write(0xCC)
+    si_rx.write(200)
+    si_rx.write(0xBB)
+    si_rx.write(0xAA)
+    si_rx.write(9)
+    si_rx.write(0x99)
+    si_rx.write(0x88)
+
+    cocotb.fork( si_rx.driver() )
+    cocotb.fork( reg_10.monitor() )
+    cocotb.fork( reg_13.monitor() )
+    cocotb.fork( reg_200.monitor() )
+    cocotb.fork( reg_mon.bus_monitor() )
 
     print "I'm starting to send the data"
-    for i in range(600): yield RisingEdge(dut.clk)
+    for i in range(100): yield RisingEdge(dut.clk)
 
-    print si_reg.fifoaddr
-    print si_reg.fifodata
+    print "Reg_10: " + repr(reg_10.fifo)
+    print "Reg_13: " + repr(reg_13.fifo)
+    print "Reg_200: " + repr(reg_200.fifo)
+    print "Data: " + repr(reg_mon.fifo_addr)
+    print "Addr: " + repr(reg_mon.fifo_data)
     print "I'm at the end"
     #if ( si_rx.fifo != [ i for i in range(100)]):
     #    TestFailure("Simple Interface data != FT245 data")
