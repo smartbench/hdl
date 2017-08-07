@@ -68,6 +68,37 @@ class ADC:
             self.input_rdy <= 0
             for i in range(3): yield RisingEdge(self.clk)
 
+class TX_PROTOCOL:
+    def __init__ (self, clk, rqst_trigger_status, trigger_status_data, trigger_status_rdy, trigger_status_eof, trigger_status_ack):
+        self.clk = clk
+        self.rqst_trigger_status = rqst_trigger_status
+        self.trigger_status_data = trigger_status_data
+        self.trigger_status_rdy = trigger_status_rdy
+        self.trigger_status_eof = trigger_status_eof
+        self.trigger_status_ack = trigger_status_ack
+
+        self.fifo = []
+
+        self.rqst_trigger_status <= 0
+        self.trigger_status_ack <= 0
+
+    @cocotb.coroutine
+    def request_data (self):
+        self.rqst_trigger_status <= 1
+        yield RisingEdge(self.clk)
+        self.rqst_trigger_status <= 0
+        yield RisingEdge(self.clk)
+        yield FallingEdge(self.clk)
+        #print "requesting..."
+        while self.trigger_status_eof.value.integer == 0:
+            if(self.trigger_status_rdy.value.integer == 1):
+                self.fifo.append(self.trigger_status_data.value.integer)
+                self.trigger_status_ack <= 1
+            else:
+                self.trigger_status_ack <= 0
+            yield RisingEdge(self.clk)
+        self.trigger_status_ack <= 0
+        #print "request finished..."
 
 @cocotb.coroutine
 def Start(dut):
@@ -96,6 +127,7 @@ def test (dut):
     ch2 = 0
     ram = RAM_Controller(dut.clk, dut.write_enable, ch1, ch2)
     adc = ADC(dut.clk, dut.input_rdy, ch1, ch2)
+    tx_protocol = TX_PROTOCOL(dut.clk, dut.rqst_trigger_status, dut.trigger_status_data, dut.trigger_status_rdy, dut.trigger_status_eof, dut.trigger_status_ack)
 
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
@@ -110,8 +142,25 @@ def test (dut):
     cocotb.fork(adc.sampling())
 
     yield Start(dut)
+    for i in range(10): yield RisingEdge(dut.clk)
+    yield tx_protocol.request_data()
     while ( dut.triggered_o.value.integer == 0 or dut.buffer_full_o.value.integer == 0 ): yield RisingEdge(dut.clk)
     for i in range(10): yield RisingEdge(dut.clk)
+
+    print "-----------------------------------------"
+    print "Fifo LEN = " + repr(len(tx_protocol.fifo))
+    for i in range(len(tx_protocol.fifo)):
+        print "Fifo Read: " + repr(tx_protocol.fifo.pop(0))
+
+    print "triggered , full = " + repr(dut.triggered_o.value.integer) + " ; " + repr(dut.buffer_full_o.value.integer)
+    yield tx_protocol.request_data()
+    print "triggered , full = " + repr(dut.triggered_o.value.integer) + " ; " + repr(dut.buffer_full_o.value.integer)
+    for i in range(50): yield RisingEdge(dut.clk)
+    print "-----------------------------------------"
+    print "Fifo LEN = " + repr(len(tx_protocol.fifo))
+    for i in range(len(tx_protocol.fifo)):
+        print "Fifo Read: " + repr(tx_protocol.fifo.pop(0))
+    print "-----------------------------------------"
 
     # Testing trigger
     adc.clear()
@@ -122,6 +171,3 @@ def test (dut):
     yield Start(dut)
     while ( dut.buffer_full_o.value.integer == 0 ): yield RisingEdge(dut.clk)
     for i in range(20): yield RisingEdge(dut.clk)
-
-
-    # Testing when there it doesn't trigger

@@ -70,7 +70,7 @@ module buffer_controller  #(
 
     output reg [7:0] trigger_status_data = 8'd0, // output frame [7:0] = {x,x,x,x,x,x,triggered_o,buffer_full_o}
     output reg trigger_status_rdy = 1'b0,
-    output reg trigger_status_eof = 1'b0,        // end of frame
+    output trigger_status_eof,        // end of frame
     input trigger_status_ack
 );
 
@@ -172,7 +172,9 @@ module buffer_controller  #(
     localparam  ST2_IDLE=0,
                 ST2_SENDING=1;
     reg state_2 = ST2_IDLE;
+
     assign trigger_status_eof = (trigger_status_ack == 1'b1 || trigger_status_rdy == 1'b0) ? 1'b1 : 1'b0;
+
     // comm with tx_control
     always @(posedge clk) begin
         trigger_status_data[0] <= buffer_full_o;
@@ -190,7 +192,7 @@ module buffer_controller  #(
                     end
                 end
 
-                ST_SENDING:
+                ST2_SENDING:
                 begin
                     if(trigger_status_ack == 1'b1) begin
                         trigger_status_rdy <= 1'b0;
