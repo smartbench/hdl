@@ -25,6 +25,8 @@
 module top #(
     parameter BITS_ADC = 8,
     parameter BITS_DAC = 8
+    parameter REG_ADDR_WIDTH = 4,
+    parameter REG_DATA_WIDTH = 8
 )   (
                                     // Description                  Type            Width
     // Basic
@@ -73,48 +75,46 @@ module top #(
     output trigger_edge,
     output [1:0] trigger_source_sel
 );
-    wire [`__DATA_WIDTH * `__NUM_REGS-1:0] registers;
 
-    conf_regs configuration_registers (
-        .clk                    (clk)                   ,
-        .rst                    (rst)                   ,
-        .register_addr          (register_addr)         ,
-        .register_data          (register_data)         ,
-        .register_rdy           (register_rdy)          ,
-        .register_ack           (register_ack)          ,
-        .registers              (registers)
+    fully_associative_register #(
+        .ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .MY_ADDR        (`ADDR_CHA_SETTINGS),
+        .MY_RESET_VALUE (`DEFAULT_CHA_SETTINGS)
+    ) reg_CHA_settings (
+        .clk            (clk),
+        .rst            (rst),
+        .si_addr        (register_addr),
+        .si_data        (register_data),
+        .si_rdy         (register_rdy),
+
+        // .data        ( { CHA_ATT , CHA_GAIN , CHA_DC_COUPLING , CHA_ON } )
+        .data[7:5]      (CHA_ATT),
+        .data[4:2]      (CHA_GAIN),
+        .data[1]        (CHA_DC_COUPLING),
+        .data[0]        (CHA_ON)
     );
 
-    conf_shift_register shift_register (
-        .clk                    (clk)                   ,
-        .rst                    (rst)                   ,
-        .registers              (registers)             ,
-        .request                (request)               ,
-        .ack                    (ack)                   ,
-        .tx_data                (tx_data)               ,
-        .empty                  (empty)
+    fully_associative_register #(
+        .ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .MY_ADDR        (`ADDR_CHB_SETTINGS),
+        .MY_RESET_VALUE (`DEFAULT_CHB_SETTINGS)
+    ) reg_CHB_settings (
+        .clk            (clk),
+        .rst            (rst),
+        .si_addr        (register_addr),
+        .si_data        (register_data),
+        .si_rdy         (register_rdy),
+
+        // .data        ( { CHA_ATT , CHA_GAIN , CHA_DC_COUPLING , CHA_ON } )
+        .data[7:5]      (CHB_ATT),
+        .data[4:2]      (CHB_GAIN),
+        .data[1]        (CHB_DC_COUPLING),
+        .data[0]        (CHB_ON)
     );
 
-    conf_reg_wrapper wrapper (
-        .registers              (registers)             ,
-        .CHA_ATT                (CHA_ATT)               ,
-        .CHA_GAIN               (CHA_GAIN)              ,
-        .CHA_DC_COUPLING        (CHA_DC_COUPLING)       ,
-        .CHA_ON                 (CHA_ON)                ,
-        .CHB_ATT                (CHB_ATT)               ,
-        .CHB_GAIN               (CHB_GAIN)              ,
-        .CHB_DC_COUPLING        (CHB_DC_COUPLING)       ,
-        .CHB_ON                 (CHB_ON)                ,
-        .decimation_factor      (decimation_factor)     ,
-        .ch1_dac_value          (ch1_dac_value)         ,
-        .ch2_dac_value          (ch2_dac_value)         ,
-        .num_samples            (num_samples)           ,
-        .pre_trigger            (pre_trigger)           ,
-        .trigger_mode           (trigger_mode)          ,
-        .trigger_value          (trigger_value)         ,
-        .trigger_edge           (trigger_edge)          ,
-        .trigger_source_sel     (trigger_source_sel)
-    );
+    
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
