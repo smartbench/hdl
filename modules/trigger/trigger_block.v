@@ -7,34 +7,31 @@
     > trigger_input_selector
     > Buffer_Controller
     > registers
-        - PRETRIGGER_H,
-        - PRETRIGGER_L,
-        - NUM_SAMPLES_H,
-        - NUM_SAMPLES_L,
+        - PRETRIGGER,
+        - NUM_SAMPLES,
         - TRIGGER_VALUE,
-        - TRIGGER_SETTINGS,
+        - TRIGGER_SETTINGS:
+            [7:3] - nothing
+            [2:1] - Trigger Source Selector ( ch1 / ch2 / ext / ?? )
+            [0] - Trigger Edge Type (pos / neg)
 
 */
 
 `timescale 1ns/1ps
 
 module trigger_block  #(
-    parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 8,
-    parameter BITS_DAC = 8,
+    parameter REG_ADDR_WIDTH = 16,
+    parameter REG_DATA_WIDTH = 8,
+    parameter BITS_DAC = 10,
     parameter BITS_ADC = 8,
     // addresses
-    parameter ADDR_PRETRIGGER_H,
-    parameter ADDR_PRETRIGGER_L,
-    parameter ADDR_NUM_SAMPLES_H,
-    parameter ADDR_NUM_SAMPLES_L,
+    parameter ADDR_PRETRIGGER,
+    parameter ADDR_NUM_SAMPLES,
     parameter ADDR_TRIGGER_VALUE,
     parameter ADDR_TRIGGER_SETTINGS,
     // default values
-    parameter DEFAULT_PRETRIGGER_H,
-    parameter DEFAULT_PRETRIGGER_L,
-    parameter DEFAULT_NUM_SAMPLES_H,
-    parameter DEFAULT_NUM_SAMPLES_L,
+    parameter DEFAULT_PRETRIGGER,
+    parameter DEFAULT_NUM_SAMPLES,
     parameter DEFAULT_TRIGGER_VALUE,
     parameter DEFAULT_TRIGGER_SETTINGS // trigger_settings: mode(single/normal), edge(pos/neg), source_sel(00,01,10,11)
 ) (
@@ -65,8 +62,8 @@ module trigger_block  #(
     output we,
 
     // Registers bus
-    input [ADDR_WIDTH-1:0] register_addr,
-    input [DATA_WIDTH-1:0] register_data,
+    input [REG_ADDR_WIDTH-1:0] register_addr,
+    input [REG_DATA_WIDTH-1:0] register_data,
     input register_rdy,
 );
 
@@ -82,7 +79,7 @@ module trigger_block  #(
 
     wire [1:0] trigger_source_sel,
     wire trigger_conf,
-    wire trigger_edge,
+    wire trigger_edge_type,
 
 
     // Pretrigger Registers
@@ -97,20 +94,7 @@ module trigger_block  #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data           (pretrigger[15:8])
-    );
-    fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (ADDR_PRETRIGGER_L),
-        .MY_RESET_VALUE (DEFAULT_PRETRIGGER_L)
-    ) reg_pretrigger_L (
-        .clk            (clk),
-        .rst            (rst),
-        .si_addr        (register_addr),
-        .si_data        (register_data),
-        .si_rdy         (register_rdy),
-        .data           (pretrigger[7:0])
+        .data           (pretrigger)
     );
 
     // Number of Samples Registers
@@ -125,20 +109,7 @@ module trigger_block  #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data           (num_samples[15:8])
-    );
-    fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (ADDR_NUM_SAMPLES_L),
-        .MY_RESET_VALUE (DEFAULT_NUM_SAMPLES_L)
-    ) reg_num_samples_L (
-        .clk            (clk),
-        .rst            (rst),
-        .si_addr        (register_addr),
-        .si_data        (register_data),
-        .si_rdy         (register_rdy),
-        .data           (num_samples[7:0])
+        .data           (num_samples)
     );
 
     // Trigger Value Register
@@ -168,25 +139,10 @@ module trigger_block  #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data[3:2]      (trigger_source_sel)
-        .data[1]        (trigger_conf)
-        .data[0]        (trigger_edge)
+        .data[7:3]      (0)
+        .data[2:1]      (trigger_source_sel)
+        .data[0]        (trigger_edge_type)
     );
-    /*
-    fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (),
-        .MY_RESET_VALUE ()
-    ) reg_Channel_settings (
-        .clk            (clk),
-        .rst            (rst),
-        .si_addr        (register_addr),
-        .si_data        (register_data),
-        .si_rdy         (register_rdy),
-        .data           ()
-    );
-    */
 
     buffer_controller  #(
         .BITS_ADC   (BITS_ADC)
@@ -214,22 +170,21 @@ module trigger_block  #(
     );
 
     trigger_input_selector #(
-        .ADDR_WIDTH = 8,
-        .DATA_WIDTH = 8,
-        .BITS_ADC = 8,
-        .BITS_DAC = 10
+        .ADDR_WIDTH = REG_ADDR_WIDTH,
+        .DATA_WIDTH = REG_DATA_WIDTH,
+        .BITS_ADC = BITS_ADC,
+        .BITS_DAC = BITS_DAC
     )  (
+        // Trigger Sources
         .ch1_in         (ch1_in),
         .ch2_in         (ch2_in),
         ext_in          (ext_in),
         adc_ch1_rdy     (adc_ch1_rdy),
         adc_ch2_rdy     (adc_ch2_rdy),
-
         // Data from Registers
         .trigger_value_in       (trigger_value_i),
         .trigger_source_sel     (trigger_source_sel),
-        .trigger_edge_type      (trigger_edge),
-
+        .trigger_edge_type      (trigger_edge_type),
         // Buffer Controller
         .trigger_value_out      (trigger_value_o),
         .trigger_source_out     (trigger_source_data),
