@@ -2,11 +2,11 @@
 
 /*
     Trigger Input Selector
-    
+
     This module connencts the corresponding trigger's source and trigger value to the buffer controller according to the
     configuration stored in the trigger configuration registers.
     Only combinational logic here!
-    
+
     The trigger configuration inputs are:
 
     - trigger_edge_type: selection of positive edge detection or negative edge detection.
@@ -15,13 +15,13 @@
         source bitwise negated.
         0: positive edge detection
         1: negative edge detection.
-    
+
     - trigger_source_sel[2]: selection of the trigger's source.
         00: UNDEFINED
         01: CH1
         10: CH2
         11: EXT
-        
+
     - trigger_value[BITS_ADC]: Trigger Value.
         When the source crosses this value (pos / neg edge), the scope triggers.
 
@@ -29,7 +29,7 @@
     the trigger's source is this bit sign-extended, and the trigger value is set to
     100...0. This way a change from 0 to 1 in EXT will trigger the scope. (If negative edge is
     selected, the trigger source is inverted and the scope will trigger when it changes from 1 to 0)
-    
+
     Also has the logic to handle the Event Register and send the corresponding signals to other modules.
 
 */
@@ -39,8 +39,8 @@
 module trigger_input_selector  #(
     parameter ADDR_WIDTH = 16,
     parameter DATA_WIDTH = 16,
-    parameter BITS_DAC = 8,
-    parameter BITS_ADC = 8,
+    parameter BITS_DAC = 10,
+    parameter BITS_ADC = 8
 ) (
                                 // Description                  Type            Width
     // No clock here...
@@ -51,7 +51,7 @@ module trigger_input_selector  #(
     input ext_in,
     input adc_ch1_rdy,
     input adc_ch2_rdy,
-    
+
     // Data from Registers
     input [BITS_ADC-1:0] trigger_value_in,
     input [1:0] trigger_source_sel,
@@ -60,7 +60,7 @@ module trigger_input_selector  #(
     // Buffer Controller
     output [BITS_ADC-1:0] trigger_value_out,
     output trigger_source_out,
-    output buffer_cont_input_rdy.
+    output trigger_source_rdy
 
 );
 
@@ -80,7 +80,7 @@ module trigger_input_selector  #(
                 n_edge=1'b1;
 
     // buffer controller's 'input_rdy' bit, depends on the trigger's source
-    assign buffer_cont_input_rdy =  (trigger_source == src_CH1) ? adc_ch1_rdy :
+    assign trigger_source_rdy =     (trigger_source == src_CH1) ? adc_ch1_rdy :
                                     (trigger_source == src_CH2) ? adc_ch2_rdy :
                                     (trigger_source == src_EXT) ? (adc_ch1_rdy | adc_ch2_rdy) :
                                                                   1'b0;

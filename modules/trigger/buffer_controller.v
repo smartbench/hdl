@@ -42,7 +42,8 @@
 */
 
 `timescale 1ns/1ps
-module buffer_controller  #( parameter BITS_ADC = 8
+module buffer_controller  #(
+    parameter BITS_ADC = 8
 )(
     input clk,                      // clock
     input rst,                      // synchronous reset
