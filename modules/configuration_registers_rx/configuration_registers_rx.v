@@ -20,7 +20,7 @@
 
 module configuration_registers_rx #(
     parameter RX_DATA_WIDTH = 8,        // FIFO data width
-    parameter REG_ADDR_WIDTH = 16,
+    parameter REG_ADDR_WIDTH = 8,
     parameter REG_DATA_WIDTH = 16
 ) (
 
@@ -36,8 +36,7 @@ module configuration_registers_rx #(
     // Simple interface register data
     output [REG_DATA_WIDTH-1:0] register_data,      // data
     output [REG_ADDR_WIDTH-1:0] register_addr,      // ready
-    output reg register_rdy,                        // ready
-    input register_ack                              // acknowledgment
+    output reg register_rdy                         // ready
 );
 
     // Register data is formed by REG_DATA_PACKETS number of  FIFO data
@@ -59,11 +58,9 @@ module configuration_registers_rx #(
     // States local parameters
     localparam ST_RECEIVING_ADDR = 0;
     localparam ST_RECEIVING_DATA = 1;
-    localparam ST_WAITING_ACK = 2;
-    localparam ST_NUMBER = 3;
 
     // State register
-    reg [$clog2(ST_NUMBER)-1:0] state = ST_RECEIVING_ADDR;
+    reg state = ST_RECEIVING_ADDR;
 
     // Flattened the arrays of packets in the data bits (this is why register_data and register_addr are wires)
     genvar i;
@@ -73,47 +70,45 @@ module configuration_registers_rx #(
     endgenerate
 
     // Asynch assigment of rx_ack; equal rx_rdy except we are waiting to be acknowledged
-    assign rx_ack = ( state != ST_WAITING_ACK )? rx_rdy : 1'b0 ;
+    assign rx_ack = rx_rdy;
 
     always @(posedge(clk)) begin
+
+        register_rdy <= 1'b0;
+
         if ( rst == 1'b1 ) begin
-            register_rdy <= 1'b0;
-            state <= ST_RECEIVING_ADDR;
             count <= 0;
+            state <= ST_RECEIVING_ADDR;
         end else begin
             case (state)
+
                 ST_RECEIVING_ADDR:
                 begin
                     if ( rx_rdy == 1'b1 ) begin
                         register_addr_pck[count] <= rx_data;
                         if( count == REG_ADDR_PACKETS-1 ) begin
+                            count <= 0;
                             state <= ST_RECEIVING_DATA;
-                            count <=0;
                         end else begin
                             count <= count + 1;
                         end
                     end
                 end
+
                 ST_RECEIVING_DATA:
                 begin
                     if ( rx_rdy == 1'b1 ) begin
                         register_data_pck[count] <= rx_data;
                         if( count == REG_DATA_PACKETS-1 ) begin
                             register_rdy <= 1;
-                            state <= ST_WAITING_ACK;
-                            count <=0;
+                            count <= 0;
+                            state <= ST_RECEIVING_ADDR;
                         end else begin
                             count <= count + 1;
                         end
                     end
                 end
-                ST_WAITING_ACK:
-                begin
-                    if( register_ack == 1'b1 ) begin
-                        register_rdy <= 1'b0;
-                        state <= ST_RECEIVING_ADDR;
-                    end
-                end
+
             endcase
         end
     end
