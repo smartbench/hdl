@@ -3,12 +3,10 @@
     Instantiated Modules:
         ram_controller
         adc_block
-        analog_controller
+        dac_controller
 
     Instantiated Registers:
         channel_settings
-        decimation_factor (for adc clock)
-        N_moving_average
         ...
 
 */
@@ -17,25 +15,41 @@
 
 module channel_block #(
     parameter BITS_ADC = 8,
+    parameter BITS_DAC = 10,
     parameter REG_ADDR_WIDTH = 5,
     parameter REG_DATA_WIDTH = 8,
     parameter TX_DATA_WIDTH = 8,
     parameter RAM_DATA_WIDTH = 8,
-    parameter RAM_SIZE = (4096*4)
+    parameter RAM_SIZE = (4096*4),
 
+    parameter ADDR_CH_SETTINGS,
+    parameter ADDR_DAC_VALUE_H,
+    parameter ADDR_DAC_VALUE_L,
+    /* ... Faltan ... */
+    parameter DEFAULT_CH_SETTINGS,
+    parameter DEFAULT_DAC_VALUE_H,
+    parameter DEFAULT_DAC_VALUE_L,
+    /* ... Faltan ... */
 ) (
     // Basic synchronous signals
     input   clk,
     input   rst,
 
-    // ADC interface with pins
+    // iInterface with ADC pins
     input [BITS_ADC-1:0] adc_input,
     output adc_oe;
     output adc_clk_o;
 
+    // Interface with MUXes
+    output  [2:0] Att_Sel,
+    output  [2:0] Gain_Sel,
+    output  DC_Coupling,
+    // ChannelOn
+
     // Buffer Controller
     input   rqst_data,
     input   we,
+    input   [15:0] num_samples,
 
     // Registers Bus
     input   [REG_ADDR_WIDTH-1:0] reg_addr,
@@ -62,6 +76,40 @@ module channel_block #(
 
     assign  adc_data_o = si_adc_data;
     assign  adc_rdy_o = si_adc_rdy;
+
+    fully_associative_register #(
+        .ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .MY_ADDR        (ADDR_CH_SETTINGS),
+        .MY_RESET_VALUE (DEFAULT_CH_SETTINGS)
+    ) reg_Channel_settings (
+        .clk            (clk),
+        .rst            (rst),
+        .si_addr        (register_addr),
+        .si_data        (register_data),
+        .si_rdy         (register_rdy),
+        // .data        ( { Att_Sel , Gain_Sel , DC_Coupling , Channel_On } )
+        .data[7:5]      (Att_Sel),
+        .data[4:2]      (Gain_Sel),
+        .data[1]        (DC_Coupling),
+        .data[0]        (Channel_On)
+    );
+
+    fully_associative_register #(
+        .ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .MY_ADDR        (ADDR_DAC_VALUE),
+        .MY_RESET_VALUE (DEFAULT_DAC_VALUE)
+    ) reg_DAC_Value_H (
+        .clk            (clk),
+        .rst            (rst),
+        .si_addr        (register_addr),
+        .si_data        (register_data),
+        .si_rdy         (register_rdy),
+
+        // .data        ( { CHA_ATT , CHA_GAIN , CHA_DC_COUPLING , CHA_ON } )
+        .data           (dac_val[15:8])
+    );
 
     // Source CH1
     ram_controller #(
