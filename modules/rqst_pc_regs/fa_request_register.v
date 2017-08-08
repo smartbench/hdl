@@ -23,7 +23,7 @@
                                                                                     module is continuously reading data.
                                                                                     It forces an OR of the data array (see
                                                                                     requests_pc_handler.v)
-                                                                                    
+
 
     Releases:   In development ...
 */
@@ -31,10 +31,10 @@
 `timescale 1ns/1ps
 
 module fa_request_register #(
-    parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 16,
-    parameter MY_ADDR = 4'ha,
-    parameter MY_RESET_VALUE = 4'h0
+    parameter ADDR_WIDTH = `__REG_ADDR_WIDTH,
+    parameter DATA_WIDTH = `__REG_DATA_WIDTH,
+    parameter MY_ADDR = 0,
+    parameter MY_RESET_VALUE = 0
 ) (
     // Basic signals
     input clk,
@@ -49,9 +49,6 @@ module fa_request_register #(
     input data_ack,
     output reg [DATA_WIDTH-1:0] data
 );
-
-    // Asynchronous acknowledge.
-    assign si_ack = si_rdy & (si_addr==MY_ADDR);
 
     always @( posedge(clk) ) begin
         if ( rst == 1'b1 ) begin

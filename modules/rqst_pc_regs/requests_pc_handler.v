@@ -2,9 +2,9 @@
 
 /*
     Requests from PC Handler Module
-    
+
     This module has the logic to handle the Request PC Register and send the corresponding signals to other modules.
- 
+
     PROBLEM: | of 16 bits
     SOLUTION: delete ACK. Request register keeps it's value during one
     clock and if you miss it, you miss it.
@@ -21,18 +21,20 @@ module requests_pc_handler  #(
     // Basic
     input clk,                  // fpga clock                   input           1
     input rst,                  // synch reset                  input           1
-    
-    // Interface with Request PC Register    
+
+    // Interface with Request PC Register
     input [DATA_WIDTH-1:0] request_reg_data,
                             // request_reg data
     output request_reg_ack,
-    
+
     // Output signals
-    output reg start_o,
-    output reg reset_o,
-    output reg stop_o,
-    output reg rqst_conf_o,
-    
+    output reg start_o = 1'b0,
+    output reg stop_o = 1'b0,
+    output reg rqst_ch1 = 1'b0,
+    output reg rqst_ch2 = 1'b0,
+    output reg rqst_trigger_status = 1'b0,
+    output reg reset_o = 1'b0,
+
 );
 
     wire    rqst_reset,
@@ -44,7 +46,7 @@ module requests_pc_handler  #(
     assign rqst_stop = request_reg_data[2];
     assign rqst_reset = request_reg_data[1];
     assign rqst_start = request_reg_data[0];
-    
+
     // Asynchronous acknowledge.
     /* If the ack is a sequential register, data will be duplicated since
     it stays unerased during 2 clocks. */
