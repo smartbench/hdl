@@ -1,5 +1,5 @@
 /*
-    Top level insatantiating all register related modules.
+    Top level
 
     Authors:
                 AD      Andres Demski
@@ -10,11 +10,13 @@
     Version:
                 Date            Number          Name                Modified by         Comment
                 2017/07/28      0.1             REG_INTEGRATION     IP                  conf_regs+conf_shift_register+conf_reg_wrapper
+                2017/08/07      0.2             REGS DELETED        AK                  Regs are instantiated in the module they are used,
+                                                                                            and the writing is done with a bus composed of data, addr and rdy.
+                                                                                            PLL Instantiated
 
     ToDo:
                 Date            Suggested by    Priority    Activity                Description
-                2017/07/28      IP              Moderate    Add a request reg       Instantiation of a request reg and realization of testbench.
-                2017/07/28      IP              Moderate    Synthesis               Try to synthesize. Test it in ice40hx8k using configuration_registers_rx and uart modules.
+
 
     Releases:   In development ...
 */
@@ -23,100 +25,86 @@
 `timescale 1ns/1ps
 
 module top #(
-    parameter BITS_ADC = 8,
-    parameter BITS_DAC = 8
-    parameter REG_ADDR_WIDTH = 4,
-    parameter REG_DATA_WIDTH = 8
+    parameter BITS_ADC = `__BITS_ADC,
+    parameter BITS_DAC = `__BITS_DAC,
+    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH
 )   (
                                     // Description                  Type            Width
     // Basic
-    input clk,                      // fpga clock               input           1
+    input clock_i,                  // fpga clock               input           1
     input rst,                      // synch reset              input           1
 
-    // Address and data, write SI interface
-    input [`__ADDR_WIDTH-1:0] register_addr,
-                                    // address                  input           ADDR_WIDTH (def. 8)
-    input [`__DATA_WIDTH-1:0] register_data,
-                                    // data                     input           DATA_WIDTH (def. 8)
-    input register_rdy,             // data ready               input           1
-    output register_ack,            // Acknowledge              output          1
+    // ADC
+    input [BITS_ADC-1:0] ch1_adc_data,
+    input [BITS_ADC-1:0] ch2_adc_data,
+    output adc_ch1_clk_o,
+    output adc_ch2_clk_o,
 
-    // Address and data, tx simple interface
-    input request,                  // This bit loads the current array in the shift register
-    input ack,                      // This bit forces a shift: >> TX_WIDTH
-    output [`__TX_WIDTH-1:0] tx_data,  // This is wired to the TX_WIDTH lowest bits of the shift register
-    output empty,        // This notifies when all the data was already shifted.
+    // Analog
+    output [2:0] ch1_gain_sel,
+    output [2:0] ch2_gain_sel,
+    output [2:0] ch1_att_sel,
+    output [2:0] ch2_att_sel,
+    output ch1_dc_coupling,
+    output ch2_dc_coupling,
 
-    // REGISTERS
-    // Analog Muxes and Switches
-    output [2:0] CHA_ATT,
-    output [2:0] CHA_GAIN,
-    output CHA_DC_COUPLING,
-    output CHA_ON,
-    output [2:0]CHB_ATT,
-    output [2:0]CHB_GAIN,
-    output CHB_DC_COUPLING,
-    output CHB_ON,
+    // I2C (dacs)
+    output i2c_sda,
+    output i2c_scl,
 
-    // ADC decimation_factor
-    output [31:0] decimation_factor,
+    // LEDS (for testing)
+    output led_o_0;
+    output led_o_1;
+    output led_o_2;
+    output led_o_3;
+    output led_o_4;
+    output led_o_5;
+    output led_o_6;
+    output led_o_7;
 
-    // DACs
-    output [BITS_DAC-1:0] ch1_dac_value,     // DAC value
-    output [BITS_DAC-1:0] ch2_dac_value,     // DAC value
-
-    // Buffer Controller
-    output [15:0] num_samples,
-    output [15:0] pre_trigger,
-    output trigger_mode,
-
-    // Trigger Input Selector
-    output [BITS_ADC-1:0] trigger_value,
-    output trigger_edge,
-    output [1:0] trigger_source_sel
 );
 
-    fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (`ADDR_CHA_SETTINGS),
-        .MY_RESET_VALUE (`DEFAULT_CHA_SETTINGS)
-    ) reg_CHA_settings (
-        .clk            (clk),
-        .rst            (rst),
-        .si_addr        (register_addr),
-        .si_data        (register_data),
-        .si_rdy         (register_rdy),
+    // PLL output clock
+    wire clk_100M;
 
-        // .data        ( { CHA_ATT , CHA_GAIN , CHA_DC_COUPLING , CHA_ON } )
-        .data[7:5]      (CHA_ATT),
-        .data[4:2]      (CHA_GAIN),
-        .data[1]        (CHA_DC_COUPLING),
-        .data[0]        (CHA_ON)
+    wire [REG_ADDR_WIDTH-1:0] reg_addr;
+    wire [REG_DATA_WIDTH-1:0] reg_data;
+    wire reg_rdy;
+
+    // PLL instantiation
+    SB_PLL40_CORE #(
+        .FEEDBACK_PATH("SIMPLE"),
+        .PLLOUT_SELECT("GENCLK"),
+        .DIVR(4'b0000),
+        .DIVF(7'b1000010),
+        .DIVQ(3'b011),
+        .FILTER_RANGE(3'b001)
+    )uut(
+        .RESETB(1'b1),
+        .BYPASS(1'b0),
+        .REFERENCECLK(clock_i),
+        .PLLOUTCORE(clk_100M)
     );
 
-    fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (`ADDR_CHB_SETTINGS),
-        .MY_RESET_VALUE (`DEFAULT_CHB_SETTINGS)
-    ) reg_CHB_settings (
-        .clk            (clk),
-        .rst            (rst),
-        .si_addr        (register_addr),
-        .si_data        (register_data),
-        .si_rdy         (register_rdy),
 
-        // .data        ( { CHA_ATT , CHA_GAIN , CHA_DC_COUPLING , CHA_ON } )
-        .data[7:5]      (CHB_ATT),
-        .data[4:2]      (CHB_GAIN),
-        .data[1]        (CHB_DC_COUPLING),
-        .data[0]        (CHB_ON)
+    // LEDS assigned to counter for testing
+    wire [7:0] s_Q;
+    assign led_o_7 = s_Q[7];
+    assign led_o_6 = s_Q[6];
+    assign led_o_5 = s_Q[5];
+    assign led_o_4 = s_Q[4];
+    assign led_o_3 = s_Q[3];
+    assign led_o_2 = s_Q[2];
+    assign led_o_1 = s_Q[1];
+    assign led_o_0 = s_Q[0];
+
+    counter u1(
+        .clk(clk_100M),
+        .Q(s_Q)
     );
 
-    
-
-    `ifdef COCOTB_SIM                                                        // COCOTB macro
+    `ifdef COCOTB_SIM          // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,top);
