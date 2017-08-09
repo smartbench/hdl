@@ -23,112 +23,122 @@
     Releases:   To be tested
 */
 
-// `include "moving_average/moving_average.v"
-// `include "adc_interface/adc_interface.v"
-// `include "moving_average.v"
-// `include "adc_interface.v"
+/*
+`ifndef COCOTB_SIM                // COCOTB macro
+  `include "moving_average/moving_average.v"
+  `include "adc_interface/adc_interface.v"
+  `include "moving_average.v"
+  `include "adc_interface.v"
+`endif*/
+
 
 
 `timescale 1ns/1ps
 
 module adc_top #(
-    parameter ADC_DATA_WIDTH = 8,
-    parameter ADC_DF_WIDTH   = 32,  // ADC decimation
-    parameter MA_ACUM_WIDTH = 12,     // Moving Average Acumulator
-    parameter SI_DATA_WIDTH = 16,    // Single Interface
-    parameter SI_ADDR_WIDTH = 8,
+    parameter BITS_ADC = `__BITS_ADC,
+    parameter ADC_DF_WIDTH   = 32,      // ADC decimation
+    parameter MA_ACUM_WIDTH = 12,       // Moving Average Acumulator
+    parameter REG_DATA_WIDTH = `REG_DATA_WIDTH,    // Simgle Interface
+    parameter REG_ADDR_WIDTH = `REG_ADDR_WIDTH,
     parameter ADC_DF_DV_REG = 0,
     parameter MA_K_FACTOR_DV_REG = 3,
-    parameter REG_ADC_DF_ADDR_L = 0,
-    parameter REG_ADC_DF_ADDR_H = 1,
-    parameter REG_MA_DF_ADDR = 2
-    // parameter REG_ADC_DF_WIDTH = 32,
-    // parameter REG_MA_K_FACTOR_WIDTH = 4
+    parameter REG_ADDR_ADC_DF_L,
+    parameter REG_ADDR_ADC_DF_H,
+    parameter REG_ADDR_MOV_AVE_K = 0
   )(
     // Basic
     input clk_i,
     input reset,
 
     // ADC interface (to the ADC outside of the FPGA)
-    input [ADC_DATA_WIDTH-1:0] adc_data,
+    input [ADC_DATA_WIDTH-1:0] adc_data_i,
     output adc_oe,
-    output wire clk_o,
+    output clk_o,
 
     // ADC Simple Interface (inside of the FPGA)
-    output wire [ADC_DATA_WIDTH-1:0] adc_si_data,
-    output wire adc_si_rdy,
-    // input adc_si_ack,
+    output [ADC_DATA_WIDTH-1:0] si_data_o,
+    output si_rdy_o,
 
     // Registers Simple Interface
-    input [SI_DATA_WIDTH-1:0] reg_si_data,
-    input [SI_ADDR_WIDTH-1:0] reg_si_addr,
-    input reg_si_rdy,
-    output reg reg_si_ack = 0
+    input [REG_DATA_WIDTH-1:0] reg_si_data,
+    input [REG_ADDR_WIDTH-1:0] reg_si_addr,
+    input reg_si_rdy
     );
 
-    wire [ADC_DATA_WIDTH-1:0] adc_si_data_temp;
-    wire adc_si_rdy_temp;
-    reg adc_si_ack_temp = 1'b1;
+    wire [ADC_DATA_WIDTH-1:0] adc_interface_si_data;
+    wire adc_interface_si_rdy;
+    wire adc_interface_si_ack;
     reg [ADC_DF_WIDTH-1:0] adc_df                       = ADC_DF_DV_REG;  // adc decimation factor DefaultValue  register
     reg [$clog2(MA_ACUM_WIDTH-ADC_DATA_WIDTH)-1:0] ma_k = MA_K_FACTOR_DV_REG; // moving average k factor DefaultValue register
+    
+    reg reset_restart = 1'b0;
 
     adc_interface #(
-      .DATA_WIDTH         (ADC_DATA_WIDTH),
+      .DATA_WIDTH         (BITS_ADC),
       .DF_WIDTH           (ADC_DF_WIDTH)
     )adc_interface_inst(
       .clk_i              (clk_i),
-      .reset              (reset),
-      .ADC_data           (adc_data),
+      .reset              (reset_restart),
+      .ADC_data           (adc_data_i),
       .ADC_oe             (adc_oe),
       .clk_o              (clk_o),
-      .SI_data            (adc_si_data_temp),
-      .SI_rdy             (adc_si_rdy_temp),
-      .SI_ack             (adc_si_ack_temp),
+      .SI_data            (adc_interface_si_data),
+      .SI_rdy             (adc_interface_si_rdy),
+      .SI_ack             (adc_interface_si_ack),
       .decimation_factor  (adc_df)
       );
 
     moving_average #(
-      .BITS_ADC           (ADC_DATA_WIDTH),
+      .BITS_ADC           (BITS_ADC),
       .BITS_ACUM          (MA_ACUM_WIDTH)
     )moving_average_inst(
       .clk                (clk_i),
-      .rst                (reset),
+      .rst                (reset_restart),
       .k                  (ma_k),
-      .sample_in          (adc_si_data_temp),
-      .rdy_in             (adc_si_rdy_temp),
-      .sample_out         (adc_si_data),
-      .rdy_out            (adc_si_rdy)
+      .sample_in          (adc_interface_si_data),
+      .rdy_in             (adc_interface_si_rdy),
+      .sample_out         (si_data_o),
+      .rdy_out            (si_rdy_o)
       );
 
-
+    
+    // Registers
     always @ ( posedge(clk_i) ) begin
+      reset_restart <= 1'b0;
       if (reset == 1'b1) begin
         adc_df <= ADC_DF_DV_REG;
         ma_k <= MA_K_FACTOR_DV_REG;
-        reg_si_ack <=0;
+        reset_restart <= 1'b1;
       end else begin
         if (reg_si_rdy==1'b1) begin
+
           case (reg_si_addr)
-            // NOTE: not generic Description!! If ADC_DF_WIDTH or SI_DATA_WIDTH changes
+            // NOTE: not generic Description!! If ADC_DF_WIDTH or REG_DATA_WIDTH changes
             // gotta check the lines below
-            REG_ADC_DF_ADDR_L: begin
-              adc_df[SI_DATA_WIDTH-1:0] <= reg_si_data;
-              reg_si_ack <= 1;
-              end
-            REG_ADC_DF_ADDR_H: begin
-              adc_df[ADC_DF_WIDTH-1:SI_DATA_WIDTH] <= reg_si_data;
-              reg_si_ack <= 1;
-              end
-            REG_MA_DF_ADDR:  begin
+            // NOTE ANSWER: added a 1 clock duration reset for each time something changes
+            REG_ADDR_ADC_DF_L:
+            begin
+              adc_df[REG_DATA_WIDTH-1:0] <= reg_si_data;
+              reset_restart <= 1'b1;
+            end
+            REG_ADDR_ADC_DF_H:
+            begin
+              adc_df[ADC_DF_WIDTH-1:REG_DATA_WIDTH] <= reg_si_data;
+              reset_restart <= 1'b1;
+            end
+              
+            REG_ADDR_MOV_AVE_N:
+            begin
               ma_k <= reg_si_data[$clog2(MA_ACUM_WIDTH-ADC_DATA_WIDTH)-1:0];
-              reg_si_ack <= 1;
-              end
-            default:       begin     ;
-              reg_si_ack <= 0;
-              end
+              reset_restart <= 1'b1;
+             end
+            
+            default:
+            begin
+            end
+            
           endcase
-        end else begin
-          reg_si_ack <= 0;
         end
       end
     end

@@ -28,52 +28,33 @@
 
 `timescale 1ns/1ps
 
-module adc_interface  (
-                                // Description                  Type            Width
+module adc_interface  #(
+    parameter DATA_WIDTH = `__BITS_ADC,     // TI ADC1175 data width
+    parameter DF_WIDTH   = 32               // Decimation up to 4294967296 factor
+)(
     // Basic
-    clk_i,                      // fpga clock                   input           1
-    reset,                      // synch reset                  input           1
+    input clk_i,                // fpga clock
+    input reset,                // synch reset
 
     // ADC interface
-    ADC_data,                   // data                         input           DATA_WIDTH (def. 8)
-    ADC_oe,                     // ouput enable, active low     output          1
-    clk_o,                      // ADC clock                    output          1
+    input [DATA_WIDTH-1:0] ADC_data,    // data
+    output ADC_oe,                      // ouput enable, active low
+    output reg clk_o,                   // ADC clock
 
     // Simple interface
-    SI_data,                    // data                         output          DATA_WIDTH (def. 8)
-    SI_rdy,                     // ready                        output          1
-    SI_ack,                     // acknowledgment               input           1
+    output reg [DATA_WIDTH-1:0] SI_data,    // data
+    output reg SI_rdy,                      // ready
+    input SI_ack,                           // acknowledge
 
     // Configuration
-    decimation_factor,          // frec_clk_i/frec_clock_o-1    input           DF_WIDTH (def. 32)
+    input [DF_WIDTH-1:0] decimation_factor,          // frec_clk_i/frec_clock_o-1
                                 // actual decimation_factor is decimation_factor+1 !!!!
                                 // example: decimation_factor=0 then frec_clk_o=frec_clk_i
 
 );
-    // Parameters
-    parameter DATA_WIDTH = 8;   // TI ADC1175 data width
-    parameter DF_WIDTH   = 32;  // Decimation up to 4294967296 factor
 
     // Local Parameters
     //local parameter COUNT_ZERO = { DF_WIDTH {1'b0} };  //reset value of decimation counter
-
-    // Basic
-    input clk_i;
-    input reset;
-
-    // ADC interface
-    input [DATA_WIDTH-1:0] ADC_data;
-    output ADC_oe;
-    output reg clk_o;
-    //output wire clk_o;
-
-    // Simple interface
-    output reg [DATA_WIDTH-1:0] SI_data;
-    output reg SI_rdy;
-    input SI_ack;
-
-    // Configuration
-    input [DF_WIDTH-1:0] decimation_factor;
 
     // Decimation counter. Counts up to decimation_factor-1.
     reg [DF_WIDTH-1:0]  counter;

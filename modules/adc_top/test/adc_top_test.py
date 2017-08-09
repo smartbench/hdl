@@ -49,10 +49,10 @@ class Adc:
                 self.dut.adc_data = self.fifo.pop(0)
                 #print 'poping'
             else:
-                self.dut.adc_data = 0
+                self.dut.adc_data <= 0
 
 class SI_REG_Master:
-    def __init__ (self, clk, reset, reg_si_data, reg_si_addr, reg_si_rdy, reg_si_ack):
+    def __init__ (self, clk, reset, reg_si_data, reg_si_addr, reg_si_rdy):
         self.reset = reset
         self.clk = clk
         self.reg_si_data = reg_si_data
@@ -60,6 +60,10 @@ class SI_REG_Master:
         self.reg_si_rdy = reg_si_rdy
         self.reg_si_ack = reg_si_ack
         self.fifo = []
+        
+        self.reg_si_data <= 0
+        self.reg_si_data <= 0
+        self.reg_si_rdy <= 0
 
     def writeReg (self, data, addr):
         self.fifo.append((data, addr))
@@ -74,7 +78,7 @@ class SI_REG_Master:
                 self.reg_si_data <= aux[0]
                 self.reg_si_addr <= aux[1]
                 self.reg_si_rdy <= 1
-                while self.reg_si_ack.value.integer != 1 : yield RisingEdge(self.clk)
+                yield RisingEdge(self.clk)
                 self.reg_si_rdy <= 0
 
 
@@ -91,7 +95,7 @@ def Reset (dut):
 def adc_top_test (dut):
     adc = Adc(dut)
     si_adc = SI_Slave( dut.clk_i, dut.reset, dut.adc_si_data, dut.adc_si_rdy)
-    si_reg = SI_REG_Master (dut.clk_i, dut.reset, dut.reg_si_data, dut.reg_si_addr, dut.reg_si_rdy, dut.reg_si_ack)
+    si_reg = SI_REG_Master (dut.clk_i, dut.reset, dut.reg_si_data, dut.reg_si_addr, dut.reg_si_rdy)
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
 
