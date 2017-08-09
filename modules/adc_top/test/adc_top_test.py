@@ -33,7 +33,6 @@ class Adc:
         self.dut = dut
         self.fifo = []
         self.dut.adc_data_i <= 0
-#        self.dut.adc_si_data <= 0 # Output of Moving average
 
     def takeSample(self,val):
         self.fifo.append(val)
@@ -47,7 +46,7 @@ class Adc:
             nsTimer(9.5)
             if ( len(self.fifo) > 0 ):
                 self.dut.adc_data_i = self.fifo.pop(0)
-                #print 'poping'
+                #print 'poping' # Pooping? there is no more toilet paper!
             else:
                 self.dut.adc_data_i <= 0
 
@@ -93,19 +92,26 @@ def Reset (dut):
 
 @cocotb.test()
 def adc_top_test (dut):
+
+    REG_ADDR_ADC_DF_L = 0
+    REG_ADDR_ADC_DF_H = 1
+    REG_ADDR_MOV_AVE_K = 2
+    
+    DF = 2
+    K = 1
+    
     adc = Adc(dut)
     si_slave = SI_Slave( dut.clk_i, dut.rst, dut.si_data_o, dut.si_rdy_o)
     si_reg = SI_REG_Master (dut.clk_i, dut.rst, dut.reg_si_data, dut.reg_si_addr, dut.reg_si_rdy)
     
     #print 'Taking samples'
-    for i in range(100): adc.takeSample(i)
+    for i in range(100):
+        aux = (i+1)*10
+        adc.takeSample(aux)
 
-    #parameter REG_ADDR_ADC_DF_L = 0,
-    si_reg.writeReg(0,1)
-    #parameter REG_ADDR_ADC_DF_H = 1,
-    si_reg.writeReg(1,0)
-    #parameter REG_ADDR_MOV_AVE_K = 2
-    si_reg.writeReg(2,0)
+    si_reg.writeReg( REG_ADDR_ADC_DF_L , DF % (256*256) )
+    si_reg.writeReg( REG_ADDR_ADC_DF_H , (DF >> 16) % (256*256) )
+    si_reg.writeReg( REG_ADDR_MOV_AVE_K , K )
     
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)

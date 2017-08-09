@@ -78,7 +78,7 @@ module adc_top #(
       .DF_WIDTH           (ADC_DF_WIDTH)
     )adc_interface_inst(
       .clk_i              (clk_i),
-      .rst                  (rst_restart),
+      .rst                (rst_restart),
       .ADC_data           (adc_data_i),
       .ADC_oe             (adc_oe),
       .clk_o              (clk_o),
