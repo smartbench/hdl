@@ -17,7 +17,7 @@
 
 */
 
-`include "../../../../inc/conf_regs_defines.v"
+`include "../../../inc/conf_regs_defines.v"
 
 `timescale 1ns/1ps
 
@@ -141,9 +141,10 @@ module trigger_block  #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data[7:3]      (),
-        .data[`__TRIGGER_CONF_SOURCE_SEL]   (trigger_source_sel),
-        .data[`__TRIGGER_CONF_EDGE]         (trigger_edge_type)
+//        .data[7:3]      (,
+//        .data[`__TRIGGER_CONF_SOURCE_SEL]   (trigger_source_sel),
+//        .data[`__TRIGGER_CONF_EDGE]         (trigger_edge_type)
+        .data           ( {trigger_source_sel, trigger_edge_type} )
     );
 
     buffer_controller  #(
@@ -152,8 +153,8 @@ module trigger_block  #(
         .clk(clk),
         .rst(rst),
         // Request Handler
-        .start          (start)
-        .stop           (stop)
+        .start          (start),
+        .stop           (stop),
         .rqst_trigger_status    (rqst_trigger_status),
         // From Trigger Input Selector
         .input_sample   (trigger_source_data),
@@ -172,17 +173,17 @@ module trigger_block  #(
     );
 
     trigger_input_selector #(
-        .ADDR_WIDTH = REG_ADDR_WIDTH,
-        .DATA_WIDTH = REG_DATA_WIDTH,
-        .BITS_ADC = BITS_ADC,
-        .BITS_DAC = BITS_DAC
-    )  (
+        .ADDR_WIDTH (REG_ADDR_WIDTH),
+        .DATA_WIDTH (REG_DATA_WIDTH),
+        .BITS_ADC (BITS_ADC),
+        .BITS_DAC (BITS_DAC)
+    ) trigger_input_selector_u (
         // Trigger Sources
         .ch1_in         (ch1_in),
         .ch2_in         (ch2_in),
-        ext_in          (ext_in),
-        adc_ch1_rdy     (adc_ch1_rdy),
-        adc_ch2_rdy     (adc_ch2_rdy),
+        .ext_in         (ext_in),
+        .adc_ch1_rdy    (adc_ch1_rdy),
+        .adc_ch2_rdy    (adc_ch2_rdy),
         // Data from Registers
         .trigger_value_in       (trigger_value_i),
         .trigger_source_sel     (trigger_source_sel),

@@ -22,6 +22,7 @@
     Releases:   In development ...
 */
 
+`include "../../../inc/conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module fully_associative_register #(
