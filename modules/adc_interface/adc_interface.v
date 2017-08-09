@@ -42,9 +42,9 @@ module adc_interface  #(
     output reg clk_o,                   // ADC clock
 
     // Simple interface
-    output reg [DATA_WIDTH-1:0] SI_data,    // data
-    output reg SI_rdy,                      // ready
-    input SI_ack,                           // acknowledge
+    output reg [DATA_WIDTH-1:0] SI_data = 0,    // data
+    output reg SI_rdy = 1'b0,                   // ready
+    input SI_ack,                               // acknowledge
 
     // Configuration
     input [DF_WIDTH-1:0] decimation_factor  // frec_clk_i/frec_clock_o-1
