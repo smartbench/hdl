@@ -25,10 +25,8 @@
 
 /*
 `ifndef COCOTB_SIM                // COCOTB macro
-  `include "moving_average/moving_average.v"
-  `include "adc_interface/adc_interface.v"
-  `include "moving_average.v"
-  `include "adc_interface.v"
+  `include "../moving_average/moving_average.v"
+  `include "../adc_interface/adc_interface.v"
 `endif*/
 
 
@@ -36,28 +34,28 @@
 `timescale 1ns/1ps
 
 module adc_top #(
-    parameter BITS_ADC = `__BITS_ADC,
+    parameter BITS_ADC = 8,//`__BITS_ADC,
     parameter ADC_DF_WIDTH   = 32,      // ADC decimation
     parameter MA_ACUM_WIDTH = 12,       // Moving Average Acumulator
-    parameter REG_DATA_WIDTH = `REG_DATA_WIDTH,    // Simgle Interface
-    parameter REG_ADDR_WIDTH = `REG_ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = 16,//`REG_DATA_WIDTH,    // Simgle Interface
+    parameter REG_ADDR_WIDTH = 8,//`REG_ADDR_WIDTH,
     parameter ADC_DF_DV_REG = 0,
     parameter MA_K_FACTOR_DV_REG = 3,
-    parameter REG_ADDR_ADC_DF_L,
-    parameter REG_ADDR_ADC_DF_H,
-    parameter REG_ADDR_MOV_AVE_K = 0
+    parameter REG_ADDR_ADC_DF_L = 0,
+    parameter REG_ADDR_ADC_DF_H = 1,
+    parameter REG_ADDR_MOV_AVE_K = 2
   )(
     // Basic
     input clk_i,
-    input reset,
+    input rst,
 
     // ADC interface (to the ADC outside of the FPGA)
-    input [ADC_DATA_WIDTH-1:0] adc_data_i,
+    input [BITS_ADC-1:0] adc_data_i,
     output adc_oe,
     output clk_o,
 
     // ADC Simple Interface (inside of the FPGA)
-    output [ADC_DATA_WIDTH-1:0] si_data_o,
+    output [BITS_ADC-1:0] si_data_o,
     output si_rdy_o,
 
     // Registers Simple Interface
@@ -66,20 +64,21 @@ module adc_top #(
     input reg_si_rdy
     );
 
-    wire [ADC_DATA_WIDTH-1:0] adc_interface_si_data;
+    wire [BITS_ADC-1:0] adc_interface_si_data;
     wire adc_interface_si_rdy;
     wire adc_interface_si_ack;
     reg [ADC_DF_WIDTH-1:0] adc_df                       = ADC_DF_DV_REG;  // adc decimation factor DefaultValue  register
-    reg [$clog2(MA_ACUM_WIDTH-ADC_DATA_WIDTH)-1:0] ma_k = MA_K_FACTOR_DV_REG; // moving average k factor DefaultValue register
+    reg [$clog2(MA_ACUM_WIDTH-BITS_ADC)-1:0] ma_k = MA_K_FACTOR_DV_REG; // moving average k factor DefaultValue register
     
-    reg reset_restart = 1'b0;
+    reg rst_restart = 1'b0;
+    assign adc_interface_si_ack = adc_interface_si_rdy;
 
     adc_interface #(
       .DATA_WIDTH         (BITS_ADC),
       .DF_WIDTH           (ADC_DF_WIDTH)
     )adc_interface_inst(
       .clk_i              (clk_i),
-      .reset              (reset_restart),
+      .rst                  (rst_restart),
       .ADC_data           (adc_data_i),
       .ADC_oe             (adc_oe),
       .clk_o              (clk_o),
@@ -94,7 +93,7 @@ module adc_top #(
       .BITS_ACUM          (MA_ACUM_WIDTH)
     )moving_average_inst(
       .clk                (clk_i),
-      .rst                (reset_restart),
+      .rst                (rst_restart),
       .k                  (ma_k),
       .sample_in          (adc_interface_si_data),
       .rdy_in             (adc_interface_si_rdy),
@@ -105,11 +104,11 @@ module adc_top #(
     
     // Registers
     always @ ( posedge(clk_i) ) begin
-      reset_restart <= 1'b0;
-      if (reset == 1'b1) begin
+      rst_restart <= 1'b0;
+      if (rst == 1'b1) begin
         adc_df <= ADC_DF_DV_REG;
         ma_k <= MA_K_FACTOR_DV_REG;
-        reset_restart <= 1'b1;
+        rst_restart <= 1'b1;
       end else begin
         if (reg_si_rdy==1'b1) begin
 
@@ -120,18 +119,18 @@ module adc_top #(
             REG_ADDR_ADC_DF_L:
             begin
               adc_df[REG_DATA_WIDTH-1:0] <= reg_si_data;
-              reset_restart <= 1'b1;
+              rst_restart <= 1'b1;
             end
             REG_ADDR_ADC_DF_H:
             begin
               adc_df[ADC_DF_WIDTH-1:REG_DATA_WIDTH] <= reg_si_data;
-              reset_restart <= 1'b1;
+              rst_restart <= 1'b1;
             end
               
-            REG_ADDR_MOV_AVE_N:
+            REG_ADDR_MOV_AVE_K:
             begin
-              ma_k <= reg_si_data[$clog2(MA_ACUM_WIDTH-ADC_DATA_WIDTH)-1:0];
-              reset_restart <= 1'b1;
+              ma_k <= reg_si_data[$clog2(MA_ACUM_WIDTH-BITS_ADC)-1:0];
+              rst_restart <= 1'b1;
              end
             
             default:

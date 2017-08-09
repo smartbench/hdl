@@ -29,12 +29,12 @@
 `timescale 1ns/1ps
 
 module adc_interface  #(
-    parameter DATA_WIDTH = `__BITS_ADC,     // TI ADC1175 data width
+    parameter DATA_WIDTH = 8,//`__BITS_ADC,     // TI ADC1175 data width
     parameter DF_WIDTH   = 32               // Decimation up to 4294967296 factor
 )(
     // Basic
     input clk_i,                // fpga clock
-    input reset,                // synch reset
+    input rst,                  // synch reset
 
     // ADC interface
     input [DATA_WIDTH-1:0] ADC_data,    // data
@@ -47,7 +47,7 @@ module adc_interface  #(
     input SI_ack,                           // acknowledge
 
     // Configuration
-    input [DF_WIDTH-1:0] decimation_factor,          // frec_clk_i/frec_clock_o-1
+    input [DF_WIDTH-1:0] decimation_factor  // frec_clk_i/frec_clock_o-1
                                 // actual decimation_factor is decimation_factor+1 !!!!
                                 // example: decimation_factor=0 then frec_clk_o=frec_clk_i
 
@@ -75,7 +75,7 @@ module adc_interface  #(
     end
 
     always @(posedge clk_i) begin
-        if (reset == 1'b1) begin                                            // RESET
+        if (rst == 1'b1) begin                                            // RESET
             counter <= 0;
             SI_rdy <= 1'b0;
             clk_o_divided <= 1'b0;

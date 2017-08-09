@@ -62,11 +62,11 @@ class Adc:
 
 @cocotb.coroutine
 def Reset (dut):
-    dut.reset <= 0
+    dut.rst <= 0
     for i in range(10): yield RisingEdge(dut.clk_i)
-    dut.reset <= 1
+    dut.rst <= 1
     yield RisingEdge(dut.clk_i)
-    dut.reset <= 0
+    dut.rst <= 0
     dut.decimation_factor <= 0
     yield RisingEdge(dut.clk_i)
 
@@ -74,7 +74,7 @@ def Reset (dut):
 def adc_interface_test (dut):
 
     adc = Adc(dut)
-    si_adc = SI_Slave( dut.clk_i, dut.reset, dut.SI_data, dut.SI_rdy, dut.SI_ack )
+    si_adc = SI_Slave( dut.clk_i, dut.rst, dut.SI_data, dut.SI_rdy, dut.SI_ack )
 
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
