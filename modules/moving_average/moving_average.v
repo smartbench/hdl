@@ -52,7 +52,7 @@ module moving_average  #(
     //  it should be able to store DF*MAX_VAL_ADC, so it's size has
     //  to be log2(K)+log2(MAX_VAL_ADC) = log2(DF) + BITS_ADC.
     // DF has to be a power of two, so to reduce the number of innecesary
-    //  wires, the input parameter is k=log2(DF).
+    //  wires, the input parameter is k=log2(DF) instead of just DF.
     // Then, DF = 2^k = (1 << k)
 
     // The maximum decimation factor with an accumulator depends on the
@@ -63,7 +63,7 @@ module moving_average  #(
     wire [BIT_DIFF-1:0] DF;
     wire [BITS_ACUM-1:0] sum_tmp;
 
-    reg [BIT_DIFF-1:0] count = 0;
+    reg [BIT_DIFF-1:0] count = 1;
     reg [BITS_ACUM-1:0] acum = 0;
 
     // Decimation Factor = 2^k = 1 << k
@@ -73,15 +73,13 @@ module moving_average  #(
     assign sum_tmp[BITS_ACUM-1:0] = acum + {{BIT_DIFF{1'b0}} , sample_in};
 
 
-
-
     // Carga DF en el contador y luego se resta. Mejor para cuando se cambia
     //  DF sobre la marcha, porque la comparación es contra una cte.
     always @( posedge(clk) ) begin
         rdy_out <= 1'b0;
         sample_out <= 0;
-        acum <= 0;
         if ( rst == 1'b1 ) begin
+            acum <= 0;
             count <= DF; // Starts from DF
         end else begin
             if(rdy_in == 1'b1) begin
@@ -90,7 +88,8 @@ module moving_average  #(
                     acum <= sum_tmp;
                 end else begin
                     acum <= 0;
-                    sample_out <= sum_tmp[BITS_ACUM-1:BIT_DIFF];
+                    //sample_out <= sum_tmp[BITS_ACUM-1:BIT_DIFF];
+                    sample_out <= (sum_tmp >> k);
                     rdy_out <= 1'b1;
                     count <= DF;
                 end
