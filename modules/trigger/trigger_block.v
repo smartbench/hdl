@@ -20,10 +20,10 @@
 `timescale 1ns/1ps
 
 module trigger_block  #(
-    parameter REG_ADDR_WIDTH = 16,
-    parameter REG_DATA_WIDTH = 8,
-    parameter BITS_DAC = 10,
-    parameter BITS_ADC = 8,
+    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
+    parameter BITS_DAC = `__BITS_DAC,
+    parameter BITS_ADC = `__BITS_ADC,
     // addresses
     parameter ADDR_PRETRIGGER,
     parameter ADDR_NUM_SAMPLES,
@@ -86,8 +86,8 @@ module trigger_block  #(
     fully_associative_register #(
         .ADDR_WIDTH     (REG_ADDR_WIDTH),
         .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (ADDR_PRETRIGGER_H),
-        .MY_RESET_VALUE (DEFAULT_PRETRIGGER_H)
+        .MY_ADDR        (ADDR_PRETRIGGER),
+        .MY_RESET_VALUE (DEFAULT_PRETRIGGER)
     ) reg_pretrigger_H (
         .clk            (clk),
         .rst            (rst),
@@ -101,8 +101,8 @@ module trigger_block  #(
     fully_associative_register #(
         .ADDR_WIDTH     (REG_ADDR_WIDTH),
         .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (ADDR_NUM_SAMPLES_H),
-        .MY_RESET_VALUE (DEFAULT_NUM_SAMPLES_H)
+        .MY_ADDR        (ADDR_NUM_SAMPLES),
+        .MY_RESET_VALUE (DEFAULT_NUM_SAMPLES)
     ) reg_num_samples_H (
         .clk            (clk),
         .rst            (rst),
@@ -139,9 +139,9 @@ module trigger_block  #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data[7:3]      (0)
-        .data[2:1]      (trigger_source_sel)
-        .data[0]        (trigger_edge_type)
+        .data[7:3]      (),
+        .data[`__TRIGGER_CONF_SOURCE_SEL]   (trigger_source_sel),
+        .data[`__TRIGGER_CONF_EDGE]         (trigger_edge_type)
     );
 
     buffer_controller  #(
