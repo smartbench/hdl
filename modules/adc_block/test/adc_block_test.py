@@ -91,7 +91,7 @@ def Reset (dut):
     yield RisingEdge(dut.clk_i)
 
 @cocotb.test()
-def adc_top_test (dut):
+def adc_block_test (dut):
 
     REG_ADDR_ADC_DF_L = 0
     REG_ADDR_ADC_DF_H = 1

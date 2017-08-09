@@ -1,5 +1,5 @@
 /*
-    ADC Top
+    ADC block (top of adc modules)
 
     This module instantiates adc_interface and moving_average modules.
     Also, implements an interface to connect into the Simple Interface bus for
@@ -14,6 +14,7 @@
     Version:
                 Date            Number          Name                Modified by         Comment
                 05/08/2017      0.1             first_approach      NC                  Starting development...
+                09/08/2017      0.2             second_approach     AK                  changes before merging
 
 
     ToDo:
@@ -33,7 +34,7 @@
 
 `timescale 1ns/1ps
 
-module adc_top #(
+module adc_block #(
     parameter BITS_ADC = 8,//`__BITS_ADC,
     parameter ADC_DF_WIDTH   = 32,      // ADC decimation
     parameter MA_ACUM_WIDTH = 12,       // Moving Average Acumulator
@@ -145,9 +146,9 @@ module adc_top #(
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
-            $dumpvars (0,adc_top);
+            $dumpvars (0,adc_block);
             #1;
         end
     `endif
 
-endmodule // adc_top
+endmodule // adc_block
