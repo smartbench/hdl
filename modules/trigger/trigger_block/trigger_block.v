@@ -17,6 +17,8 @@
 
 */
 
+`include "../../../../inc/conf_regs_defines.v"
+
 `timescale 1ns/1ps
 
 module trigger_block  #(
@@ -25,15 +27,15 @@ module trigger_block  #(
     parameter BITS_DAC = `__BITS_DAC,
     parameter BITS_ADC = `__BITS_ADC,
     // addresses
-    parameter ADDR_PRETRIGGER,
-    parameter ADDR_NUM_SAMPLES,
-    parameter ADDR_TRIGGER_VALUE,
-    parameter ADDR_TRIGGER_SETTINGS,
+    parameter ADDR_PRETRIGGER = 0,
+    parameter ADDR_NUM_SAMPLES = 1,
+    parameter ADDR_TRIGGER_VALUE = 2,
+    parameter ADDR_TRIGGER_SETTINGS = 3,
     // default values
-    parameter DEFAULT_PRETRIGGER,
-    parameter DEFAULT_NUM_SAMPLES,
-    parameter DEFAULT_TRIGGER_VALUE,
-    parameter DEFAULT_TRIGGER_SETTINGS // trigger_settings: mode(single/normal), edge(pos/neg), source_sel(00,01,10,11)
+    parameter DEFAULT_PRETRIGGER = 100,
+    parameter DEFAULT_NUM_SAMPLES = 150,
+    parameter DEFAULT_TRIGGER_VALUE = 128,
+    parameter DEFAULT_TRIGGER_SETTINGS = 2 // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
 ) (
                                 // Description                  Type            Width
     input clk,
@@ -64,11 +66,11 @@ module trigger_block  #(
     // Registers bus
     input [REG_ADDR_WIDTH-1:0] register_addr,
     input [REG_DATA_WIDTH-1:0] register_data,
-    input register_rdy,
+    input register_rdy
 );
 
     // Buffer Controller
-    wire trigger_source_data,
+    wire trigger_source_data;
     wire trigger_source_rdy;
     wire [BITS_ADC-1:0] trigger_value_o;
 
@@ -77,9 +79,9 @@ module trigger_block  #(
     wire [15:0] num_samples;
     wire [BITS_ADC-1:0] trigger_value_i;
 
-    wire [1:0] trigger_source_sel,
-    wire trigger_conf,
-    wire trigger_edge_type,
+    wire [1:0] trigger_source_sel;
+    wire trigger_conf;
+    wire trigger_edge_type;
 
 
     // Pretrigger Registers
@@ -88,7 +90,7 @@ module trigger_block  #(
         .DATA_WIDTH     (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_PRETRIGGER),
         .MY_RESET_VALUE (DEFAULT_PRETRIGGER)
-    ) reg_pretrigger_H (
+    ) reg_pretrigger (
         .clk            (clk),
         .rst            (rst),
         .si_addr        (register_addr),
@@ -103,7 +105,7 @@ module trigger_block  #(
         .DATA_WIDTH     (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_NUM_SAMPLES),
         .MY_RESET_VALUE (DEFAULT_NUM_SAMPLES)
-    ) reg_num_samples_H (
+    ) reg_num_samples (
         .clk            (clk),
         .rst            (rst),
         .si_addr        (register_addr),
