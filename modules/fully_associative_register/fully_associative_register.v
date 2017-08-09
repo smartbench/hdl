@@ -22,12 +22,11 @@
     Releases:   In development ...
 */
 
-`include "conf_regs_defines.v"
 `timescale 1ns/1ps
 
 module fully_associative_register #(
-    parameter ADDR_WIDTH = `__ADDR_WIDTH,
-    parameter DATA_WIDTH = `__DATA_WIDTH,
+    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
     parameter MY_ADDR = 4'ha,
     parameter MY_RESET_VALUE = 4'h0
 ) (
@@ -36,13 +35,13 @@ module fully_associative_register #(
     input rst,
 
     // Address and data simple interface
-    input [ADDR_WIDTH-1:0] si_addr,
-    input [DATA_WIDTH-1:0] si_data,
+    input [REG_ADDR_WIDTH-1:0] si_addr,
+    input [REG_DATA_WIDTH-1:0] si_data,
     input si_rdy,
     output si_ack,
 
     // Register value
-    output reg [DATA_WIDTH-1:0] data = MY_RESET_VALUE
+    output reg [REG_DATA_WIDTH-1:0] data = MY_RESET_VALUE
 );
 
     // Asynchronous acknowledge.
@@ -57,15 +56,5 @@ module fully_associative_register #(
             end
         end
     end
-
-    `ifndef __FULLY_ASSOCIATIVE_REGISTER_INCLUDED
-    `ifdef COCOTB_SIM                                                        // COCOTB macro
-        initial begin
-            $dumpfile ("waveform.vcd");
-            $dumpvars (0,fully_associative_register);
-            #1;
-        end
-    `endif
-    `endif
 
 endmodule
