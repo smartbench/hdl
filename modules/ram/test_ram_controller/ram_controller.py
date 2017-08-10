@@ -93,7 +93,7 @@ def test (dut):
     dut.wr_en <= 0
     dut.n_samples <= num_samples
     channel = CHANNEL(dut.clk, dut.din, dut.si_rdy_adc, dut.si_ack_adc)
-    tx_protocol = TX_PROTOCOL(dut.clk, dut.dout, dut.rd_en, dut.EOF, dut.rqst_buff, dut.wr_en)
+    tx_protocol = TX_PROTOCOL(dut.clk, dut.data_out, dut.data_rdy, dut.data_eof, dut.rqst_buff, dut.wr_en)
     cocotb.fork(Clock(dut.clk, 10, units='ns').start())
     for i in range(datos_cant):
         #aux = randint(0,100)
