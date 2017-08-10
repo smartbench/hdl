@@ -59,7 +59,7 @@ module trigger_input_selector  #(
 
     // Buffer Controller
     output [BITS_ADC-1:0] trigger_value_out,
-    output trigger_source_out,
+    output [BITS_ADC-1:0] trigger_source_out,
     output trigger_source_rdy
 
 );

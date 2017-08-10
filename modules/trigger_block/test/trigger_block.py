@@ -12,15 +12,15 @@ def nsTimer (t):
 
 class SI_REG_MASTER:
     def __init__ (self, clk, rst, reg_si_data, reg_si_addr, reg_si_rdy):
-        self.rst = rst
         self.clk = clk
+        self.rst = rst
         self.reg_si_data = reg_si_data
         self.reg_si_addr = reg_si_addr
         self.reg_si_rdy = reg_si_rdy
         self.fifo_data = []
         self.fifo_addr = []
 
-        self.reg_si_data <= 0
+        self.reg_si_addr <= 0
         self.reg_si_data <= 0
         self.reg_si_rdy <= 0
 
@@ -61,7 +61,7 @@ class ADC:
                 self.data <= self.fifo.pop(0)
                 self.rdy <= 1
             yield RisingEdge(self.clk)
-            self.input_rdy <= 0
+            self.rdy <= 0
             for i in range(3): yield RisingEdge(self.clk)
 
 
@@ -76,7 +76,8 @@ class RAM_Controller:
     @cocotb.coroutine
     def run(self):
         while True:
-            if(self.we):
+            yield FallingEdge(self.clk)
+            if(self.we.value.integer == 1 and self.rdy.value.integer == 1):
                 self.fifo.append(self.data_in)
             yield RisingEdge(self.clk)
 
@@ -128,7 +129,7 @@ class RQST_HANDLER:
         self.rqst_trigger_status <= 0
 
     @cocotb.coroutine
-    def start(self):
+    def rqst_start(self):
         self.start <= 1
         self.stop <= 0
         yield RisingEdge(self.clk)
@@ -136,7 +137,7 @@ class RQST_HANDLER:
         yield RisingEdge(self.clk)
 
     @cocotb.coroutine
-    def stop(self):
+    def rqst_stop(self):
         self.stop <= 1
         yield RisingEdge(self.clk)
 
@@ -185,10 +186,11 @@ def test (dut):
     #dut.pre_trigger <= 8        # number of samples before trigger
     #dut.trigger_value <= 170    # trigger value
 
-    ch1_data = 0
-    ch2_data = 0
-    ch1_rdy = 0
-    ch2_rdy = 0
+    ch1_data = dut.ch1_in
+    ch2_data = dut.ch2_in
+    ch1_rdy = dut.adc_ch1_rdy
+    ch2_rdy = dut.adc_ch2_rdy
+    ext_in = dut.ext_in
 
     ram_ch1 = RAM_Controller(dut.clk, dut.we, ch1_data, ch1_rdy)
     ram_ch2 = RAM_Controller(dut.clk, dut.we, ch2_data, ch2_rdy)
@@ -201,12 +203,6 @@ def test (dut):
     si_reg_master = SI_REG_MASTER( dut.clk, dut.rst, dut.register_data, dut.register_addr, dut.register_rdy)
 
     rqst_handler = RQST_HANDLER( dut.clk, dut.start, dut.stop, dut.rqst_trigger_status)
-
-    dut.ch1_in <= ch1_data
-    dut.ch2_in <= ch2_data
-    dut.ext_in <= 0
-    dut.adc_ch1_rdy <= ch1_rdy
-    dut.adc_ch2_rdy <= ch2_rdy
 
     si_reg_master.writeReg( ADDR_PRETRIGGER , 8 )
     si_reg_master.writeReg( ADDR_NUM_SAMPLES , 24 )
@@ -228,7 +224,7 @@ def test (dut):
     cocotb.fork(ram_ch2.run())
     cocotb.fork(adc_ch1.sampling())
     cocotb.fork(adc_ch2.sampling())
-
+    cocotb.fork(si_reg_master.driver())
 
     # cocotb.fork( () )
     # cocotb.fork( () )
@@ -238,8 +234,9 @@ def test (dut):
 
     for i in range(10): yield RisingEdge(dut.clk)
 
-    yield rqst_handler.start()
+    yield rqst_handler.rqst_start()
     for i in range(500): yield RisingEdge(dut.clk)
+    yield rqst_handler.rqst_stop()
     yield tx_protocol.request_data()
     for i in range(500): yield RisingEdge(dut.clk)
 
@@ -250,13 +247,13 @@ def test (dut):
 
     print "-----------------------------------------"
     print "LEN fifo Ram CH1 = " + repr(len(ram_ch1.fifo))
-    for i in range(len(ram_ch1.fifo)):
-        print "Fifo Read: " + repr(ram_ch1.fifo.pop(0))
+    #for i in range(len(ram_ch1.fifo)):
+    #    print "Fifo Read: " + repr(ram_ch1.fifo.pop(0))
 
     print "-----------------------------------------"
     print "LEN fifo Ram CH2 = " + repr(len(ram_ch2.fifo))
-    for i in range(len(ram_ch2.fifo)):
-        print "Fifo Read: " + repr(ram_ch2.fifo.pop(0))
+    #for i in range(len(ram_ch2.fifo)):
+    #    print "Fifo Read: " + repr(ram_ch2.fifo.pop(0))
 
     print "I'm at the end"
     #if ( si_rx.fifo != [ i for i in range(100)]):

@@ -70,7 +70,7 @@ module trigger_block  #(
 );
 
     // Buffer Controller
-    wire trigger_source_data;
+    wire [BITS_ADC-1:0]trigger_source_data;
     wire trigger_source_rdy;
     wire [BITS_ADC-1:0] trigger_value_o;
 
@@ -191,7 +191,7 @@ module trigger_block  #(
         // Buffer Controller
         .trigger_value_out      (trigger_value_o),
         .trigger_source_out     (trigger_source_data),
-        .trigger_source_rdy  (trigger_source_rdy)
+        .trigger_source_rdy     (trigger_source_rdy)
     );
 
     `ifdef COCOTB_SIM               // COCOTB macro
