@@ -175,7 +175,7 @@ module top_level #(
         .RX_DATA_WIDTH(),
         .REG_ADDR_WIDTH(),
         .REG_DATA_WIDTH()
-    ) (
+    ) rx_block_u (
         .clk(clk_100M),
         .rst(rst),
         .rx_data(si_ft245_rx_data),
@@ -190,7 +190,7 @@ module top_level #(
         .example_register_data() */
     );
 
-    module trigger_block  #(
+    trigger_block  #(
         .REG_ADDR_WIDTH(),
         .REG_DATA_WIDTH(),
         .BITS_DAC(),
@@ -203,7 +203,7 @@ module top_level #(
         .DEFAULT_NUM_SAMPLES(),
         .DEFAULT_TRIGGER_VALUE(),
         .DEFAULT_TRIGGER_SETTINGS() // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
-    ) (
+    ) trigger_block_u (
         .clk(clk_100M),
         .rst(rst),
         // Request handler
@@ -227,6 +227,34 @@ module top_level #(
         .register_addr(reg_addr),
         .register_data(reg_data),
         .register_rdy(reg_rdy)
+    );
+
+    tx_protocol #(
+        .DATA_WIDTH(TX_DATA_WIDTH),
+        .TX_WIDTH(TX_DATA_WIDTH),
+        .SOURCES(3)
+    ) tx_protocol_u (
+        .clk(clk_100M),
+        .rst(rst),
+        // SI - Output (FT245)
+        .tx_data(si_ft245_tx_data),
+        .tx_rdy(si_ft245_tx_rdy),
+        .tx_ack(si_ft245_tx_ack),
+        // SI - Channel 1
+        .ch1_data(tx_ch1_data),
+        .ch1_rdy(tx_ch1_rdy),
+        .ch1_eof(tx_ch1_eof),
+        ch1_ack(tx_ch1_ack),
+        // SI - Channel 2
+        .ch2_data(tx_ch2_data),
+        .ch2_rdy(tx_ch2_rdy),
+        .ch2_eof(tx_ch2_eof),
+        ch2_ack(tx_ch2_ack),
+        // SI - Trigger status
+        .trig_data(tx_trigger_status_data),
+        .trig_rdy(tx_trigger_status_rdy),
+        .trig_eof(tx_trigger_status_eof),
+        trig_ack(tx_trigger_status_ack)
     );
 
 
