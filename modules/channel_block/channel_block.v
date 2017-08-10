@@ -3,7 +3,7 @@
     Instantiated Modules:
         ram_controller
         adc_block
-        dac_controller
+
 
     Instantiated Registers:
         channel_settings
@@ -22,13 +22,11 @@ module channel_block #(
     parameter RAM_DATA_WIDTH = 8,
     parameter RAM_SIZE = (4096*4),
 
-    parameter ADDR_CH_SETTINGS,
-    parameter ADDR_DAC_VALUE_H,
-    parameter ADDR_DAC_VALUE_L,
+    parameter ADDR_CH_SETTINGS = 0,
+    parameter ADDR_DAC_VALUE = 1,
     /* ... Faltan ... */
-    parameter DEFAULT_CH_SETTINGS,
-    parameter DEFAULT_DAC_VALUE_H,
-    parameter DEFAULT_DAC_VALUE_L,
+    parameter DEFAULT_CH_SETTINGS = 0,
+    parameter DEFAULT_DAC_VALUE = 512,
     /* ... Faltan ... */
 ) (
     // Basic synchronous signals
@@ -77,9 +75,10 @@ module channel_block #(
     assign  adc_data_o = si_adc_data;
     assign  adc_rdy_o = si_adc_rdy;
 
+    // Register Channel Configuration (gain, att, coupling)
     fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_CH_SETTINGS),
         .MY_RESET_VALUE (DEFAULT_CH_SETTINGS)
     ) reg_Channel_settings (
@@ -95,20 +94,19 @@ module channel_block #(
         .data[0]        (Channel_On)
     );
 
+    // Register DAC value
     fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (ADDR_DAC_VALUE),
-        .MY_RESET_VALUE (DEFAULT_DAC_VALUE)
-    ) reg_DAC_Value_H (
+        .REG_ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH     (REG_DATA_WIDTH),
+        .MY_ADDR            (ADDR_DAC_VALUE),
+        .MY_RESET_VALUE     (DEFAULT_DAC_VALUE)
+    ) reg_DAC_Value (
         .clk            (clk),
         .rst            (rst),
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-
-        // .data        ( { CHA_ATT , CHA_GAIN , CHA_DC_COUPLING , CHA_ON } )
-        .data           (dac_val[15:8])
+        .data[BITS_DAC-1:0]    (dac_val[BITS_DAC-1:0])
     );
 
     // Source CH1
@@ -134,26 +132,26 @@ module channel_block #(
     );
 
     // ADC
-    adc_top #(
+    adc_block #(
         .ADC_DATA_WIDTH(BITS_ADC),
         .ADC_DF_WIDTH(32),
         .MA_BITS_ACUM(12),
-        .SI_DATA_WIDTH(32)
-    ) adc_block(
+        .REG_DATA_WIDTH(REG_DATA_WIDTH),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+    ) adc_block_u (
         .clk_i(clk),
         .reset(rst),
         // ADC interface (to the ADC outside of the FPGA)
-        .ADC_data(adc_input),
-        .ADC_oe(adc_oe),
+        .adc_data_i(adc_input),
+        .adc_oe(adc_oe),
         .clk_o(adc_clk_o),
         // Internal (RAM Controller) and Output (Trigger Source Selector)
-        .ADC_SI_data(si_adc_data),
-        .ADC_SI_rdy(si_adc_rdy),
-        .ADC_SI_ack(si_adc_ack),
+        .si_data_o(si_adc_data),
+        .si_rdy_o(si_adc_rdy),
         // Input (Registers Simple Interface Bus)
-        .REG_SI_data(reg_data),
-        .REG_SI_addr(reg_addr),
-        .REG_SI_rdy(reg_rdy),
+        .reg_si_data(reg_data),
+        .reg_si_addr(reg_addr),
+        .reg_si_rdy(reg_rdy),
     );
 
     `ifdef COCOTB_SIM
