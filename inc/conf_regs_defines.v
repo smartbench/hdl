@@ -7,6 +7,13 @@
     REGS_TOTAL/.. reefers to both.
 */
 
+<<<<<<< HEAD
+=======
+
+`ifndef __CONF_REGS_DEFINES_V
+`define __CONF_REGS_DEFINES_V
+
+>>>>>>> trigger_development
 /*******************************************************************************
                             HARDWARE DEFINITIONS
 *******************************************************************************/
@@ -17,9 +24,12 @@
 /*******************************************************************************
                             BASIC REGISTER DEFINITIONS
 *******************************************************************************/
+<<<<<<< HEAD
 `ifndef __CONF_REGS_DEFINES_V
 `define __CONF_REGS_DEFINES_V
 
+=======
+>>>>>>> trigger_development
 `define __RX_WIDTH                  8       // Register and address width are a multiple of __RX_WIDTH
 `define __TX_WIDTH                  8       // Shift register out width
 `define __NUM_REGS                  10

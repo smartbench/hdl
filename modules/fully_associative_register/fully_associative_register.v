@@ -22,6 +22,10 @@
     Releases:   In development ...
 */
 
+<<<<<<< HEAD
+=======
+`include "../../../inc/conf_regs_defines.v"
+>>>>>>> trigger_development
 `timescale 1ns/1ps
 
 module fully_associative_register #(
