@@ -237,7 +237,7 @@ module top_level #(
         .register_data(reg_data),
         .register_rdy(reg_rdy),
         // num samples value
-        .num_samples(num_samples)
+        .num_samples_o(num_samples)
     );
 
     tx_protocol #(
