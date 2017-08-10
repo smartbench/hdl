@@ -52,8 +52,8 @@ module channel_block #(
     input   [15:0] num_samples,
 
     // Registers Bus
-    input   [REG_ADDR_WIDTH-1:0] reg_addr,
-    input   [REG_DATA_WIDTH-1:0] reg_data,
+    input   [REG_ADDR_WIDTH-1:0] register_addr,
+    input   [REG_DATA_WIDTH-1:0] register_data,
     input   reg_rdy,
 
     // Trigger source
@@ -74,12 +74,14 @@ module channel_block #(
     wire    si_adc_rdy;
     wire    si_adc_ack;
 
+    wire [REG_DATA_WIDTH-1:0] dac_val;
+
     assign  adc_data_o = si_adc_data;
     assign  adc_rdy_o = si_adc_rdy;
 
     // Register Channel Configuration (gain, att, coupling)
 
-    wire [7:0] reg_Channel_settings_data;
+    wire [REG_DATA_WIDTH-1:0] reg_Channel_settings_data;
 
     fully_associative_register #(
         .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
@@ -102,7 +104,6 @@ module channel_block #(
 
     // Register DAC value
 
-    wire reg_DAC_Value_data;
 
     fully_associative_register #(
         .REG_ADDR_WIDTH     (REG_ADDR_WIDTH),
@@ -115,10 +116,9 @@ module channel_block #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data           (reg_DAC_Value_data)
+        .data           (dac_val)
     );
 
-    assign dac_val[BITS_DAC-1:0] = reg_DAC_Value_data[BITS_DAC-1:0];
     // Source CH1
     ram_controller #(
         .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
@@ -143,14 +143,14 @@ module channel_block #(
 
     // ADC
     adc_block #(
-        .ADC_DATA_WIDTH(BITS_ADC),
+        .BITS_ADC(BITS_ADC),
         .ADC_DF_WIDTH(32),
-        .MA_BITS_ACUM(12),
+        .MA_ACUM_WIDTH(12),
         .REG_DATA_WIDTH(REG_DATA_WIDTH),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
     ) adc_block_u (
         .clk_i(clk),
-        .reset(rst),
+        .rst(rst),
         // ADC interface (to the ADC outside of the FPGA)
         .adc_data_i(adc_input),
         .adc_oe(adc_oe),
@@ -159,8 +159,8 @@ module channel_block #(
         .si_data_o(si_adc_data),
         .si_rdy_o(si_adc_rdy),
         // Input (Registers Simple Interface Bus)
-        .reg_si_data(reg_data),
-        .reg_si_addr(reg_addr),
+        .reg_si_data(register_data),
+        .reg_si_addr(register_addr),
         .reg_si_rdy(reg_rdy)
     );
 

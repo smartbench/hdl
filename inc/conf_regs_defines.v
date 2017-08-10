@@ -87,10 +87,10 @@
 
 `define __IV_CONF_CH1               16'b11100001
 `define __IV_CONF_CH2               16'b11100000
-`define __IV_DAC_CH1                (1 << (__BITS_DAC-1)) // 16'b1000000000000000
-`define __IV_DAC_CH2                (1 << (__BITS_DAC-1)) // 16'b1000000000000000
+`define __IV_DAC_CH1                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
+`define __IV_DAC_CH2                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
 `define __IV_TRIGGER_CONF           16'b0
-`define __IV_TRIGGER_VALUE          (1 << (__BITS_ADC-1)) // 16'b10000000
+`define __IV_TRIGGER_VALUE          (1 << (`__BITS_ADC-1)) // 16'b10000000
 `define __IV_NUM_SAMPLES            16'b10000000
 `define __IV_PRE_TRIGGER            16'b0
 `define __IV_DECIMATION_L           16'b0
