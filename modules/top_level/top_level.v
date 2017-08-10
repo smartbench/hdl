@@ -95,8 +95,16 @@ module top_level #(
     // Ext
     input ext_trigger,
 
-    // FTDI
-    // ...
+    // FT245 rx interface
+    input [7:0] rx_data_245,
+    input rxf_245,
+    output rx_245,
+
+    // ft245 tx interface
+    output [7:0] tx_data_245,
+    input txe_245,
+    output wr_245,
+    output tx_oe_245,
 
     // I2C
     output SDA,
@@ -257,6 +265,29 @@ module top_level #(
         trig_ack(tx_trigger_status_ack)
     );
 
+    // FT245
+    ft245_interface #(
+        .CLOCK_PERIOD_NS(10)
+    )(
+        .clk(clk_100M),
+        .rst(rst),
+        // ft245 rx interface
+        .rx_data_245(rx_data_245),
+        .rxf_245(rxf_245),
+        .rx_245(rx_245),
+        // ft245 tx interface
+        .tx_data_245(tx_data_245),
+        .txe_245(txe_245),
+        .wr_245(wr_245),
+        .tx_oe_245(tx_oe_245),
+        // simple interface
+        .rx_data_si(si_ft245_rx_data),
+        .rx_rdy_si(si_ft245_rx_rdy),
+        .rx_ack_si(si_ft245_rx_ack),
+        .tx_data_si(si_ft245_tx_data),
+        .tx_rdy_si(si_ft245_tx_rdy),
+        .tx_ack_si(si_ft245_tx_ack)
+    );
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
