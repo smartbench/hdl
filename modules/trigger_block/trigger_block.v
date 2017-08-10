@@ -62,6 +62,7 @@ module trigger_block  #(
 
     // Ram Controller
     output we,
+    output [REG_DATA_WIDTH-1:0] num_samples_o,
 
     // Registers bus
     input [REG_ADDR_WIDTH-1:0] register_addr,
@@ -75,14 +76,15 @@ module trigger_block  #(
     wire [BITS_ADC-1:0] trigger_value_o;
 
     // Registers
-    wire [15:0] pretrigger;
-    wire [15:0] num_samples;
+    wire [REG_DATA_WIDTH-1:0] pretrigger;
+    wire [REG_DATA_WIDTH-1:0] num_samples;
     wire [BITS_ADC-1:0] trigger_value_i;
 
     wire [1:0] trigger_source_sel;
     wire trigger_conf;
     wire trigger_edge_type;
 
+    assign num_samples_o = num_samples;
 
     // Pretrigger Registers
     fully_associative_register #(
