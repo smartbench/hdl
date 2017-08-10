@@ -26,11 +26,13 @@
     Releases:   In development ...
 */
 
+`include "conf_regs_defines.v"
+
 `timescale 1ns/1ps
 
 module adc_interface  #(
-    parameter DATA_WIDTH = 8,//`__BITS_ADC,     // TI ADC1175 data width
-    parameter DF_WIDTH   = 32               // Decimation up to 4294967296 factor
+    parameter DATA_WIDTH = `__BITS_ADC,         // TI ADC1175 data width
+    parameter DF_WIDTH   = `__ADC_DF_WIDTH      // Decimation up to 4294967296 factor
 )(
     // Basic
     input clk_i,                // fpga clock

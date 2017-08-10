@@ -22,13 +22,13 @@
     Releases:   In development ...
 */
 
-// `include "conf_regs_defines.v"
+`include "conf_regs_defines.v"
 
 `timescale 1ns/1ps
 
 module moving_average  #(
-    parameter BITS_ADC = 8,
-    parameter BITS_ACUM = 12
+    parameter BITS_ADC = `__BITS_ADC,
+    parameter BITS_ACUM = `__MA_ACUM_WIDTH
 ) (
                                     // Description              Type            Width
     // Basic

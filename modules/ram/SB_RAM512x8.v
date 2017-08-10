@@ -1,9 +1,12 @@
+
+`include "conf_regs_defines.v"
+
 `timescale 1ns/1ps
 
 // When infering RAM cascading is supported
 module SB_RAM512x8 #(
-    parameter ADDR_WIDTH = 10,
-    parameter DATA_WIDTH = 8
+    parameter ADDR_WIDTH = `__ADDR_WIDTH,
+    parameter DATA_WIDTH = `__DATA_WIDTH
 )(
     input [ADDR_WIDTH-1:0] waddr,
     input [ADDR_WIDTH-1:0] raddr,

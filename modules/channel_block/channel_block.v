@@ -11,23 +11,25 @@
 
 */
 
+`include "conf_regs_defines.v"
+
 `timescale 1ns/1ps
 
 module channel_block #(
-    parameter BITS_ADC = 8,
-    parameter BITS_DAC = 10,
-    parameter REG_ADDR_WIDTH = 5,
-    parameter REG_DATA_WIDTH = 8,
-    parameter TX_DATA_WIDTH = 8,
-    parameter RAM_DATA_WIDTH = 8,
-    parameter RAM_SIZE = (4096*4),
+    parameter BITS_ADC = `__BITS_ADC,
+    parameter BITS_DAC = `__BITS_DAC,
+    parameter REG_ADDR_WIDTH = `__ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = `__DATA_WIDTH,
+    parameter TX_DATA_WIDTH = `__TX_WIDTH,
+    parameter RAM_DATA_WIDTH = `__BITS_ADC,
+    parameter RAM_SIZE = `__RAM_SIZE_CH,
 
-    parameter ADDR_CH_SETTINGS = 0,
-    parameter ADDR_DAC_VALUE = 1,
-    /* ... Faltan ... */
-    parameter DEFAULT_CH_SETTINGS = 0,
-    parameter DEFAULT_DAC_VALUE = 512,
-    /* ... Faltan ... */
+    parameter ADDR_CH_SETTINGS = `__ADDR_CONF_CH1,
+    parameter ADDR_DAC_VALUE = `__ADDR_DAC_CH1,
+
+    parameter DEFAULT_CH_SETTINGS = `__IV_CONF_CH1,
+    parameter DEFAULT_DAC_VALUE = `__IV_DAC_CH1
+
 ) (
     // Basic synchronous signals
     input   clk,
@@ -35,8 +37,8 @@ module channel_block #(
 
     // iInterface with ADC pins
     input [BITS_ADC-1:0] adc_input,
-    output adc_oe;
-    output adc_clk_o;
+    output adc_oe,
+    output adc_clk_o,
 
     // Interface with MUXes
     output  [2:0] Att_Sel,
@@ -62,20 +64,23 @@ module channel_block #(
     output  [TX_DATA_WIDTH-1:0] tx_data,
     output  tx_rdy,
     output  tx_eof,
-    input   tx_ack,
+    input   tx_ack
 
 );
 
     // ADC <--> RAM Controller
     // ADC ---> Trigger Source Selector
-    wire    [BITS_ADC-1:0] si_adc_data,
-    wire    si_adc_rdy,
-    wire    si_adc_ack,
+    wire    [BITS_ADC-1:0] si_adc_data;
+    wire    si_adc_rdy;
+    wire    si_adc_ack;
 
     assign  adc_data_o = si_adc_data;
     assign  adc_rdy_o = si_adc_rdy;
 
     // Register Channel Configuration (gain, att, coupling)
+
+    wire [7:0] reg_Channel_settings_data;
+
     fully_associative_register #(
         .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
         .REG_DATA_WIDTH (REG_DATA_WIDTH),
@@ -88,13 +93,17 @@ module channel_block #(
         .si_data        (register_data),
         .si_rdy         (register_rdy),
         // .data        ( { Att_Sel , Gain_Sel , DC_Coupling , Channel_On } )
-        .data[7:5]      (Att_Sel),
-        .data[4:2]      (Gain_Sel),
-        .data[1]        (DC_Coupling),
-        .data[0]        (Channel_On)
+        .data           (reg_Channel_settings_data)
     );
+    assign Att_Sel = reg_Channel_settings_data[7:5] ;
+    assign Gain_Sel = reg_Channel_settings_data[4:2];
+    assign DC_Coupling = reg_Channel_settings_data[1];
+    assign Channel_On = reg_Channel_settings_data[0] ;
 
     // Register DAC value
+
+    wire reg_DAC_Value_data;
+
     fully_associative_register #(
         .REG_ADDR_WIDTH     (REG_ADDR_WIDTH),
         .REG_DATA_WIDTH     (REG_DATA_WIDTH),
@@ -106,9 +115,10 @@ module channel_block #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        .data[BITS_DAC-1:0]    (dac_val[BITS_DAC-1:0])
+        .data           (reg_DAC_Value_data)
     );
 
+    assign dac_val[BITS_DAC-1:0] = reg_DAC_Value_data[BITS_DAC-1:0];
     // Source CH1
     ram_controller #(
         .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
@@ -151,7 +161,7 @@ module channel_block #(
         // Input (Registers Simple Interface Bus)
         .reg_si_data(reg_data),
         .reg_si_addr(reg_addr),
-        .reg_si_rdy(reg_rdy),
+        .reg_si_rdy(reg_rdy)
     );
 
     `ifdef COCOTB_SIM

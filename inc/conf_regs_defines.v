@@ -7,18 +7,22 @@
     REGS_TOTAL/.. reefers to both.
 */
 
+`ifndef __CONF_REGS_DEFINES_V
+`define __CONF_REGS_DEFINES_V
+
+`define __ADC_DF_WIDTH  32
+`define __RAM_SIZE_CH   (4096*4)          // RAM for each channel
+`define __MA_ACUM_WIDTH 12
+
 /*******************************************************************************
                             HARDWARE DEFINITIONS
 *******************************************************************************/
 `define __BITS_ADC      8
 `define __BITS_DAC      10
 
-
 /*******************************************************************************
                             BASIC REGISTER DEFINITIONS
 *******************************************************************************/
-`ifndef __CONF_REGS_DEFINES_V
-`define __CONF_REGS_DEFINES_V
 
 `define __RX_WIDTH                  8       // Register and address width are a multiple of __RX_WIDTH
 `define __TX_WIDTH                  8       // Shift register out width
@@ -38,19 +42,21 @@
 *******************************************************************************/
 
 // Request regs addresses
-`define __ADDR_REQUESTS             0
+`define __ADDR_REQUESTS                 0
 
 // Conf regs addresses
-`define __ADDR_CONF_CH1             1
-`define __ADDR_CONF_CH2             2
-`define __ADDR_DAC_CH1              3
-`define __ADDR_DAC_CH2              4
-`define __ADDR_TRIGGER_CONF         5
-`define __ADDR_TRIGGER_VALUE        6
-`define __ADDR_NUM_SAMPLES          7
-`define __ADDR_PRE_TRIGGER          8
-`define __ADDR_DECIMATION_L         9
-`define __ADDR_DECIMATION_H         10
+`define __ADDR_CONF_CH1                 1
+`define __ADDR_CONF_CH2                 2
+`define __ADDR_DAC_CH1                  3
+`define __ADDR_DAC_CH2                  4
+`define __ADDR_TRIGGER_CONF             5
+`define __ADDR_TRIGGER_VALUE            6
+`define __ADDR_NUM_SAMPLES              7
+`define __ADDR_PRE_TRIGGER              8
+`define __ADDR_DECIMATION_L             9
+`define __ADDR_DECIMATION_H             10
+`define __ADDR_N_MOVING_AVERAGE_CH1     11
+`define __ADDR_N_MOVING_AVERAGE_CH2     12
 
 /*******************************************************************************
                                 BIT FIELDS
@@ -63,7 +69,7 @@
 `define __CONF_CH_ON                        0:0
 
 // trigger_conf
-//`define __TRIGGER_CONF_MODE                 3:3
+//`define __TRIGGER_CONF_MODE               3:3
 `define __TRIGGER_CONF_SOURCE_SEL           1:0
 `define __TRIGGER_CONF_EDGE                 0
 
@@ -90,19 +96,7 @@
 `define __IV_DECIMATION_L           16'b0
 `define __IV_DECIMATION_H           16'b0
 `define __IV_AVERAGE_N              16'b1
-
-`define __IV_ARRAY  {                            \
-                        `__IV_CONF_CH1,          \
-                        `__IV_CONF_CH2,          \
-                        `__IV_DAC_CH1,           \
-                        `__IV_DAC_CH2,           \
-                        `__IV_TRIGGER_CONF,      \
-                        `__IV_TRIGGER_VALUE,     \
-                        `__IV_NUM_SAMPLES,       \
-                        `__IV_PRE_TRIGGER,       \
-                        `__IV_DECIMATION_L,      \
-                        `__IV_DECIMATION_H,      \
-                        `__IV_AVERAGE_N          \
-                    }
+`define __IV_N_MOVING_AVERAGE_CH1   16'b0
+`define __IV_N_MOVING_AVERAGE_CH2   16'b0
 
 `endif
