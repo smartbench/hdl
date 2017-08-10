@@ -29,18 +29,18 @@ module top_level #(
     parameter RAM_SIZE = `__RAM_SIZE_CH,
     parameter TX_DATA_WIDTH = `__TX_WIDTH,
     parameter RX_DATA_WIDTH = `__RX_WIDTH,
-    parameter REG_DATA_WIDTH = `__DATA_WIDTH,       // Simple Interface
+    parameter REG_DATA_WIDTH = `__DATA_WIDTH,       // Simple Interfacez
     parameter REG_ADDR_WIDTH = `__ADDR_WIDTH,
 
     // registers addresses
     parameter ADDR_ADC_CLK_DIV_L = `__ADDR_ADC_CLK_DIV_L,
     parameter ADDR_ADC_CLK_DIV_H = `__ADDR_ADC_CLK_DIV_H,
-    parameter ADDR_MOV_AVE_K_CH1 = `__ADDR_MOV_AVE_K_CH1,
-    parameter ADDR_MOV_AVE_K_CH2 = `__ADDR_MOV_AVE_K_CH2,
-    parameter ADDR_SETTINGS_CH1 = `__ADDR_CONF_CH1,
-    parameter ADDR_SETTINGS_CH2 = `__ADDR_CONF_CH2,
-    parameter ADDR_DAC_VALUE_CH1 = `__ADDR_DAC_CH1,
-    parameter ADDR_DAC_VALUE_CH2 = `__ADDR_DAC_CH2,
+    parameter ADDR_MOV_AVE_K_CHA = `__ADDR_MOV_AVE_K_CHA,
+    parameter ADDR_MOV_AVE_K_CHB = `__ADDR_MOV_AVE_K_CHB,
+    parameter ADDR_SETTINGS_CHA = `__ADDR_CONF_CHA,
+    parameter ADDR_SETTINGS_CHB = `__ADDR_CONF_CHB,
+    parameter ADDR_DAC_VALUE_CHA = `__ADDR_DAC_CHA,
+    parameter ADDR_DAC_VALUE_CHB = `__ADDR_DAC_CHB,
     parameter ADDR_PRETRIGGER = `__ADDR_PRETRIGGER,
     parameter ADDR_NUM_SAMPLES = `__ADDR_NUM_SAMPLES,
     parameter ADDR_TRIGGER_VALUE = `__ADDR_TRIGGER_VALUE,
@@ -50,12 +50,12 @@ module top_level #(
     // registers default values
     parameter DEFAULT_ADC_CLK_DIV_H = `__IV_DECIMATION_H,
     parameter DEFAULT_ADC_CLK_DIV_L = `__IV_DECIMATION_L,
-    parameter DEFAULT_MOV_AVE_K_CH1 = `__IV_MOV_AVE_K_CH1,
-    parameter DEFAULT_MOV_AVE_K_CH2 = `__IV_MOV_AVE_K_CH2,
-    parameter DEFAULT_SETTINGS_CH1 = `__IV_CONF_CH1,
-    parameter DEFAULT_SETTINGS_CH2 = `__IV_CONF_CH2,
-    parameter DEFAULT_DAC_VALUE_CH1 = `__IV_DAC_CH1,
-    parameter DEFAULT_DAC_VALUE_CH2 = `__IV_DAC_CH2,
+    parameter DEFAULT_MOV_AVE_K_CHA = `__IV_MOV_AVE_K_CHA,
+    parameter DEFAULT_MOV_AVE_K_CHB = `__IV_MOV_AVE_K_CHB,
+    parameter DEFAULT_SETTINGS_CHA = `__IV_CONF_CHA,
+    parameter DEFAULT_SETTINGS_CHB = `__IV_CONF_CHB,
+    parameter DEFAULT_DAC_VALUE_CHA = `__IV_DAC_CHA,
+    parameter DEFAULT_DAC_VALUE_CHB = `__IV_DAC_CHB,
     parameter DEFAULT_PRETRIGGER = `__IV_PRETRIGGER,
     parameter DEFAULT_NUM_SAMPLES = `__IV_NUM_SAMPLES,
     parameter DEFAULT_TRIGGER_VALUE = `__IV_TRIGGER_VALUE,
@@ -72,25 +72,25 @@ module top_level #(
     input rst,
 
     // Channel 1 - ADC
-    input [BITS_ADC-1:0] ch1_adc_in,
-    output ch1_adc_oe,
-    output ch1_adc_clk_o,
+    input [BITS_ADC-1:0] chA_adc_in,
+    output chA_adc_oe,
+    output chA_adc_clk_o,
     // Channel 1 - Analog
-    output [2:0] ch1_gain_sel,
-    output [2:0] ch1_att_sel,
-    output ch1_dc_coupling_sel,
-    output ch1_enabled_sel,
+    output [2:0] chA_gain_sel,
+    output [2:0] chA_att_sel,
+    output chA_dc_coupling_sel,
+    //output chA_enabled_sel,
 
 
     // Channel 2 - ADC
-    input [BITS_ADC-1:0] ch2_adc_in,
-    output ch2_adc_oe,
-    output ch2_adc_clk_o,
+    input [BITS_ADC-1:0] chB_adc_in,
+    output chB_adc_oe,
+    output chB_adc_clk_o,
     // Channel 2 - Analog
-    output [2:0] ch1_gain_sel,
-    output [2:0] ch1_att_sel,
-    output ch1_dc_coupling_sel,
-    output ch1_enabled_sel,
+    output [2:0] chA_gain_sel,
+    output [2:0] chA_att_sel,
+    output chA_dc_coupling_sel,
+    output chA_enabled_sel,
 
     // Ext
     input ext_trigger,
@@ -133,20 +133,20 @@ module top_level #(
     wire rqst_start;
     wire rqst_stop;
     wire rqst_reset;
-    wire rqst_ch1_data;
-    wire rqst_ch2_data;
+    wire rqst_chA_data;
+    wire rqst_chB_data;
     wire rqst_trigger_status;
 
     // Tx Protocol
-    wire [TX_DATA_WIDTH-1:0] tx_ch1_data;
-    wire                tx_ch1_rdy;
-    wire                tx_ch1_eof;
-    wire                tx_ch1_ack;
+    wire [TX_DATA_WIDTH-1:0] tx_chA_data;
+    wire                tx_chA_rdy;
+    wire                tx_chA_eof;
+    wire                tx_chA_ack;
 
-    wire [TX_DATA_WIDTH-1:0] tx_ch2_data;
-    wire                tx_ch2_rdy;
-    wire                tx_ch2_eof;
-    wire                tx_ch2_ack;
+    wire [TX_DATA_WIDTH-1:0] tx_chB_data;
+    wire                tx_chB_rdy;
+    wire                tx_chB_eof;
+    wire                tx_chB_ack;
 
     wire [TX_DATA_WIDTH-1:0] tx_trigger_status_data;
     wire                tx_trigger_status_rdy;
@@ -154,14 +154,15 @@ module top_level #(
     wire                tx_trigger_status_ack;
 
     // Data from adc_block
-    wire [BITS_ADC-1:0] ch1_adc_data;
-    wire                ch1_adc_rdy;
+    wire [BITS_ADC-1:0] chA_adc_data;
+    wire                chA_adc_rdy;
 
-    wire [BITS_ADC-1:0] ch2_adc_data;
-    wire                ch2_adc_rdy;
+    wire [BITS_ADC-1:0] chB_adc_data;
+    wire                chB_adc_rdy;
 
     // Buffer Controller <--> RAM
     wire we;
+    wire [REG_DATA_WIDTH-1:0] num_samples;
 
     // PLL instantiation
     SB_PLL40_CORE #(
@@ -180,9 +181,9 @@ module top_level #(
 
     // Registers Rx Block
     registers_rx_block  #(
-        .RX_DATA_WIDTH(),
-        .REG_ADDR_WIDTH(),
-        .REG_DATA_WIDTH()
+        .RX_DATA_WIDTH(RX_DATA_WIDTH),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH(REG_DATA_WIDTH)
     ) rx_block_u (
         .clk(clk_100M),
         .rst(rst),
@@ -192,31 +193,31 @@ module top_level #(
         .start_o(rqst_start),
         .stop_o(rqst_stop),
         .reset_o(rqst_reset),
-        .rqst_ch1(rqst_ch1_data),
-        .rqst_ch2(rqst_ch2_data),
+        .rqst_ch1(rqst_chA_data),
+        .rqst_ch2(rqst_chB_data),
         .rqst_trigger_status_o(rqst_trigger_status)/* ,
         .example_register_data() */
     );
 
     trigger_block  #(
-        .REG_ADDR_WIDTH(),
-        .REG_DATA_WIDTH(),
-        .BITS_DAC(),
-        .BITS_ADC(),
-        .ADDR_PRETRIGGER(),
-        .ADDR_NUM_SAMPLES(),
-        .ADDR_TRIGGER_VALUE(),
-        .ADDR_TRIGGER_SETTINGS(),
-        .DEFAULT_PRETRIGGER(),
-        .DEFAULT_NUM_SAMPLES(),
-        .DEFAULT_TRIGGER_VALUE(),
-        .DEFAULT_TRIGGER_SETTINGS() // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH(REG_DATA_WIDTH),
+        .BITS_DAC(BITS_DAC),
+        .BITS_ADC(BITS_ADC),
+        .ADDR_PRETRIGGER(ADDR_PRETRIGGER),
+        .ADDR_NUM_SAMPLES(ADDR_NUM_SAMPLES),
+        .ADDR_TRIGGER_VALUE(ADDR_TRIGGER_VALUE),
+        .ADDR_TRIGGER_SETTINGS(ADDR_TRIGGER_SETTINGS),
+        .DEFAULT_PRETRIGGER(DEFAULT_PRETRIGGER),
+        .DEFAULT_NUM_SAMPLES(DEFAULT_NUM_SAMPLES),
+        .DEFAULT_TRIGGER_VALUE(DEFAULT_TRIGGER_VALUE),
+        .DEFAULT_TRIGGER_SETTINGS(DEFAULT_TRIGGER_SETTINGS) // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
     ) trigger_block_u (
         .clk(clk_100M),
         .rst(rst),
         // Request handler
         .start(rqst_start),
-        .stop(rqst_stop),     // must be ORed with rqst_ch1 and rqst_ch2!!
+        .stop(rqst_stop),     // must be ORed with rqst_chA and rqst_chB!!
         .rqst_trigger_status(rqst_trigger_status),
         // Tx Protocol
         .trigger_status_data(tx_trigger_status_data),
@@ -224,17 +225,19 @@ module top_level #(
         .trigger_status_eof(tx_trigger_status_eof),
         .trigger_status_ack(tx_trigger_status_ack),
         // ADCs
-        .ch1_in(ch1_adc_data),
-        .ch2_in(ch2_adc_data),
+        .ch1_in(chA_adc_data),
+        .ch2_in(chB_adc_data),
         .ext_in(ext_trigger),
-        .adc_ch1_rdy(ch1_adc_rdy),
-        .adc_ch2_rdy(ch2_adc_rdy),
+        .adc_ch1_rdy(chA_adc_rdy),
+        .adc_ch2_rdy(chB_adc_rdy),
         // Ram Controller
         .we(we),
         // Registers bus
         .register_addr(reg_addr),
         .register_data(reg_data),
-        .register_rdy(reg_rdy)
+        .register_rdy(reg_rdy),
+        // num samples value
+        .num_samples(num_samples)
     );
 
     tx_protocol #(
@@ -249,15 +252,15 @@ module top_level #(
         .tx_rdy(si_ft245_tx_rdy),
         .tx_ack(si_ft245_tx_ack),
         // SI - Channel 1
-        .ch1_data(tx_ch1_data),
-        .ch1_rdy(tx_ch1_rdy),
-        .ch1_eof(tx_ch1_eof),
-        ch1_ack(tx_ch1_ack),
+        .ch1_data(tx_chA_data),
+        .ch1_rdy(tx_chA_rdy),
+        .ch1_eof(tx_chA_eof),
+        ch1_ack(tx_chA_ack),
         // SI - Channel 2
-        .ch2_data(tx_ch2_data),
-        .ch2_rdy(tx_ch2_rdy),
-        .ch2_eof(tx_ch2_eof),
-        ch2_ack(tx_ch2_ack),
+        .ch2_data(tx_chB_data),
+        .ch2_rdy(tx_chB_rdy),
+        .ch2_eof(tx_chB_eof),
+        ch2_ack(tx_chB_ack),
         // SI - Trigger status
         .trig_data(tx_trigger_status_data),
         .trig_rdy(tx_trigger_status_rdy),
@@ -287,6 +290,92 @@ module top_level #(
         .tx_data_si(si_ft245_tx_data),
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
+    );
+
+    // Channel Block
+    channel_block #(
+        .BITS_ADC(BITS_ADC),
+        .BITS_DAC(BITS_DAC),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH(REG_DATA_WIDTH),
+        .TX_DATA_WIDTH(TX_DATA_WIDTH),
+        .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
+        .RAM_SIZE(RAM_SIZE),
+        .ADDR_CH_SETTINGS(ADDR_SETTINGS_CHA),
+        .ADDR_DAC_VALUE(ADDR_DAC_VALUE_CHA),
+        .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHA),
+        .DEFAULT_DAC_VALUE(DEFAULT_DAC_VALUE_CHA)
+    ) channel_block_A(
+        clk(clk_100M),
+        rst(rst),
+        // iInterface with ADC pins
+        adc_input(chA_adc_in),
+        adc_oe(chA_adc_oe),
+        adc_clk_o(chA_adc_clk_o),
+        // Interface with MUXes
+        Att_Sel(chA_att_sel),
+        Gain_Sel(chA_gain_sel),
+        DC_Coupling(chA_dc_coupling_sel),
+        // ChannelOn
+        // Buffer Controller
+        .rqst_data(rqst_chA_data),
+        .we(we),
+        .num_samples(num_samples),
+        // Registers Bus
+        .register_addr(reg_addr),
+        .register_data(reg_data),
+        .reg_rdy(reg_rdy),
+        // Trigger source
+        .adc_data_o(chA_adc_data),
+        .adc_rdy_o(chA_adc_rdy),
+        // Tx Protocol
+        .tx_data(tx_chA_data),
+        .tx_rdy(tx_chA_rdy),
+        .tx_eof(tx_chA_eof),
+        .tx_ack(tx_chA_ack)
+    );
+
+    // Channel Block
+    channel_block #(
+        .BITS_ADC(BITS_ADC),
+        .BITS_DAC(BITS_DAC),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH(REG_DATA_WIDTH),
+        .TX_DATA_WIDTH(TX_DATA_WIDTH),
+        .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
+        .RAM_SIZE(RAM_SIZE),
+        .ADDR_CH_SETTINGS(ADDR_SETTINGS_CHB),
+        .ADDR_DAC_VALUE(ADDR_DAC_VALUE_CHB),
+        .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHB),
+        .DEFAULT_DAC_VALUE(DEFAULT_DAC_VALUE_CHB)
+    ) channel_block_B(
+        clk(clk_100M),
+        rst(rst),
+        // iInterface with ADC pins
+        adc_input(chB_adc_in),
+        adc_oe(chB_adc_oe),
+        adc_clk_o(chB_adc_clk_o),
+        // Interface with MUXes
+        Att_Sel(chB_att_sel),
+        Gain_Sel(chB_gain_sel),
+        DC_Coupling(chB_dc_coupling_sel),
+        // ChannelOn
+        // Buffer Controller
+        .rqst_data(rqst_chB_data),
+        .we(we),
+        .num_samples(num_samples),
+        // Registers Bus
+        .register_addr(reg_addr),
+        .register_data(reg_data),
+        .reg_rdy(reg_rdy),
+        // Trigger source
+        .adc_data_o(chB_adc_data),
+        .adc_rdy_o(chB_adc_rdy),
+        // Tx Protocol
+        .tx_data(tx_chB_data),
+        .tx_rdy(tx_chB_rdy),
+        .tx_eof(tx_chB_eof),
+        .tx_ack(tx_chB_ack)
     );
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro
