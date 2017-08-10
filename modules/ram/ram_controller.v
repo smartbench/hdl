@@ -1,8 +1,11 @@
+
+`include "conf_regs_defines.v"
+
 `timescale 1ns/1ps
 
 module ram_controller #(
-    parameter RAM_DATA_WIDTH = 8,
-    parameter RAM_SIZE = (4096*4)    // 1 bloque de 4Kbit (cambiar después...)
+    parameter RAM_DATA_WIDTH = `__BITS_ADC,
+    parameter RAM_SIZE = `__RAM_SIZE_CH    // 1 bloque de 4Kbit (cambiar después...)
 )(
     input clk,
     input rst,

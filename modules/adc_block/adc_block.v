@@ -30,21 +30,21 @@
   `include "../adc_interface/adc_interface.v"
 `endif*/
 
-
+`include "conf_regs_defines.v"
 
 `timescale 1ns/1ps
 
 module adc_block #(
-    parameter BITS_ADC = 8,//`__BITS_ADC,
-    parameter ADC_DF_WIDTH   = 32,      // ADC decimation
-    parameter MA_ACUM_WIDTH = 12,       // Moving Average Acumulator
-    parameter REG_DATA_WIDTH = 16,//`REG_DATA_WIDTH,    // Simgle Interface
-    parameter REG_ADDR_WIDTH = 8,//`REG_ADDR_WIDTH,
-    parameter ADC_DF_DV_REG = 0,
-    parameter MA_K_FACTOR_DV_REG = 3,
-    parameter REG_ADDR_ADC_DF_L = 0,
-    parameter REG_ADDR_ADC_DF_H = 1,
-    parameter REG_ADDR_MOV_AVE_K = 2
+    parameter BITS_ADC = `__BITS_ADC,
+    parameter ADC_DF_WIDTH   = `__ADC_DF_WIDTH,     // ADC decimation
+    parameter MA_ACUM_WIDTH = `__MA_ACUM_WIDTH,     // Moving Average Acumulator
+    parameter REG_DATA_WIDTH = `__DATA_WIDTH,       // Simple Interface
+    parameter REG_ADDR_WIDTH = `__ADDR_WIDTH,
+    parameter ADC_DF_DV_REG = (`__IV_DECIMATION_H << 16) | (`__IV_DECIMATION_L),
+    parameter MA_K_FACTOR_DV_REG = `__IV_N_MOVING_AVERAGE_CH1,
+    parameter REG_ADDR_ADC_DF_L = `__IV_DECIMATION_L,
+    parameter REG_ADDR_ADC_DF_H = `__IV_DECIMATION_H,
+    parameter REG_ADDR_MOV_AVE_K = `__ADDR_N_MOVING_AVERAGE_CH1
   )(
     // Basic
     input clk_i,
@@ -70,7 +70,7 @@ module adc_block #(
     wire adc_interface_si_ack;
     reg [ADC_DF_WIDTH-1:0] adc_df                       = ADC_DF_DV_REG;  // adc decimation factor DefaultValue  register
     reg [$clog2(MA_ACUM_WIDTH-BITS_ADC)-1:0] ma_k = MA_K_FACTOR_DV_REG; // moving average k factor DefaultValue register
-    
+
     reg rst_restart = 1'b0;
     assign adc_interface_si_ack = adc_interface_si_rdy;
 
@@ -102,7 +102,7 @@ module adc_block #(
       .rdy_out            (si_rdy_o)
       );
 
-    
+
     // Registers
     always @ ( posedge(clk_i) ) begin
       rst_restart <= 1'b0;
@@ -127,17 +127,17 @@ module adc_block #(
               adc_df[ADC_DF_WIDTH-1:REG_DATA_WIDTH] <= reg_si_data;
               rst_restart <= 1'b1;
             end
-              
+
             REG_ADDR_MOV_AVE_K:
             begin
               ma_k <= reg_si_data[$clog2(MA_ACUM_WIDTH-BITS_ADC)-1:0];
               rst_restart <= 1'b1;
              end
-            
+
             default:
             begin
             end
-            
+
           endcase
         end
       end
