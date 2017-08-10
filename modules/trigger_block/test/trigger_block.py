@@ -4,7 +4,7 @@ from cocotb.triggers import Timer, RisingEdge, FallingEdge, Edge
 from cocotb.result import TestFailure, TestError
 
 from random import randint
-
+from math import pi, sin
 
 @cocotb.coroutine
 def nsTimer (t):
@@ -19,7 +19,7 @@ class SI_REG_MASTER:
         self.reg_si_rdy = reg_si_rdy
         self.fifo_data = []
         self.fifo_addr = []
-        
+
         self.reg_si_data <= 0
         self.reg_si_data <= 0
         self.reg_si_rdy <= 0
@@ -43,11 +43,11 @@ class ADC:
         self.clk = clk
         self.data = data
         self.rdy = rdy
-        
+
         self.fifo = []
         self.data <= 0
         self.rdy <= 0
-        
+
     def clear(self):
         self.fifo = []
 
@@ -63,7 +63,7 @@ class ADC:
             yield RisingEdge(self.clk)
             self.input_rdy <= 0
             for i in range(3): yield RisingEdge(self.clk)
-            
+
 
 class RAM_Controller:
     def __init__ (self, clk, we, data_in, rdy):
@@ -71,13 +71,13 @@ class RAM_Controller:
         self.we = we
         self.data_in = data_in
         self.rdy = rdy
-        self.fifo
+        self.fifo = []
 
     @cocotb.coroutine
     def run(self):
         while True:
             if(self.we):
-                self.fifo.append(data_in)
+                self.fifo.append(self.data_in)
             yield RisingEdge(self.clk)
 
 class TX_PROTOCOL:
@@ -120,32 +120,34 @@ class RQST_HANDLER:
         #self.rqst_ch1 = rqst_ch1
         #self.rqst_ch2 = rqst_ch2
         self.rqst_trigger_status = rqst_trigger_status
-        
+
         self.start <= 0
         self.stop <= 0
         #self.rqst_ch1 <= 0
         #self.rqst_ch2 <= 0
         self.rqst_trigger_status <= 0
-    
+
     @cocotb.coroutine
     def start(self):
         self.start <= 1
         self.stop <= 0
         yield RisingEdge(self.clk)
         self.start <= 0
-    
+        yield RisingEdge(self.clk)
+
     @cocotb.coroutine
     def stop(self):
         self.stop <= 1
         yield RisingEdge(self.clk)
-    
+
     @cocotb.coroutine
     def rqst_trigger_status(self):
         self.rqst_trigger_status <= 1
         yield RisingEdge(self.clk)
         self.rqst_trigger_status <= 0
-            
-        
+        yield RisingEdge(self.clk)
+
+
 
 @cocotb.coroutine
 def Start(dut):
@@ -172,7 +174,7 @@ def test (dut):
     ADDR_NUM_SAMPLES = 1
     ADDR_TRIGGER_VALUE = 2
     ADDR_TRIGGER_SETTINGS = 3
-    
+
     EDGE_POS = 0
     EDGE_NEG = 1
     SRC_XX = (0 << 1)
@@ -187,17 +189,17 @@ def test (dut):
     ch2_data = 0
     ch1_rdy = 0
     ch2_rdy = 0
-    
+
     ram_ch1 = RAM_Controller(dut.clk, dut.we, ch1_data, ch1_rdy)
     ram_ch2 = RAM_Controller(dut.clk, dut.we, ch2_data, ch2_rdy)
-    
+
     adc_ch1 = ADC(dut.clk, ch1_data, ch1_rdy)
     adc_ch2 = ADC(dut.clk, ch2_data, ch2_rdy)
-    
+
     tx_protocol = TX_PROTOCOL(dut.clk, dut.rqst_trigger_status, dut.trigger_status_data, dut.trigger_status_rdy, dut.trigger_status_eof, dut.trigger_status_ack)
-    
+
     si_reg_master = SI_REG_MASTER( dut.clk, dut.rst, dut.register_data, dut.register_addr, dut.register_rdy)
-    
+
     rqst_handler = RQST_HANDLER( dut.clk, dut.start, dut.stop, dut.rqst_trigger_status)
 
     dut.ch1_in <= ch1_data
@@ -208,7 +210,7 @@ def test (dut):
 
     si_reg_master.writeReg( ADDR_PRETRIGGER , 8 )
     si_reg_master.writeReg( ADDR_NUM_SAMPLES , 24 )
-    si_reg_master.writeReg( ADDR_TRIGGER_VALUE , 170 ) 
+    si_reg_master.writeReg( ADDR_TRIGGER_VALUE , 170 )
     si_reg_master.writeReg( ADDR_TRIGGER_SETTINGS , SRC_CH1 | EDGE_POS )
 
     for t in range(100):
@@ -226,31 +228,31 @@ def test (dut):
     cocotb.fork(ram_ch2.run())
     cocotb.fork(adc_ch1.sampling())
     cocotb.fork(adc_ch2.sampling())
-    
 
-    cocotb.fork( () )
-    cocotb.fork( () )
-    cocotb.fork( () )
-    cocotb.fork( () )
-    cocotb.fork( () )
-    
+
+    # cocotb.fork( () )
+    # cocotb.fork( () )
+    # cocotb.fork( () )
+    # cocotb.fork( () )
+    # cocotb.fork( () )
+
     for i in range(10): yield RisingEdge(dut.clk)
-    
-    rqst_handler.start()
+
+    yield rqst_handler.start()
     for i in range(500): yield RisingEdge(dut.clk)
     yield tx_protocol.request_data()
     for i in range(500): yield RisingEdge(dut.clk)
-    
+
     print "-----------------------------------------"
     print "LEN fifo Tx_Protocol = " + repr(len(tx_protocol.fifo))
     for i in range(len(tx_protocol.fifo)):
         print "Fifo Read: " + repr(tx_protocol.fifo.pop(0))
-        
+
     print "-----------------------------------------"
     print "LEN fifo Ram CH1 = " + repr(len(ram_ch1.fifo))
     for i in range(len(ram_ch1.fifo)):
         print "Fifo Read: " + repr(ram_ch1.fifo.pop(0))
-        
+
     print "-----------------------------------------"
     print "LEN fifo Ram CH2 = " + repr(len(ram_ch2.fifo))
     for i in range(len(ram_ch2.fifo)):

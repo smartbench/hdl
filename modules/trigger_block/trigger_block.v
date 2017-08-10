@@ -86,8 +86,8 @@ module trigger_block  #(
 
     // Pretrigger Registers
     fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .REG_ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH     (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_PRETRIGGER),
         .MY_RESET_VALUE (DEFAULT_PRETRIGGER)
     ) reg_pretrigger (
@@ -101,10 +101,10 @@ module trigger_block  #(
 
     // Number of Samples Registers
     fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
-        .MY_ADDR        (ADDR_NUM_SAMPLES),
-        .MY_RESET_VALUE (DEFAULT_NUM_SAMPLES)
+        .REG_ADDR_WIDTH     (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH     (REG_DATA_WIDTH),
+        .MY_ADDR            (ADDR_NUM_SAMPLES),
+        .MY_RESET_VALUE     (DEFAULT_NUM_SAMPLES)
     ) reg_num_samples (
         .clk            (clk),
         .rst            (rst),
@@ -116,8 +116,8 @@ module trigger_block  #(
 
     // Trigger Value Register
     fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_TRIGGER_VALUE),
         .MY_RESET_VALUE (DEFAULT_TRIGGER_VALUE)
     ) reg_trigger_value (
@@ -131,8 +131,8 @@ module trigger_block  #(
 
     // Trigger Settings Register
     fully_associative_register #(
-        .ADDR_WIDTH     (REG_ADDR_WIDTH),
-        .DATA_WIDTH     (REG_DATA_WIDTH),
+        .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_TRIGGER_SETTINGS),
         .MY_RESET_VALUE (DEFAULT_TRIGGER_SETTINGS)
     ) reg_trigger_settings (
@@ -173,8 +173,8 @@ module trigger_block  #(
     );
 
     trigger_input_selector #(
-        .ADDR_WIDTH (REG_ADDR_WIDTH),
-        .DATA_WIDTH (REG_DATA_WIDTH),
+        .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
+        .REG_DATA_WIDTH (REG_DATA_WIDTH),
         .BITS_ADC (BITS_ADC),
         .BITS_DAC (BITS_DAC)
     ) trigger_input_selector_u (
@@ -191,7 +191,7 @@ module trigger_block  #(
         // Buffer Controller
         .trigger_value_out      (trigger_value_o),
         .trigger_source_out     (trigger_source_data),
-        .buffer_cont_input_rdy  (trigger_source_rdy)
+        .trigger_source_rdy  (trigger_source_rdy)
     );
 
     `ifdef COCOTB_SIM               // COCOTB macro

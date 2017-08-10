@@ -20,9 +20,6 @@
             When finished, buffer_full_o=1, changes to 'ST_IDLE'.
 
 
-    IMPORTANT:
-    NOT TESTED!!
-
     Authors:
                 AD      Andres Demski
                 AK      Ariel Kukulanski

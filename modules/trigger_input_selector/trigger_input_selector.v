@@ -37,8 +37,8 @@
 `timescale 1ns/1ps
 
 module trigger_input_selector  #(
-    parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 16,
+    parameter REG_ADDR_WIDTH = 16,
+    parameter REG_DATA_WIDTH = 16,
     parameter BITS_DAC = 10,
     parameter BITS_ADC = 8
 ) (
@@ -80,18 +80,18 @@ module trigger_input_selector  #(
                 n_edge=1'b1;
 
     // buffer controller's 'input_rdy' bit, depends on the trigger's source
-    assign trigger_source_rdy =     (trigger_source == src_CH1) ? adc_ch1_rdy :
-                                    (trigger_source == src_CH2) ? adc_ch2_rdy :
-                                    (trigger_source == src_EXT) ? (adc_ch1_rdy | adc_ch2_rdy) :
+    assign trigger_source_rdy =     (trigger_source_sel == src_CH1) ? adc_ch1_rdy :
+                                    (trigger_source_sel == src_CH2) ? adc_ch2_rdy :
+                                    (trigger_source_sel == src_EXT) ? (adc_ch1_rdy | adc_ch2_rdy) :
                                                                   1'b0;
 
     // Detector Trigger Value = Trigger Value, unless Trigger_Source_Sel == EXT.
-    assign trigger_value_out[BITS_ADC-1:0] = (trigger_source == src_EXT) ? (1 << (BITS_ADC-1)) : trigger_value[BITS_ADC-1:0];
+    assign trigger_value_out[BITS_ADC-1:0] = (trigger_source_sel == src_EXT) ? (1 << (BITS_ADC-1)) : trigger_value_in[BITS_ADC-1:0];
 
     // MUX for trigger source selection
-    assign tmp_trigger_source[BITS_ADC-1:0] = (trigger_source == src_CH1) ? ch1_in :
-                                              (trigger_source == src_CH2) ? ch2_in :
-                                              (trigger_source == src_EXT) ? { BITS_ADC{ext_in} } : // sign extension
+    assign tmp_trigger_source[BITS_ADC-1:0] = (trigger_source_sel == src_CH1) ? ch1_in :
+                                              (trigger_source_sel == src_CH2) ? ch2_in :
+                                              (trigger_source_sel == src_EXT) ? { BITS_ADC{ext_in} } : // sign extension
                                                                             0;
 
     // Edge type: negate bits to change to negative edge type.
