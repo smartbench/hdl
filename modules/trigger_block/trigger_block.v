@@ -70,7 +70,7 @@ module trigger_block  #(
 );
 
     // Buffer Controller
-    wire [BITS_ADC-1:0]trigger_source_data;
+    wire [BITS_ADC-1:0] trigger_source_data;
     wire trigger_source_rdy;
     wire [BITS_ADC-1:0] trigger_value_o;
 
@@ -162,7 +162,7 @@ module trigger_block  #(
         // Registers
         .num_samples    (num_samples),
         .pre_trigger    (pretrigger),
-        .trigger_value  (trigger_value),
+        .trigger_value  (trigger_value_o),
         // Ram controller
         .write_enable   (we),
         // Tx Protocol

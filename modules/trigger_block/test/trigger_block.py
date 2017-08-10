@@ -209,7 +209,7 @@ def test (dut):
     si_reg_master.writeReg( ADDR_TRIGGER_VALUE , 170 )
     si_reg_master.writeReg( ADDR_TRIGGER_SETTINGS , SRC_CH1 | EDGE_POS )
 
-    for t in range(100):
+    for t in range(200):
         x1 = 128 + int(100 * sin(2*pi*1e6*t*20e-9))
         x2 = 128 - int(050 * sin(2*pi*1e6*t*20e-9))
         adc_ch1.write(x1)
