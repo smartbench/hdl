@@ -74,7 +74,7 @@ class Ft245:
         self.temp_data = 0
 
     def write (self,val):
-        self.tx_fifo.append(val)
+        self.rx_fifo.append(val)
 
     @cocotb.coroutine
     def tx_monitor (self):
@@ -92,8 +92,6 @@ class Ft245:
                 self.dut.txe_245 <= 1
             yield nsTimer(80) # T12
 
-
-
     @cocotb.coroutine
     def rx_driver (self):
         while True:
@@ -101,7 +99,7 @@ class Ft245:
                 self.dut.rxf_245 <= 0
                 yield FallingEdge(self.dut.rx_245)
                 yield nsTimer(50)
-                self.dut.ftdi_data <= self.fifo.pop(0)
+                self.dut.ftdi_data <= self.rx_fifo.pop(0)
                 yield RisingEdge(self.dut.rx_245)
                 self.dut.ftdi_data <= 0
                 yield nsTimer(25)
