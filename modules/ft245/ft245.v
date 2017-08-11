@@ -28,13 +28,13 @@ module ft245_interface
     output reg tx_ack_si=0
 );
 
-    parameter CLOCK_PERIOD_NS = 10;
+    parameter CLOCK_PERIOD_NS = 10.0;
 
-    localparam WAIT_TIME_RX = 30;
-    localparam INACTIVE_TIME_RX = 14;
-    localparam SETUP_TIME_TX = 5;
-    localparam HOLD_TIME_TX = 5;
-    localparam ACTIVE_TIME_TX = 30;
+    localparam WAIT_TIME_RX = 30.0;
+    localparam INACTIVE_TIME_RX = 14.0;
+    localparam SETUP_TIME_TX = 5.0;
+    localparam HOLD_TIME_TX = 5.0;
+    localparam ACTIVE_TIME_TX = 30.0;
 
 
     localparam CNT_WAIT_RX = $rtoi($ceil(WAIT_TIME_RX/CLOCK_PERIOD_NS));
@@ -84,6 +84,7 @@ module ft245_interface
                     if (cnt == CNT_WAIT_RX-1) begin
                         rx_245 <= 1'b1;
                         state <= ST_INACTIVE_RX;
+                        cnt <= 0;
                         rx_data_si <= rx_data_245;
                         rx_rdy_si <= 1'b1;
                     end
@@ -109,6 +110,7 @@ module ft245_interface
                     cnt <= cnt + 1;
                     wr_245 <= 1'b0;
                     if (cnt == CNT_ACTIVE_TX-1) begin
+                        cnt <= 0;
                         tx_oe_245 <= 1'b0;
                         state <= ST_IDLE;
                         wr_245 <= 1'b1;
