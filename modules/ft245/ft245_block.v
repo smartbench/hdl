@@ -39,9 +39,9 @@ module ft245_block #(
     
     genvar h;
     generate
-        for (h=0 ; h<8 ; h=h+1) begin
+        for (h=0 ; h<FT245_DATA_WIDTH ; h=h+1) begin
             SB_IO IO_PIN_INST(
-                .PACKAGE_PIN (Package_Pin),
+                .PACKAGE_PIN (ftdi_data[h]),
                 .LATCH_INPUT_VALUE (),
                 .CLOCK_ENABLE (),
                 .INPUT_CLK (),
