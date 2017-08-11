@@ -1,17 +1,21 @@
 
 `timescale 1ns/1ps
 
+`define FT245_DATA_WIDTH 8
+`define RX_WIDTH 8
+`define TX_WIDTH 8
+
 module ft245_block #(
     parameter FT245_DATA_WIDTH = `FT245_DATA_WIDTH,
     parameter RX_WIDTH = `RX_WIDTH,
     parameter TX_WIDTH = `TX_WIDTH
-)( 
-    // 
+)(
+    //
     input clk,
     input rst,
 
     inout [FT245_DATA_WIDTH-1:0] ftdi_data,
-    
+
     // ft245 rx interface
     input rxf_245,
     output rx_245,
@@ -28,19 +32,21 @@ module ft245_block #(
     input tx_rdy_si,
     output tx_ack_si
 
-
 );
-    
-    defparam my_generic_IO.PIN_TYPE = 6’b{4'b1010, 2'b01};
-    
+
+    //defparam my_generic_IO.PIN_TYPE = 6’b{4'b1010, 2'b01};
+
     wire tx_oe_245;
     wire [FT245_DATA_WIDTH-1:0] tx_data_245;
     wire [FT245_DATA_WIDTH-1:0] rx_data_245;
-    
+
     genvar h;
     generate
         for (h=0 ; h<FT245_DATA_WIDTH ; h=h+1) begin
-            SB_IO IO_PIN_INST(
+            SB_IO #(
+                .PIN_TYPE(6'b 101001),
+                .PULLUP(1'b0)
+            ) IO_PIN_INST (
                 .PACKAGE_PIN (ftdi_data[h]),
                 .LATCH_INPUT_VALUE (),
                 .CLOCK_ENABLE (),
@@ -54,11 +60,11 @@ module ft245_block #(
             );
         end
     endgenerate
-    
-    
+
+
     ft245_interface #(
         .CLOCK_PERIOD_NS(10.0)
-    ) ft245_interface_u ( 
+    ) ft245_interface_u (
         .clk(clk),
         .rst(rst),
         .rx_data_245(rx_data_245),
@@ -77,7 +83,6 @@ module ft245_block #(
         .tx_rdy_si(tx_rdy_si),
         .tx_ack_si(tx_ack_si)
     );
-
 
 
 `ifdef COCOTB_SIM
