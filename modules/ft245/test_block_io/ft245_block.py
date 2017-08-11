@@ -75,13 +75,11 @@ class Ft245:
 
     def write (self,val):
         self.tx_fifo.append(val)
-        if self.rxing == False:
-            self.dut.rxf_245 <= 0
 
     @cocotb.coroutine
     def tx_monitor (self):
         while True:
-            if(len(self.dut.tx_fifo) > 0):
+            if(len(self.tx_fifo) > 0):
                 self.dut.txe_245 <= 0
                 yield RisingEdge(self.dut.wr_245)
                 self.temp_data <= self.dut.ftdi_data.value.integer
@@ -92,7 +90,7 @@ class Ft245:
                 self.tx_fifo.append(self.temp_data)
                 yield nsTimer(25)   # T11
                 self.dut.txe_245 <= 1
-            yield nsTimer(80)
+            yield nsTimer(80) # T12
 
 
 
