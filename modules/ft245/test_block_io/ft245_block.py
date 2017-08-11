@@ -53,11 +53,20 @@ class SI_Slave:
     def monitor ( self):
         while True:
             self.ack <= 0
-            yield RisingEdge(self.rdy)
-            for i in range(randint(0,15)): yield RisingEdge(self.clk)
-            self.ack <= 1
+            if(self.rdy.value.integer == 1):
+                yield FallingEdge(self.clk)
+                self.fifo.append(self.data.value.integer)
+                self.ack <= 1
             yield RisingEdge(self.clk)
-            self.fifo.append(self.data.value.integer)
+
+
+        # while True:
+        #     self.ack <= 0
+        #     yield RisingEdge(self.rdy)
+        #     for i in range(randint(0,15)): yield RisingEdge(self.clk)
+        #     self.ack <= 1
+        #     yield RisingEdge(self.clk)
+        #     self.fifo.append(self.data.value.integer)
             # ???????
 
 
@@ -65,13 +74,13 @@ class Ft245:
     def __init__ (self,dut):
         self.dut = dut
 
-        self.rxing = False
-        self.dut.rxf_245 <= 1
-        self.dut.txe_245 <= 0
-        #self.dut.ftdi_data
         self.tx_fifo = []
         self.rx_fifo = []
         self.temp_data = 0
+
+        self.dut.rxf_245 <= 1
+        self.dut.txe_245 <= 0
+        #self.dut.ftdi_data <= 0
 
     def write (self,val):
         self.rx_fifo.append(val)
@@ -103,7 +112,7 @@ class Ft245:
                 yield RisingEdge(self.dut.rx_245)
                 self.dut.ftdi_data <= 0
                 yield nsTimer(25)
-                self.dut.rxf_245 <= 0
+                self.dut.rxf_245 <= 1
             yield nsTimer(80)
 
 
