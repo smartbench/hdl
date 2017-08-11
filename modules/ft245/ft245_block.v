@@ -40,28 +40,6 @@ module ft245_block #(
     wire [FT245_DATA_WIDTH-1:0] tx_data_245;
     wire [FT245_DATA_WIDTH-1:0] rx_data_245;
 
-    genvar h;
-    generate
-        for (h=0 ; h<FT245_DATA_WIDTH ; h=h+1) begin
-            SB_IO #(
-                .PIN_TYPE(6'b 101001),
-                .PULLUP(1'b0)
-            ) IO_PIN_INST (
-                .PACKAGE_PIN (ftdi_data[h]),
-                .LATCH_INPUT_VALUE (),
-                .CLOCK_ENABLE (),
-                .INPUT_CLK (),
-                .OUTPUT_CLK (),
-                .OUTPUT_ENABLE (tx_oe_245),
-                .D_OUT_0 (rx_data_245[h]),
-                .D_OUT_1 (),
-                .D_IN_0 (tx_data_245[h]),
-                .D_IN_1 ()
-            );
-        end
-    endgenerate
-
-
     ft245_interface #(
         .CLOCK_PERIOD_NS(10.0)
     ) ft245_interface_u (
@@ -85,12 +63,59 @@ module ft245_block #(
     );
 
 
+`ifndef COCOTB_SIM
+
+/*
+Tri-state buffer iCE40 - useful links
+https://stackoverflow.com/questions/37431914/ice40-icestorm-fpga-flow-bi-directional-io-pins
+https://www.reddit.com/r/yosys/comments/6apqig/trouble_with_tristate_io_on_ice40/
+*/
+    genvar h;
+    generate
+        for (h=0 ; h<FT245_DATA_WIDTH ; h=h+1) begin
+            SB_IO #(
+                .PIN_TYPE(6'b 101001),
+                .PULLUP(1'b0)
+            ) IO_PIN_INST (
+                .PACKAGE_PIN (ftdi_data[h]),
+                .LATCH_INPUT_VALUE (),
+                .CLOCK_ENABLE (),
+                .INPUT_CLK (),
+                .OUTPUT_CLK (),
+                .OUTPUT_ENABLE (tx_oe_245),
+                .D_OUT_0 (tx_data_245[h]),
+                .D_OUT_1 (),
+                .D_IN_0 (rx_data_245[h]),
+                .D_IN_1 ()
+            );
+        end
+    endgenerate
+
+`else
+/*
+Tri-state buffer a manopla - useful links
+https://stackoverflow.com/questions/40902637/how-to-write-to-inout-port-and-read-from-inout-port-of-the-same-module
+*/
+    COCO_IO #(
+        .WIDTH(8)
+        ) IO_PIN_INST (
+            .data_io(ftdi_data),
+            .oe(tx_oe_245),
+            .data_o(tx_data_245),
+            .data_i(rx_data_245)
+        );
+
+
+`endif
+
+
+
 `ifdef COCOTB_SIM
-initial begin
-  $dumpfile ("waveform.vcd");
-  $dumpvars (0,ft245_block);
-  #1;
-end
+    initial begin
+      $dumpfile ("waveform.vcd");
+      $dumpvars (0,ft245_block);
+      #1;
+    end
 `endif
 
 endmodule
