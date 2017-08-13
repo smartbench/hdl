@@ -2,6 +2,8 @@
 `timescale 1ns/1ps
 module ft245_interface
 (
+    input clk,
+    input rst,
 
     // ft245 rx interface
     input [7:0] rx_data_245,
@@ -11,12 +13,8 @@ module ft245_interface
     // ft245 tx interface
     output reg [7:0] tx_data_245= 8'b0,
     input txe_245,
-    output reg wr_245= 1'b0,
+    output reg wr_245= 1'b1,
     output reg tx_oe_245=1'b0,
-
-    //
-    input clk,
-    input rst,
 
     // simple interface
     output reg [7:0] rx_data_si = 8'd0,
@@ -25,7 +23,7 @@ module ft245_interface
 
     input [7:0] tx_data_si,
     input tx_rdy_si,
-    output reg tx_ack_si=0
+    output reg tx_ack_si=1'b0
 );
 
     parameter CLOCK_PERIOD_NS = 10.0;
@@ -51,30 +49,23 @@ module ft245_interface
     localparam ST_SETUP_TX = 3;
     localparam ST_WAIT_TX = 4;
 
-    reg [2:0] state =0;
+    reg [2:0] state = ST_IDLE;
     reg [$clog2(MAX_CNT):0] cnt=0;
 
-    //always @* tx_ack_si <= (state==ST_IDLE)? tx_rdy_si & ~txe_245 & rxf_245 & ~rx_rdy_si: 1'b0;
+    always @* tx_ack_si <=  (state==ST_IDLE) ?
+        (rxf_245 & rx_rdy_si & ~txe_245 & tx_rdy_si) : 1'b0;
 
     always @(posedge clk) begin
         if (rst == 1'b1) begin
             state <= ST_IDLE;
             rx_245 <= 1'b1;
+            tx_oe_245 <= 1'b0;
             cnt <= 3'd0;
+            wr_245 <= 1'b1;
             rx_rdy_si <= 1'b0;
         end else begin
-
-            // start AK
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
-            tx_ack_si <= 1'b0;
-            // end AK
-
-            /*
-            // start AD
-            rx_rdy_si <= (rx_rdy_si == 1'b0)? 1'b0 : rx_rdy_si ^ rx_ack_si;
             wr_245 <= 1'b1;
-            // end AD
-            */
             case (state)
                 ST_IDLE:
                 begin
@@ -82,26 +73,11 @@ module ft245_interface
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
-
-                    // start AK
                     end else if(txe_245 == 1'b0 && tx_rdy_si == 1'b1) begin
-                        tx_ack_si <= 1'b1;
-                        wr_245 <= 1'b1;
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         state <= ST_SETUP_TX;
                     end
-                    // end AK
-
-                    /*
-                    // start AD
-                    end else if ( tx_ack_si == 1'b1 ) begin
-                        tx_data_245 <= tx_data_si;
-                        tx_oe_245 <= 1'b1;
-                        state <= ST_SETUP_TX;
-                    end
-                    // end AD
-                    */
                 end
 
                 ST_WAIT_RX:
@@ -143,7 +119,7 @@ module ft245_interface
                     end
                 end
 
-                default:  rx_245 <= 1'b0;
+                default:  rx_245 <= 1'b1;
             endcase
         end
     end

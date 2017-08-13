@@ -43,11 +43,6 @@ module breadboard_top (
     wire tx_rdy_si;
     wire tx_ack_si;
 
-    assign rx_ack_si = rx_rdy_si;
-    always @(posedge clk_100M) begin
-        if(rx_rdy_si == 1'b1) leds <= rx_data_si;
-    end
-
     // --------------------------
     // USING FT245_BLOCK
     ft245_block #(
@@ -73,5 +68,23 @@ module breadboard_top (
         .tx_ack_si(tx_ack_si)
 
     );
+
+    /*
+    assign rx_ack_si = rx_rdy_si;
+    always @(posedge clk_100M) begin
+        if(rx_rdy_si == 1'b1) leds <= rx_data_si;
+    end*/
+
+    assign rx_ack_si = tx_ack_si;
+    assign tx_rdy_si = rx_rdy_si;
+    assign tx_data_si = ~rx_data_si;
+
+    always @(posedge clk_100M) begin
+        if(rst) begin
+        end else begin
+            if(rx_rdy_si == 1'b1) leds <= rx_data_si;
+            //if(tx_ack_si == 1'b1 && txe_245 == 1'b0) leds <= 8'hAA;
+        end
+    end
 
 endmodule
