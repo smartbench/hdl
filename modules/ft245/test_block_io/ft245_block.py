@@ -13,9 +13,8 @@ def nsTimer (t):
 RD_TO_DATA = 14.0;
 RFX_INACTIVE = 49.0;
 
-SETUP_TIME_TX = 5.0;
-HOLD_TIME_TX = 5.0;
-ACTIVE_TIME_TX = 30.0;
+WR_TO_INACTIVE = 14.0;
+TXE_INACTIVE = 50.0;
 
 class SI_Master:
     def __init__ ( self, clk, rst , data, rdy, ack):
@@ -39,7 +38,8 @@ class SI_Master:
             if len(self.fifo) > 0 :
                 self.rdy <= 1
                 self.data <= self.fifo.pop(0)
-                while self.ack.value.integer != 1 : yield RisingEdge(self.clk)
+                if(self.ack.value.integer == 0): yield RisingEdge(self.ack)
+                #while self.ack.value.integer != 1 : yield FallingEdge(self.clk)
                 self.rdy <= 0
 
 
@@ -72,52 +72,32 @@ class Ft245:
 
         self.tx_fifo = []
         self.rx_fifo = []
-        self.temp_data = 0
 
         self.dut.rxf_245 <= 1
         self.dut.txe_245 <= 0
-        #self.dut.ftdi_data <= 0
+        #self.dut.in_out_245 <= 0
 
     def write (self,val):
         self.rx_fifo.append(val)
 
     @cocotb.coroutine
     def tx_monitor (self):
+        print ("-----------------------------------------------")
+        yield nsTimer(TXE_INACTIVE)
         while True:
-            if True: # if(len(self.tx_fifo) > 0):
+            if True: # if BufferNotFull:
                 self.dut.txe_245 <= 0
-                yield RisingEdge(self.dut.wr_245)
-                self.temp_data <= self.dut.ftdi_data.value.integer
-                yield nsTimer(20) # T9
-                while self.dut.wr_245.value.integer == 1:
-                    self.temp_data <= self.dut.ftdi_data.value.integer
-                    yield nsTimer(20) # T9
-                self.tx_fifo.append(self.temp_data)
-                print ("-----------------------------------------------")
-                print ("FDTI TX: " + repr(self.temp_data))
+                if self.dut.wr_245.value.integer == 1: yield FallingEdge(self.dut.wr_245)
+                yield Timer(1, units='ps')
+                #print ("{WR_245, TXE_245} = " + repr(self.dut.wr_245.value.integer) + repr(self.dut.txe_245.value.integer) )
+                self.tx_fifo.append(self.dut.in_out_245.value.integer)
                 #print ("-----------------------------------------------")
-                yield nsTimer(25)   # T11
+                print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
+                #print ("-----------------------------------------------")
+                yield nsTimer(WR_TO_INACTIVE)
                 self.dut.txe_245 <= 1
-            yield nsTimer(80) # T12
+            yield nsTimer(TXE_INACTIVE)
 
-    # @cocotb.coroutine
-    # def rx_driver (self):
-    #     while True:
-    #         if(len(self.rx_fifo) > 0):
-    #             #print ("-----------------------------------------------")
-    #             self.dut.rxf_245 <= 0
-    #             yield FallingEdge(self.dut.rx_245)
-    #             yield nsTimer(RD_TO_DATA)
-    #             self.dut.ftdi_data <= self.rx_fifo.pop(0)
-    #             #print ("-----------------------------------------------")
-    #             print ("FDTI RX: " + repr(self.dut.ftdi_data.value.integer))
-    #             #print ("-----------------------------------------------")
-    #             yield RisingEdge(self.dut.rx_245)
-    #             self.dut.ftdi_data <= 0
-    #             yield nsTimer(1)
-    #             self.dut.rxf_245 <= 1
-    #             yield nsTimer(RFX_INACTIVE)
-    #         yield nsTimer(5)
     @cocotb.coroutine
     def rx_driver (self):
         while True:
@@ -125,16 +105,16 @@ class Ft245:
                 self.dut.rxf_245 <= 0
                 if(self.dut.rx_245.value.integer == 1): yield FallingEdge(self.dut.rx_245)
                 yield nsTimer(RD_TO_DATA)
-                #self.dut.ftdi_data <= 0
+                #self.dut.in_out_245 <= 0
                 aux = self.rx_fifo.pop(0)
-                self.dut.ftdi_data <= aux #self.rx_fifo.pop(0)
+                self.dut.in_out_245 <= aux #self.rx_fifo.pop(0)
                 #print "-----------------------------------------------"
                 #print "AUX = " + repr(aux)
                 yield Timer(1,units='ps')
-                #print "FDTI RX: " + repr(self.dut.ftdi_data.value.integer)
+                #print "FDTI RX: " + repr(self.dut.in_out_245.value.integer)
                 #print "-----------------------------------------------"
                 if(self.dut.rx_245.value.integer == 0): yield RisingEdge(self.dut.rx_245)
-                #self.dut.ftdi_data <= 0
+                #self.dut.in_out_245 <= 0
                 yield nsTimer(14)
                 self.dut.rxf_245 <= 1
             yield nsTimer(RFX_INACTIVE)
@@ -157,7 +137,7 @@ def test (dut):
     si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
-    # for i in range(150): si_tx.write(i)
+    #for i in range(100): si_tx.write(i+1)
     cocotb.fork(ft245.rx_driver() )
     cocotb.fork(ft245.tx_monitor() )
     cocotb.fork(si_rx.monitor() )
