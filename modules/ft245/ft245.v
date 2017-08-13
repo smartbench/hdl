@@ -11,7 +11,7 @@ module ft245_interface
     // ft245 tx interface
     output reg [7:0] tx_data_245= 8'b0,
     input txe_245,
-    output reg wr_245= 1'b1,
+    output reg wr_245= 1'b0,
     output reg tx_oe_245=1'b0,
 
     //
@@ -54,7 +54,7 @@ module ft245_interface
     reg [2:0] state =0;
     reg [$clog2(MAX_CNT):0] cnt=0;
 
-    always @* tx_ack_si <= (state==ST_IDLE)? tx_rdy_si & ~txe_245 & rxf_245 & ~rx_rdy_si: 1'b0;
+    //always @* tx_ack_si <= (state==ST_IDLE)? tx_rdy_si & ~txe_245 & rxf_245 & ~rx_rdy_si: 1'b0;
 
     always @(posedge clk) begin
         if (rst == 1'b1) begin
@@ -63,7 +63,7 @@ module ft245_interface
             cnt <= 3'd0;
             rx_rdy_si <= 1'b0;
         end else begin
-            
+
             // start AK
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
             tx_ack_si <= 1'b0;
