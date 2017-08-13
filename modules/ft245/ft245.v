@@ -1,7 +1,7 @@
 
 `timescale 1ns/1ps
 module ft245_interface
-( 
+(
 
     // ft245 rx interface
     input [7:0] rx_data_245,
@@ -14,7 +14,7 @@ module ft245_interface
     output reg wr_245= 1'b1,
     output reg tx_oe_245=1'b0,
 
-    // 
+    //
     input clk,
     input rst,
 
@@ -52,32 +52,52 @@ module ft245_interface
     localparam ST_WAIT_TX = 4;
 
     reg [2:0] state =0;
-    reg [$clog2(MAX_CNT)-1:0] cnt=0;
+    reg [$clog2(MAX_CNT):0] cnt=0;
 
     always @* tx_ack_si <= (state==ST_IDLE)? tx_rdy_si & ~txe_245 & rxf_245 & ~rx_rdy_si: 1'b0;
-    
+
     always @(posedge clk) begin
         if (rst == 1'b1) begin
             state <= ST_IDLE;
             rx_245 <= 1'b1;
             cnt <= 3'd0;
         end else begin
+            // start AK
+            rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
+            tx_ack_si <= 1'b0;
+            // end AK
+            /*
+            // start AD
             rx_rdy_si <= (rx_rdy_si == 1'b0)? 1'b0 : rx_rdy_si ^ rx_ack_si;
             wr_245 <= 1'b1;
+            // end AD
+            */
             case (state)
-                ST_IDLE: 
+                ST_IDLE:
                 begin
                     if (rxf_245 == 1'b0  && rx_rdy_si == 1'b0) begin
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
+                    // start AK
+                    end else if(txe_245 == 1'b0 && tx_rdy_si == 1'b1) begin
+                        tx_ack_si <= 1'b1;
+                        wr_245 <= 1'b1;
+                        tx_data_245 <= tx_data_si;
+                        tx_oe_245 <= 1'b1;
+                        state <= ST_SETUP_TX;
+                    end
+
+                    // start AD
+                    /*
                     end else if ( tx_ack_si == 1'b1 ) begin
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         state <= ST_SETUP_TX;
-                    end 
+                    end
+                    */
                 end
-                
+
                 ST_WAIT_RX:
                 begin
                     cnt <= cnt + 1;
@@ -90,7 +110,7 @@ module ft245_interface
                     end
                 end
 
-                ST_INACTIVE_RX: 
+                ST_INACTIVE_RX:
                 begin
                     cnt <= cnt + 1;
                     if (cnt == CNT_INACTIVE_RX-1) begin
@@ -104,7 +124,7 @@ module ft245_interface
                     wr_245 <= 1'b0;
                     cnt <= 0;
                 end
-                
+
                 ST_WAIT_TX: // Espera ACTIVE_TIME_TX
                 begin
                     cnt <= cnt + 1;
@@ -116,7 +136,7 @@ module ft245_interface
                         wr_245 <= 1'b1;
                     end
                 end
-                
+
                 default:  rx_245 <= 1'b0;
             endcase
         end

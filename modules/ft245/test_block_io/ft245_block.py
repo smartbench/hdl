@@ -10,6 +10,12 @@ from cocotb.result import TestFailure, TestError
 def nsTimer (t):
     yield Timer(t,units='ns')
 
+RD_TO_DATA = 14.0;
+RFX_INACTIVE = 49.0;
+
+SETUP_TIME_TX = 5.0;
+HOLD_TIME_TX = 5.0;
+ACTIVE_TIME_TX = 30.0;
 
 class SI_Master:
     def __init__ ( self, clk, rst , data, rdy, ack):
@@ -52,22 +58,12 @@ class SI_Slave:
     @cocotb.coroutine
     def monitor ( self):
         while True:
+            yield FallingEdge(self.clk)
             self.ack <= 0
             if(self.rdy.value.integer == 1):
-                yield FallingEdge(self.clk)
-                # self.fifo.append(self.data.value.integer)
+                self.fifo.append(self.data.value.integer)
                 self.ack <= 1
             yield RisingEdge(self.clk)
-
-
-        # while True:
-        #     self.ack <= 0
-        #     yield RisingEdge(self.rdy)
-        #     for i in range(randint(0,15)): yield RisingEdge(self.clk)
-        #     self.ack <= 1
-        #     yield RisingEdge(self.clk)
-        #     self.fifo.append(self.data.value.integer)
-            # ???????
 
 
 class Ft245:
@@ -104,23 +100,44 @@ class Ft245:
                 self.dut.txe_245 <= 1
             yield nsTimer(80) # T12
 
+    # @cocotb.coroutine
+    # def rx_driver (self):
+    #     while True:
+    #         if(len(self.rx_fifo) > 0):
+    #             #print ("-----------------------------------------------")
+    #             self.dut.rxf_245 <= 0
+    #             yield FallingEdge(self.dut.rx_245)
+    #             yield nsTimer(RD_TO_DATA)
+    #             self.dut.ftdi_data <= self.rx_fifo.pop(0)
+    #             #print ("-----------------------------------------------")
+    #             print ("FDTI RX: " + repr(self.dut.ftdi_data.value.integer))
+    #             #print ("-----------------------------------------------")
+    #             yield RisingEdge(self.dut.rx_245)
+    #             self.dut.ftdi_data <= 0
+    #             yield nsTimer(1)
+    #             self.dut.rxf_245 <= 1
+    #             yield nsTimer(RFX_INACTIVE)
+    #         yield nsTimer(5)
     @cocotb.coroutine
     def rx_driver (self):
         while True:
             if(len(self.rx_fifo) > 0):
-                #print ("-----------------------------------------------")
                 self.dut.rxf_245 <= 0
-                yield FallingEdge(self.dut.rx_245)
-                yield nsTimer(50)
-                self.dut.ftdi_data <= self.rx_fifo.pop(0)
-                print ("-----------------------------------------------")
-                #print ("FDTI RX: " + repr(self.dut.ftdi_data.value.integer))
-                #print ("-----------------------------------------------")
-                yield RisingEdge(self.dut.rx_245)
-                self.dut.ftdi_data <= 0
-                yield nsTimer(25)
+                if(self.dut.rx_245.value.integer == 1): yield FallingEdge(self.dut.rx_245)
+                yield nsTimer(RD_TO_DATA)
+                #self.dut.ftdi_data <= 0
+                aux = self.rx_fifo.pop(0)
+                self.dut.ftdi_data <= aux #self.rx_fifo.pop(0)
+                #print "-----------------------------------------------"
+                #print "AUX = " + repr(aux)
+                yield Timer(1,units='ps')
+                #print "FDTI RX: " + repr(self.dut.ftdi_data.value.integer)
+                #print "-----------------------------------------------"
+                if(self.dut.rx_245.value.integer == 0): yield RisingEdge(self.dut.rx_245)
+                #self.dut.ftdi_data <= 0
+                yield nsTimer(14)
                 self.dut.rxf_245 <= 1
-            yield nsTimer(80)
+            yield nsTimer(RFX_INACTIVE)
 
 
 @cocotb.coroutine
@@ -146,13 +163,15 @@ def test (dut):
     cocotb.fork(si_rx.monitor() )
     cocotb.fork(si_tx.driver() )
     for i in range(10): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i)
+    for i in range(50): ft245.write(i+1)
     for i in range(10*130): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i+50)
+    for i in range(50): ft245.write(i+51)
     for i in range(10*130): yield RisingEdge(dut.clk)
 
     #if (ft245.tx_fifo != [i for i in range(150)]):
     #    raise TestFailure("Simple Interface data != FT245 data (TX)")
 #
-#    if ( si_rx.fifo != [ i for i in range(100)]):
-#        raise TestFailure("Simple Interface data != FT245 data (RX)")
+    if ( si_rx.fifo != [ i+1 for i in range(100)]):
+        raise TestFailure("Simple Interface data != FT245 data (RX)")
+
+    print "-----------> EEEE-XITO <------------"

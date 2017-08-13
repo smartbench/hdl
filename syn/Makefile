@@ -20,7 +20,7 @@ $(TOP).blif: $(SRC)
 	yosys -p "synth_ice40 -blif $(TOP).blif" $(SRC)
 
 $(TOP).asc: $(TOP).blif
-	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc      
+	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
 
 $(TOP).bin: $(TOP).asc
 	icepack $(TOP).asc $(TOP).bin
@@ -28,6 +28,8 @@ $(TOP).bin: $(TOP).asc
 prog:
 	iceprog $(TOP).bin
 
+load-cram:
+	iceprog -S $(TOP).bin
+
 clean:
 	rm $(TOP).bin $(TOP).asc $(TOP).blif --force
-

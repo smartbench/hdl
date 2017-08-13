@@ -1,9 +1,11 @@
 
 
-
 `timescale 1ns/1ps
 
-module SB_IO (
+module SB_IO #(
+    parameter PIN_TYPE = 6'b 101001,
+    parameter  PULLUP = 1'b0
+    )(
        inout PACKAGE_PIN ,
        input LATCH_INPUT_VALUE,
        input CLOCK_ENABLE,
@@ -16,8 +18,6 @@ module SB_IO (
        output D_IN_1
 );
 
-    parameter PIN_TYPE = 6'b 101001;
-    parameter  PULLUP = 1'b0;
     assign PACKAGE_PIN = OUTPUT_ENABLE ? D_OUT_0 : 8'bzzzzzzzz ; // To drive the inout net
     assign D_IN_0 = PACKAGE_PIN;
 
