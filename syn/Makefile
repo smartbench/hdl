@@ -1,15 +1,6 @@
-<<<<<<< HEAD
-
-
-
 
 TOP = breadboard_top
 SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
-=======
-TOP = top
-SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
-INC = ../inc/
->>>>>>> configuration_registers_fully_associative_version
 
 # PNR OPT
 PACKAGE = ct256
