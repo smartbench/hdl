@@ -61,11 +61,14 @@ module ft245_interface
             state <= ST_IDLE;
             rx_245 <= 1'b1;
             cnt <= 3'd0;
+            rx_rdy_si <= 1'b0;
         end else begin
+            
             // start AK
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
             tx_ack_si <= 1'b0;
             // end AK
+
             /*
             // start AD
             rx_rdy_si <= (rx_rdy_si == 1'b0)? 1'b0 : rx_rdy_si ^ rx_ack_si;
@@ -79,6 +82,7 @@ module ft245_interface
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
+
                     // start AK
                     end else if(txe_245 == 1'b0 && tx_rdy_si == 1'b1) begin
                         tx_ack_si <= 1'b1;
@@ -87,14 +91,16 @@ module ft245_interface
                         tx_oe_245 <= 1'b1;
                         state <= ST_SETUP_TX;
                     end
+                    // end AK
 
-                    // start AD
                     /*
+                    // start AD
                     end else if ( tx_ack_si == 1'b1 ) begin
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         state <= ST_SETUP_TX;
                     end
+                    // end AD
                     */
                 end
 
