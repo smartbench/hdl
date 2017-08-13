@@ -55,7 +55,7 @@ class SI_Slave:
             self.ack <= 0
             if(self.rdy.value.integer == 1):
                 yield FallingEdge(self.clk)
-                self.fifo.append(self.data.value.integer)
+                # self.fifo.append(self.data.value.integer)
                 self.ack <= 1
             yield RisingEdge(self.clk)
 
@@ -97,9 +97,9 @@ class Ft245:
                     self.temp_data <= self.dut.ftdi_data.value.integer
                     yield nsTimer(20) # T9
                 self.tx_fifo.append(self.temp_data)
-                print "-----------------------------------------------"
-                print "FDTI TX: " + repr(self.temp_data)
-                #print "-----------------------------------------------"
+                print ("-----------------------------------------------")
+                print ("FDTI TX: " + repr(self.temp_data))
+                #print ("-----------------------------------------------")
                 yield nsTimer(25)   # T11
                 self.dut.txe_245 <= 1
             yield nsTimer(80) # T12
@@ -108,14 +108,14 @@ class Ft245:
     def rx_driver (self):
         while True:
             if(len(self.rx_fifo) > 0):
-                #print "-----------------------------------------------"
+                #print ("-----------------------------------------------")
                 self.dut.rxf_245 <= 0
                 yield FallingEdge(self.dut.rx_245)
                 yield nsTimer(50)
                 self.dut.ftdi_data <= self.rx_fifo.pop(0)
-                print "-----------------------------------------------"
-                print "FDTI RX: " + repr(self.dut.ftdi_data.value.integer)
-                #print "-----------------------------------------------"
+                print ("-----------------------------------------------")
+                #print ("FDTI RX: " + repr(self.dut.ftdi_data.value.integer))
+                #print ("-----------------------------------------------")
                 yield RisingEdge(self.dut.rx_245)
                 self.dut.ftdi_data <= 0
                 yield nsTimer(25)
@@ -140,7 +140,7 @@ def test (dut):
     si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
-    for i in range(150): si_tx.write(i)
+    # for i in range(150): si_tx.write(i)
     cocotb.fork(ft245.rx_driver() )
     cocotb.fork(ft245.tx_monitor() )
     cocotb.fork(si_rx.monitor() )

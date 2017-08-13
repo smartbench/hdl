@@ -63,13 +63,6 @@ module ft245_block #(
     );
 
 
-`ifndef COCOTB_SIM
-
-/*
-Tri-state buffer iCE40 - useful links
-https://stackoverflow.com/questions/37431914/ice40-icestorm-fpga-flow-bi-directional-io-pins
-https://www.reddit.com/r/yosys/comments/6apqig/trouble_with_tristate_io_on_ice40/
-*/
     genvar h;
     generate
         for (h=0 ; h<FT245_DATA_WIDTH ; h=h+1) begin
@@ -91,23 +84,10 @@ https://www.reddit.com/r/yosys/comments/6apqig/trouble_with_tristate_io_on_ice40
         end
     endgenerate
 
-`else
 /*
 Tri-state buffer a manopla - useful links
 https://stackoverflow.com/questions/40902637/how-to-write-to-inout-port-and-read-from-inout-port-of-the-same-module
 */
-    COCO_IO #(
-        .WIDTH(8)
-        ) IO_PIN_INST (
-            .data_io(ftdi_data),
-            .oe(tx_oe_245),
-            .data_o(tx_data_245),
-            .data_i(rx_data_245)
-        );
-
-
-`endif
-
 
 
 `ifdef COCOTB_SIM
