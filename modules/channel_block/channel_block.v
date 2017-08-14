@@ -54,7 +54,7 @@ module channel_block #(
     // Registers Bus
     input   [REG_ADDR_WIDTH-1:0] register_addr,
     input   [REG_DATA_WIDTH-1:0] register_data,
-    input   reg_rdy,
+    input   register_rdy,
 
     // Trigger source
     output  [BITS_ADC-1:0] adc_data_o,
@@ -161,7 +161,7 @@ module channel_block #(
         // Input (Registers Simple Interface Bus)
         .reg_si_data(register_data),
         .reg_si_addr(register_addr),
-        .reg_si_rdy(reg_rdy)
+        .reg_si_rdy(register_rdy)
     );
 
     `ifdef COCOTB_SIM
