@@ -4,7 +4,8 @@
 `define FT245_WIDTH 8
 
 module ft245_block #(
-    parameter FT245_WIDTH = `FT245_WIDTH
+    parameter FT245_WIDTH = `FT245_WIDTH,
+    parameter CLOCK_PERIOD_NS = 10.0
 )(
     //
     input clk,
@@ -33,7 +34,7 @@ module ft245_block #(
     wire tx_oe_245;
 
     ft245_interface #(
-        .CLOCK_PERIOD_NS(10)
+        .CLOCK_PERIOD_NS(CLOCK_PERIOD_NS)
     ) ft245_test (
         .clk(clk),
         .rst(1'b0),

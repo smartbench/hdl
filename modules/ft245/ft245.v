@@ -1,7 +1,9 @@
 
 `timescale 1ns/1ps
-module ft245_interface
-(
+
+module ft245_interface #(
+    parameter CLOCK_PERIOD_NS = 10
+)(
     input clk,
     input rst,
 
@@ -26,7 +28,6 @@ module ft245_interface
     output reg tx_ack_si=1'b0
 );
 
-    parameter CLOCK_PERIOD_NS = 10.0;
 
     localparam WAIT_TIME_RX = 30.0;
     localparam INACTIVE_TIME_RX = 14.0;
@@ -34,14 +35,35 @@ module ft245_interface
     localparam HOLD_TIME_TX = 5.0;
     localparam ACTIVE_TIME_TX = 30.0;
 
-
     localparam CNT_WAIT_RX = $rtoi($ceil(WAIT_TIME_RX/CLOCK_PERIOD_NS));
     localparam CNT_INACTIVE_RX = $rtoi($ceil(INACTIVE_TIME_RX/CLOCK_PERIOD_NS));
-
     localparam CNT_SETUP_TX = $rtoi($ceil(SETUP_TIME_TX/CLOCK_PERIOD_NS));
     localparam CNT_ACTIVE_TX = $rtoi($ceil(ACTIVE_TIME_TX/CLOCK_PERIOD_NS));
     localparam MAX_CNT = CNT_WAIT_RX;
 
+/*  // Forcing itor
+    localparam CNT_WAIT_RX = $rtoi( $ceil( $itor(WAIT_TIME_RX) / CLOCK_PERIOD_NS ) );
+    localparam CNT_INACTIVE_RX = $rtoi( $ceil( $itor(INACTIVE_TIME_RX)/ CLOCK_PERIOD_NS ) );
+    localparam CNT_SETUP_TX = $rtoi( $ceil( $itor(SETUP_TIME_TX) / CLOCK_PERIOD_NS ) );
+    localparam CNT_ACTIVE_TX = $rtoi( $ceil( $itor(ACTIVE_TIME_TX) / CLOCK_PERIOD_NS ) );
+    localparam MAX_CNT = CNT_WAIT_RX;
+*/
+/*  // HARDCODED
+    localparam CNT_WAIT_RX = 3; // 30/10
+    localparam CNT_INACTIVE_RX = 2; // 14/10
+    localparam CNT_SETUP_TX = 1; // 5/10
+    localparam CNT_ACTIVE_TX = 3; // 30/10
+    localparam MAX_CNT = CNT_WAIT_RX;
+*/
+
+    initial begin
+        //$display("CLOCK_PERIOD_NS:: CLOCK_PERIOD_NS=%s", CLOCK_PERIOD_NS);
+        $display("CNT_WAIT_RX:: CNT_WAIT_RX=%d", CNT_WAIT_RX);
+        $display("CNT_INACTIVE_RX:: CNT_INACTIVE_RX=%d", CNT_INACTIVE_RX);
+        $display("CNT_SETUP_TX:: CNT_SETUP_TX=%d", CNT_SETUP_TX);
+        $display("CNT_ACTIVE_TX:: CNT_ACTIVE_TX=%d", CNT_ACTIVE_TX);
+        $display("MAX_CNT:: MAX_CNT=%d", MAX_CNT);
+    end
 
     localparam ST_IDLE = 0;
     localparam ST_WAIT_RX = 1;

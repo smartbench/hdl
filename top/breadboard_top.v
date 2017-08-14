@@ -46,7 +46,8 @@ module breadboard_top (
     // --------------------------
     // USING FT245_BLOCK
     ft245_block #(
-        .FT245_WIDTH(8)
+        .FT245_WIDTH(8),
+        .CLOCK_PERIOD_NS(10)
     ) ft245_block_u (
         .clk(clk_100M),
         .rst(rst),

@@ -20,7 +20,7 @@ class SI_Master:
         self.clk = clk
         self.rst = rst
         self.rdy <= 0
-        self.data <= 0 
+        self.data <= 0
 
     def write(self,val):
         self.fifo.append(val)
@@ -85,7 +85,7 @@ class Ft245:
 
     @cocotb.coroutine
     def rx_driver (self):
-        while True: 
+        while True:
             self.rxing = False
             yield FallingEdge(self.dut.rx_245)
             self.rxing = True
@@ -137,4 +137,3 @@ def test (dut):
 
     if ( si_rx.fifo != [ i for i in range(100)]):
         raise TestFailure("Simple Interface data != FT245 data (RX)")
-
