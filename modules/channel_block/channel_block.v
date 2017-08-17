@@ -18,17 +18,17 @@
 module channel_block #(
     parameter BITS_ADC = `__BITS_ADC,
     parameter BITS_DAC = `__BITS_DAC,
-    parameter REG_ADDR_WIDTH = `__ADDR_WIDTH,
-    parameter REG_DATA_WIDTH = `__DATA_WIDTH,
+    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
     parameter TX_DATA_WIDTH = `__TX_WIDTH,
     parameter RAM_DATA_WIDTH = `__BITS_ADC,
     parameter RAM_SIZE = `__RAM_SIZE_CH,
 
-    parameter ADDR_CH_SETTINGS = `__ADDR_CONF_CH1,
-    parameter ADDR_DAC_VALUE = `__ADDR_DAC_CH1,
+    parameter ADDR_CH_SETTINGS = 0,
+    parameter ADDR_DAC_VALUE = 1,
 
-    parameter DEFAULT_CH_SETTINGS = `__IV_CONF_CH1,
-    parameter DEFAULT_DAC_VALUE = `__IV_DAC_CH1
+    parameter DEFAULT_CH_SETTINGS = 16'b11100001,
+    parameter DEFAULT_DAC_VALUE = (1 << (`__BITS_DAC-1))
 
 ) (
     // Basic synchronous signals
