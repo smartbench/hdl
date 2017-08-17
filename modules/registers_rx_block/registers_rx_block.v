@@ -36,6 +36,11 @@ module registers_rx_block  #(
     input rx_rdy,                                   // ready
     output rx_ack,                                  // acknowledgment
 
+    // simple interface registers bus
+    output [REG_ADDR_WIDTH-1:0] register_addr,
+    output [REG_DATA_WIDTH-1:0] register_data,
+    output register_rdy,
+
     // Output signals
     output start_o,
     output stop_o,
@@ -44,12 +49,6 @@ module registers_rx_block  #(
     output rqst_trigger_status_o,
     output reset_o
 );
-
-    //
-    wire [REG_ADDR_WIDTH-1:0] register_addr;
-    wire [REG_DATA_WIDTH-1:0] register_data;
-    wire register_rdy;
-
 
     configuration_registers_rx #(
         .RX_DATA_WIDTH(RX_DATA_WIDTH),
