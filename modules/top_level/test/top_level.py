@@ -3,6 +3,9 @@ from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge, FallingEdge, Edge
 from cocotb.result import TestFailure, TestError
 
+from math import pi, sin
+from random import randint
+
 RD_TO_DATA = 14.0
 RFX_INACTIVE = 49.0
 
@@ -32,6 +35,8 @@ RQST_CHB_BIT    = (1 << 3)
 RQST_TRIG_BIT   = (1 << 4)
 RQST_RST_BIT    = (1 << 5)
 
+NOISE_MAX       = 8
+
 #from "../../ft245/test_block_io/ft245_block.py" import Ft245
 
 @cocotb.coroutine
@@ -46,7 +51,7 @@ class ADC:
         self.fifo = []
         self.adc_data <= 0
 
-    def takeSample(self,val):
+    def write(self,val):
         self.fifo.append(val)
 
     @cocotb.coroutine
@@ -169,6 +174,19 @@ def test (dut):
     cocotb.fork( adc_chB.driver() )
     cocotb.fork( ft245.tx_monitor() )
     cocotb.fork( ft245.rx_driver() )
+
+    # load adc buffers
+    # add rand!
+    for t in range(10000):
+        x1 = 128 + int(100 * sin(2*pi*1e6*t*20e-9)) + randint(-NOISE_MAX, NOISE_MAX)
+        x2 = 128 - int(050 * sin(2*pi*1e6*t*20e-9)) + randint(-NOISE_MAX, NOISE_MAX)
+        if x1 < 0: x1 = 0
+        if x2 < 0: x2 = 0
+        if x1 > 256: x1 = 256
+        if x2 > 256: x2 = 256
+        adc_chA.write(x1)
+        adc_chB.write(x2)
+
 
     # initial config
     ft245.write_reg(ADDR_SETTINGS_CHA,1)
