@@ -25,8 +25,12 @@ ADDR_ADC_CLK_DIV_CHB_H =        12
 ADDR_N_MOVING_AVERAGE_CHA =     13
 ADDR_N_MOVING_AVERAGE_CHB =     14
 
-DF = 2
-K = 1
+RQST_START_BIT  = (1 << 0)
+RQST_STOP_BIT   = (1 << 1)
+RQST_CHA_BIT    = (1 << 2)
+RQST_CHB_BIT    = (1 << 3)
+RQST_TRIG_BIT   = (1 << 4)
+RQST_RST_BIT    = (1 << 5)
 
 #from "../../ft245/test_block_io/ft245_block.py" import Ft245
 
@@ -50,13 +54,13 @@ class ADC:
         while True:
             yield RisingEdge(self.adc_clk)
             nsTimer(10)
-            self.self.adc_data <= 0 # invalid data here
+            self.adc_data <= 0 # invalid data here
             nsTimer(9.5)
             if ( len(self.fifo) > 0 ):
-                self.self.adc_data = self.fifo.pop(0)
+                self.adc_data = self.fifo.pop(0)
                 #print 'poping' # Pooping? there is no more toilet paper!
             else:
-                self.self.adc_data <= 0
+                self.adc_data <= 0
 
 class FT245:
     def __init__ (self,dut):
@@ -76,6 +80,29 @@ class FT245:
         self.rx_fifo.append( addr )
         self.rx_fifo.append( data % 256 )   # first LOW
         self.rx_fifo.append( (data >> 8) % 256) # then HIGH
+
+    @cocotb.coroutine
+    def wait_bytes(self, n):
+        while(len(self.tx_fifo) < n): yield RisingEdge(self.dut.clk)
+
+    def read_byte(self, data):
+        if(len(self.tx_fifo) > 0):
+            data <= self.tx_fifo.pop(0)
+            return 0
+        return -1
+
+    def read_data(self, data, n=0):
+        i = 0
+        if(n > 0):
+            #yield self.wait_bytes(n)
+            while(i < n and len(self.tx_fifo) > 0):
+                data.append(self.tx_fifo.pop(0))
+                i = i + 1
+        else:
+            while(len(self.tx_fifo) > 0):
+                data.append(self.tx_fifo.pop(0))
+                i = i + 1
+        return i
 
     @cocotb.coroutine
     def tx_monitor (self):
@@ -128,6 +155,8 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
+    i = 0
+    data = []
 
     adc_chA = ADC(dut.chA_adc_in, dut.chA_adc_clk_o)
     adc_chB = ADC(dut.chB_adc_in, dut.chB_adc_clk_o)
@@ -141,4 +170,26 @@ def test (dut):
     cocotb.fork( ft245.tx_monitor() )
     cocotb.fork( ft245.rx_driver() )
 
-    for i in range(1000): yield RisingEdge(dut.clk_100M)
+    # initial config
+    ft245.write_reg(ADDR_SETTINGS_CHA,1)
+    ft245.write_reg(ADDR_SETTINGS_CHB,255)
+    ft245.write_reg(ADDR_DAC_CHA,127)
+    ft245.write_reg(ADDR_DAC_CHB,127)
+    ft245.write_reg(ADDR_TRIGGER_SETTINGS,2)
+    ft245.write_reg(ADDR_TRIGGER_VALUE,150)
+    ft245.write_reg(ADDR_NUM_SAMPLES,200)
+    ft245.write_reg(ADDR_PRETRIGGER,80)
+    ft245.write_reg(ADDR_ADC_CLK_DIV_CHA_L,4)
+    ft245.write_reg(ADDR_ADC_CLK_DIV_CHA_H,0)
+    ft245.write_reg(ADDR_ADC_CLK_DIV_CHB_L,4)
+    ft245.write_reg(ADDR_ADC_CLK_DIV_CHB_H,0)
+    ft245.write_reg(ADDR_N_MOVING_AVERAGE_CHA,1)
+    ft245.write_reg(ADDR_N_MOVING_AVERAGE_CHB,1)
+    for i in range(200): yield RisingEdge(dut.clk_100M)
+
+    ft245.write_reg(ADDR_REQUESTS, RQST_START_BIT)
+    for i in range(100): yield RisingEdge(dut.clk_100M)
+    ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
+    #for i in range(10): yield RisingEdge(dut.clk_100M)
+    i = ft245.read_data(data, 1)
+    print ("read %d bytes, data=%d\n", [i, data])
