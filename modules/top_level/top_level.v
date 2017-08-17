@@ -66,7 +66,7 @@ module top_level #(
     parameter DEFAULT_PRETRIGGER = `__IV_PRETRIGGER,
     parameter DEFAULT_NUM_SAMPLES = `__IV_NUM_SAMPLES,
     parameter DEFAULT_TRIGGER_VALUE = `__IV_TRIGGER_VALUE,
-    parameter DEFAULT_TRIGGER_SETTINGS = `__IV_TRIGGER_SETTINGS
+    parameter DEFAULT_TRIGGER_SETTINGS = `__IV_TRIGGER_SETTINGS,
         // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
     //parameter DEFAULT_ADC_DF_DV_REG = (`__IV_ADC_CLK_DIV_H << 16) | (`__IV_ADC_CLK_DIV_L),
 
@@ -86,7 +86,7 @@ module top_level #(
     output [2:0] chA_gain_sel,
     output [2:0] chA_att_sel,
     output chA_dc_coupling_sel,
-    //output chA_enabled_sel,
+    output chA_on_sel,
 
 
     // Channel 2 - ADC
@@ -94,10 +94,10 @@ module top_level #(
     output chB_adc_oe,
     output chB_adc_clk_o,
     // Channel 2 - Analog
-    output [2:0] chA_gain_sel,
-    output [2:0] chA_att_sel,
-    output chA_dc_coupling_sel,
-    output chA_enabled_sel,
+    output [2:0] chB_gain_sel,
+    output [2:0] chB_att_sel,
+    output chB_dc_coupling_sel,
+    output chB_on_sel,
 
     // Ext
     input ext_trigger,
@@ -258,17 +258,17 @@ module top_level #(
         .ch1_data(tx_chA_data),
         .ch1_rdy(tx_chA_rdy),
         .ch1_eof(tx_chA_eof),
-        ch1_ack(tx_chA_ack),
+        .ch1_ack(tx_chA_ack),
         // SI - Channel 2
         .ch2_data(tx_chB_data),
         .ch2_rdy(tx_chB_rdy),
         .ch2_eof(tx_chB_eof),
-        ch2_ack(tx_chB_ack),
+        .ch2_ack(tx_chB_ack),
         // SI - Trigger status
         .trig_data(tx_trigger_status_data),
         .trig_rdy(tx_trigger_status_rdy),
         .trig_eof(tx_trigger_status_eof),
-        trig_ack(tx_trigger_status_ack)
+        .trig_ack(tx_trigger_status_ack)
     );
 
     /*
@@ -296,7 +296,7 @@ module top_level #(
         .tx_ack_si(si_ft245_tx_ack)
     );*/
     ft245_block #(
-        .FT245_WIDTH(`FT245_WIDTH),
+        .FT245_WIDTH(FT245_DATA_WIDTH),
         .CLOCK_PERIOD_NS(10)
     ) ft245_block_u (
         .clk(clk_100M),
@@ -329,16 +329,16 @@ module top_level #(
         .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHA),
         .DEFAULT_DAC_VALUE(DEFAULT_DAC_CHA)
     ) channel_block_A(
-        clk(clk_100M),
-        rst(rst),
+        .clk(clk_100M),
+        .rst(rst),
         // iInterface with ADC pins
-        adc_input(chA_adc_in),
-        adc_oe(chA_adc_oe),
-        adc_clk_o(chA_adc_clk_o),
+        .adc_input(chA_adc_in),
+        .adc_oe(chA_adc_oe),
+        .adc_clk_o(chA_adc_clk_o),
         // Interface with MUXes
-        Att_Sel(chA_att_sel),
-        Gain_Sel(chA_gain_sel),
-        DC_Coupling(chA_dc_coupling_sel),
+        .Att_Sel(chA_att_sel),
+        .Gain_Sel(chA_gain_sel),
+        .DC_Coupling(chA_dc_coupling_sel),
         // ChannelOn
         // Buffer Controller
         .rqst_data(rqst_chA_data),
@@ -372,16 +372,16 @@ module top_level #(
         .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHB),
         .DEFAULT_DAC_VALUE(DEFAULT_DAC_CHB)
     ) channel_block_B(
-        clk(clk_100M),
-        rst(rst),
+        .clk(clk_100M),
+        .rst(rst),
         // iInterface with ADC pins
-        adc_input(chB_adc_in),
-        adc_oe(chB_adc_oe),
-        adc_clk_o(chB_adc_clk_o),
+        .adc_input(chB_adc_in),
+        .adc_oe(chB_adc_oe),
+        .adc_clk_o(chB_adc_clk_o),
         // Interface with MUXes
-        Att_Sel(chB_att_sel),
-        Gain_Sel(chB_gain_sel),
-        DC_Coupling(chB_dc_coupling_sel),
+        .Att_Sel(chB_att_sel),
+        .Gain_Sel(chB_gain_sel),
+        .DC_Coupling(chB_dc_coupling_sel),
         // ChannelOn
         // Buffer Controller
         .rqst_data(rqst_chB_data),

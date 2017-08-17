@@ -22,7 +22,6 @@
     Releases:   In development ...
 */
 
-`include "../../../inc/conf_regs_defines.v"
 `timescale 1ns/1ps
 
 `include "conf_regs_defines.v"
