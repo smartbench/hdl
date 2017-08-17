@@ -8,3 +8,5 @@
 *.vcd
 sim_build/
 *.vvp
+.gitignore
+*/conf_regs_defines.v
