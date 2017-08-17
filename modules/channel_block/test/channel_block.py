@@ -67,46 +67,40 @@ class SI_REG_Master:
                 self.reg_si_rdy <= 0
 
 class TX_PROTOCOL:
-    def __init__ (self, clk, dout, read_enable, eof, rqst, wr_en):
+    def __init__ (self, clk, data_out, data_rdy, data_eof, data_ack, rqst, wr_en):
         self.clk = clk
-        self.dout = dout
-        self.read_enable = read_enable
-        self.eof = eof
+        self.data_out = data_out
+        self.data_rdy = data_rdy
+        self.data_eof = data_eof
+        self.data_ack = data_ack
         self.rqst = rqst
         self.fifo = []
         self.wr_en = wr_en
 
-        self.read_enable <= 0
+        self.data_ack <= 0
         self.rqst <= 0
         self.wr_en <= 0
 
     @cocotb.coroutine
     def request_data (self):
-        self.read_enable <= 0
+        self.data_ack <= 0
         self.wr_en <= 0
         self.rqst <= 1
-
         yield RisingEdge(self.clk)
-        yield Timer(1,units='ps')
-
         self.rqst <= 0
-
         yield RisingEdge(self.clk)
-        yield Timer(1,units='ps')
-
-        while (self.eof.value.integer == 0):
-            self.fifo.append(self.dout.value.integer)
-            self.read_enable <= 1
-
+        if (self.data_rdy.value.integer == 0): yield RisingEdge(self.data_rdy)
+        yield FallingEdge(self.clk)
+        while (self.data_eof.value.integer == 0):
+            if(self.data_rdy.value.integer == 1):
+                self.fifo.append(self.data_out.value.integer)
+                self.data_ack <= 1
             yield RisingEdge(self.clk)
-            yield Timer(1,units='ps')
-
-            self.read_enable <= 0
+            self.data_ack <= 0
             for i in range(3):
-                if(self.eof.value.integer == 1): break
-
-                yield RisingEdge(self.clk)# simulando demora en lectura
-                yield Timer(1,units='ps')
+                if(self.data_eof.value.integer == 1): break
+                yield RisingEdge(self.clk) # simulando demora en lectura
+            yield FallingEdge(self.clk)
 
 @cocotb.coroutine
 def Reset (dut):
@@ -136,7 +130,7 @@ def adc_block_test (dut):
 
     adc = Adc(dut)
     si_reg = SI_REG_Master (dut.clk, dut.rst, dut.register_data, dut.register_addr, dut.register_rdy)
-    tx_protocol = TX_PROTOCOL(dut.clk, dut.tx_data, dut.tx_rdy, dut.tx_eof, dut.rqst_data, dut.we)
+    tx_protocol = TX_PROTOCOL(dut.clk, dut.tx_data, dut.tx_rdy, dut.tx_eof, dut.tx_ack, dut.rqst_data, dut.we)
 
     #print 'Taking samples'
     for i in range(100):
