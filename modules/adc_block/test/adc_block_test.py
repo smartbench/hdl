@@ -59,7 +59,7 @@ class SI_REG_Master:
         self.reg_si_rdy = reg_si_rdy
         self.fifo_data = []
         self.fifo_addr = []
-        
+
         self.reg_si_data <= 0
         self.reg_si_data <= 0
         self.reg_si_rdy <= 0
@@ -96,14 +96,14 @@ def adc_block_test (dut):
     REG_ADDR_ADC_DF_L = 0
     REG_ADDR_ADC_DF_H = 1
     REG_ADDR_MOV_AVE_K = 2
-    
+
     DF = 2
     K = 1
-    
+
     adc = Adc(dut)
     si_slave = SI_Slave( dut.clk_i, dut.rst, dut.si_data_o, dut.si_rdy_o)
     si_reg = SI_REG_Master (dut.clk_i, dut.rst, dut.reg_si_data, dut.reg_si_addr, dut.reg_si_rdy)
-    
+
     #print 'Taking samples'
     for i in range(100):
         aux = (i+1)*10
@@ -112,7 +112,7 @@ def adc_block_test (dut):
     si_reg.writeReg( REG_ADDR_ADC_DF_L , DF % (256*256) )
     si_reg.writeReg( REG_ADDR_ADC_DF_H , (DF >> 16) % (256*256) )
     si_reg.writeReg( REG_ADDR_MOV_AVE_K , K )
-    
+
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
 

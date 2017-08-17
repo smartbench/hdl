@@ -54,7 +54,7 @@ module channel_block #(
     // Registers Bus
     input   [REG_ADDR_WIDTH-1:0] register_addr,
     input   [REG_DATA_WIDTH-1:0] register_data,
-    input   reg_rdy,
+    input   register_rdy,
 
     // Trigger source
     output  [BITS_ADC-1:0] adc_data_o,
@@ -72,7 +72,7 @@ module channel_block #(
     // ADC ---> Trigger Source Selector
     wire    [BITS_ADC-1:0] si_adc_data;
     wire    si_adc_rdy;
-    wire    si_adc_ack;
+    wire    si_adc_ack; // not used!
 
     wire [REG_DATA_WIDTH-1:0] dac_val;
 
@@ -133,7 +133,7 @@ module channel_block #(
         // Internal (ADC)
         .din(si_adc_data),
         .si_rdy_adc(si_adc_rdy),
-        .si_ack_adc(si_adc_ack),
+        .si_ack_adc(si_adc_ack), //not used!
         // Output (Tx Protocol)
         .data_out(tx_data),
         .data_rdy(tx_rdy),
@@ -161,7 +161,7 @@ module channel_block #(
         // Input (Registers Simple Interface Bus)
         .reg_si_data(register_data),
         .reg_si_addr(register_addr),
-        .reg_si_rdy(reg_rdy)
+        .reg_si_rdy(register_rdy)
     );
 
     `ifdef COCOTB_SIM
