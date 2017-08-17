@@ -35,10 +35,12 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 class ADC:
-    def __init__ ( self, dut ):
-        self.dut = dut
+    def __init__ ( self, adc_data, adc_clk):
+        self.adc_data = adc_data
+        self.adc_clk = adc_clk
+
         self.fifo = []
-        self.dut.adc_data_i <= 0
+        self.adc_data <= 0
 
     def takeSample(self,val):
         self.fifo.append(val)
@@ -46,17 +48,17 @@ class ADC:
     @cocotb.coroutine
     def driver (self):
         while True:
-            yield RisingEdge(self.dut.clk_o)
+            yield RisingEdge(self.adc_clk)
             nsTimer(10)
-            self.dut.adc_data_i <= 0 # invalid data here
+            self.self.adc_data <= 0 # invalid data here
             nsTimer(9.5)
             if ( len(self.fifo) > 0 ):
-                self.dut.adc_data_i = self.fifo.pop(0)
+                self.self.adc_data = self.fifo.pop(0)
                 #print 'poping' # Pooping? there is no more toilet paper!
             else:
-                self.dut.adc_data_i <= 0
+                self.self.adc_data <= 0
 
-class Ft245:
+class FT245:
     def __init__ (self,dut):
         self.dut = dut
 
@@ -127,13 +129,15 @@ def Reset (dut):
 @cocotb.test()
 def test (dut):
 
-    adc = Adc(dut)
+    adc_chA = ADC(dut.chA_adc_in, dut.chA_adc_clk_o)
+    adc_chB = ADC(dut.chB_adc_in, dut.chB_adc_clk_o)
     ft245 = FT245(dut)
 
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
 
-    cocotb.fork( adc.driver() )
+    cocotb.fork( adc_chA.driver() )
+    cocotb.fork( adc_chB.driver() )
     cocotb.fork( ft245.tx_monitor() )
     cocotb.fork( ft245.rx_driver() )
 

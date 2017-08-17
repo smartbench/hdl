@@ -112,12 +112,15 @@ module top_level #(
 
     // I2C
     inout SDA,
-    inout SCL
+    inout SCL,
+
+    output clk_o
 
 );
 
     // PLL output clock
     wire clk_100M;
+    assign clk_o = clk_100M;
 
     // Registers bus
     wire [REG_ADDR_WIDTH-1:0] reg_addr;
@@ -179,7 +182,7 @@ module top_level #(
     )uut(
         .RESETB(1'b1),
         .BYPASS(1'b0),
-        .REFERENCECLK(clock_i),
+        .REFERENCECLK(clk_i),
         .PLLOUTCORE(clk_100M)
     );
 
@@ -201,8 +204,7 @@ module top_level #(
         .reset_o(rqst_reset),
         .rqst_ch1(rqst_chA_data),
         .rqst_ch2(rqst_chB_data),
-        .rqst_trigger_status_o(rqst_trigger_status)/* ,
-        .example_register_data() */
+        .rqst_trigger_status_o(rqst_trigger_status)
     );
 
     trigger_block  #(
