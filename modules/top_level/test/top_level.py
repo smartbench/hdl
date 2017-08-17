@@ -3,6 +3,21 @@ from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge, FallingEdge, Edge
 from cocotb.result import TestFailure, TestError
 
+RD_TO_DATA = 14.0
+RFX_INACTIVE = 49.0
+
+WR_TO_INACTIVE = 14.0
+TXE_INACTIVE = 50.0
+
+REG_ADDR_ADC_DF_L = 0
+REG_ADDR_ADC_DF_H = 1
+REG_ADDR_MOV_AVE_K = 2
+
+DF = 2
+K = 1
+
+from ../../ft245/test_block_io.ft245_block.py import Ft245
+
 @cocotb.coroutine
 def nsTimer (t):
     yield Timer(t,units='ns')
@@ -45,18 +60,11 @@ def Reset (dut):
     yield RisingEdge(dut.clk_i)
 
 @cocotb.test()
-def adc_block_test (dut):
+def test (dut):
 
-    REG_ADDR_ADC_DF_L = 0
-    REG_ADDR_ADC_DF_H = 1
-    REG_ADDR_MOV_AVE_K = 2
-    
-    DF = 2
-    K = 1
-    
     adc = Adc(dut)
     ft245 = FT245(dut)
-    
+
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
 
@@ -64,4 +72,3 @@ def adc_block_test (dut):
     cocotb.fork( ft245.driver() )
 
     for i in range(1000): yield RisingEdge(dut.clk_100M)
-

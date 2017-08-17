@@ -1,4 +1,4 @@
-./*
+/*
     Top Level
 
     Authors:
