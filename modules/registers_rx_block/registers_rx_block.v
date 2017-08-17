@@ -5,7 +5,6 @@
     Instances of:
         - configuration_registers_rx
         - requests_handler
-        - example_register
 
 */
 /*`define __REG_ADDR_WIDTH 8
@@ -19,10 +18,14 @@
 
 `timescale 1ns/1ps
 
+`include "conf_regs_defines.v"
+
 module registers_rx_block  #(
     parameter RX_DATA_WIDTH = 8,
     parameter REG_ADDR_WIDTH = 8,
-    parameter REG_DATA_WIDTH = 16
+    parameter REG_DATA_WIDTH = 16,
+    parameter ADDR_REQUESTS = 0,
+    parameter DEFAULT_REQUESTS = 0
 ) (
     // Basic
     input clk,                  // fpga clock
@@ -39,10 +42,7 @@ module registers_rx_block  #(
     output rqst_ch1,
     output rqst_ch2,
     output rqst_trigger_status_o,
-    output reset_o,
-
-    output [REG_DATA_WIDTH-1:0] example_register_data
-
+    output reset_o
 );
 
     //
@@ -69,8 +69,8 @@ module registers_rx_block  #(
     requests_handler  #(
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
         .REG_DATA_WIDTH(REG_DATA_WIDTH),
-        .MY_ADDR(12),
-        .MY_RESET_VALUE(0)
+        .MY_ADDR(ADDR_REQUESTS),
+        .MY_RESET_VALUE(DEFAULT_REQUESTS)
     ) requests_handler_u (
         .clk(clk),
         .rst(rst),
@@ -83,21 +83,6 @@ module registers_rx_block  #(
         .rqst_ch2(rqst_ch2),
         .rqst_trigger_status_o(rqst_trigger_status_o),
         .reset_o(reset_o)
-    );
-
-    fully_associative_register #(
-        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-        .REG_DATA_WIDTH(REG_DATA_WIDTH),
-        .MY_ADDR(15),
-        .MY_RESET_VALUE(8)
-    ) example_register_u (
-        .clk(clk),
-        .rst(rst),
-        .si_addr(register_addr),
-        .si_data(register_data),
-        .si_rdy(register_rdy),
-        .si_ack(),
-        .data(example_register_data)
     );
 
     `ifdef COCOTB_SIM     // COCOTB macro

@@ -97,11 +97,11 @@ def test (dut):
     cocotb.fork( Clock(dut.clk,10,units='ns').start() )
     print "------------------------------------------- THREE -------------------------------------------"
     yield Reset(dut)
-    
+
     print "------------------------------------------- FOUR -------------------------------------------"
 
     print "I'm writing the fifo"
-    
+
     si_rx.write(13)
     si_rx.write(0xFF)
     si_rx.write(0xEE)
@@ -115,13 +115,8 @@ def test (dut):
     si_rx.write(0x99)
     si_rx.write(0x88)
 
-    # example register (addr=15, default_value=8)
-    si_rx.write(15)
-    si_rx.write(0x80)
-    si_rx.write(0x01)
-
-    # requests_handler (addr=12)
-    si_rx.write(12)
+    # requests_handler (addr=0x00)
+    si_rx.write(0)
     si_rx.write(0x01)
     si_rx.write(0x00)
 
