@@ -31,7 +31,7 @@ module top_level #(
     parameter RX_DATA_WIDTH = `__RX_WIDTH,
     parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,       // Simple Interface
     parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
-    parameter FT245_DATA_WIDTH = `__FT245_DATA_WIDTH.
+    parameter FT245_DATA_WIDTH = `__FT245_DATA_WIDTH,
 
 
     // registers addresses
