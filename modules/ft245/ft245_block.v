@@ -1,11 +1,11 @@
 
 `timescale 1ns/1ps
 
-`define FT245_WIDTH 8
+//`define FT245_WIDTH 8
 
 module ft245_block #(
     parameter FT245_WIDTH = `FT245_WIDTH,
-    parameter CLOCK_PERIOD_NS = 10.0
+    parameter CLOCK_PERIOD_NS = 10
 )(
     //
     input clk,

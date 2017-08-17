@@ -95,20 +95,16 @@ module top_level #(
     // Ext
     input ext_trigger,
 
-    // FT245 rx interface
-    input [7:0] rx_data_245,
+    // FT245 interface
+    inout [`FT245_WIDTH-1:0] in_out_245,
     input rxf_245,
     output rx_245,
-
-    // ft245 tx interface
-    output [7:0] tx_data_245,
     input txe_245,
     output wr_245,
-    output tx_oe_245,
 
     // I2C
-    output SDA,
-    output SCL
+    inout SDA,
+    inout SCL
 
 );
 
@@ -268,6 +264,7 @@ module top_level #(
         trig_ack(tx_trigger_status_ack)
     );
 
+    /*
     // FT245
     ft245_interface #(
         .CLOCK_PERIOD_NS(10)
@@ -290,6 +287,25 @@ module top_level #(
         .tx_data_si(si_ft245_tx_data),
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
+    );*/
+    ft245_block #(
+        .FT245_WIDTH(`FT245_WIDTH),
+        .CLOCK_PERIOD_NS(10)
+    ) ft245_block_u (
+        .clk(clk_100M),
+        .rst(rst),
+        .in_out_245(in_out_245),
+        .rxf_245(rxf_245),
+        .rx_245(rx_245),
+        .txe_245(txe_245),
+        .wr_245(wr_245),
+        .rx_data_si(si_ft245_rx_data),
+        .rx_rdy_si(si_ft245_rx_rdy),
+        .rx_ack_si(si_ft245_rx_ack),
+        .tx_data_si(si_ft245_tx_data),
+        .tx_rdy_si(si_ft245_tx_rdy),
+        .tx_ack_si(si_ft245_tx_ack)
+
     );
 
     // Channel Block
