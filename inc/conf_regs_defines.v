@@ -32,13 +32,12 @@
 `define __NUM_REGS                  10
 `define __NUM_REQUEST_REGS          1
 `define __NUM_REGS_TOTAL            ( `__NUM_REGS + `__NUM_REQUEST_REGS )
-`define __DATA_WIDTH                16                                          // Register width
-`define __ADDR_WIDTH_MIN            ( $clog2( `__NUM_REGS_TOTAL ) )
+`define __REG_DATA_WIDTH            16                                          // Register width
+`define __REG_ADDR_WIDTH_MIN        ( $clog2( `__NUM_REGS_TOTAL ) )
 //__ADDR_WIDTH_MIN rounded to next multiple of a byte
-`define __ADDR_WIDTH                ( $rtoi( $ceil( $itor(`__ADDR_WIDTH_MIN) / `__RX_WIDTH ) ) * 8 )
+`define __REG_ADDR_WIDTH            ( $rtoi( $ceil( $itor(`__REG_ADDR_WIDTH_MIN) / `__RX_WIDTH ) ) * 8 )
 `define __REGS_STARTING_ADDR        1                                           // First reg addr after request regs.
-`define __REG_ADDR_WIDTH            `__ADDR_WIDTH
-`define __REG_DATA_WIDTH            `__DATA_WIDTH
+
 
 /*******************************************************************************
                                 ADDRESSES
@@ -91,7 +90,7 @@
 *******************************************************************************/
 
 `define __IV_CONF_CH1               16'b11100001
-`define __IV_CONF_CH2               16'b11100000
+`define __IV_CONF_CH2               16'b11100001
 `define __IV_DAC_CH1                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
 `define __IV_DAC_CH2                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
 `define __IV_TRIGGER_CONF           16'b0
