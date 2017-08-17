@@ -29,8 +29,10 @@ module top_level #(
     parameter RAM_SIZE = `__RAM_SIZE_CH,
     parameter TX_DATA_WIDTH = `__TX_WIDTH,
     parameter RX_DATA_WIDTH = `__RX_WIDTH,
-    parameter REG_DATA_WIDTH = `__DATA_WIDTH,       // Simple Interfacez
-    parameter REG_ADDR_WIDTH = `__ADDR_WIDTH,
+    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,       // Simple Interface
+    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
+    parameter FT245_DATA_WIDTH = `__FT245_DATA_WIDTH.
+
 
     // registers addresses
     parameter ADDR_REQUESTS = `__ADDR_REQUESTS,
@@ -40,8 +42,8 @@ module top_level #(
     parameter ADDR_ADC_CLK_DIV_CHB_H = `__ADDR_ADC_CLK_DIV_CHB_H,
     parameter ADDR_N_MOVING_AVERAGE_CHA = `__ADDR_N_MOVING_AVERAGE_CHA,
     parameter ADDR_N_MOVING_AVERAGE_CHB = `__ADDR_N_MOVING_AVERAGE_CHB,
-    parameter ADDR_SETTINGS_CHA = `ADDR_SETTINGS_CHA,
-    parameter ADDR_SETTINGS_CHB = `ADDR_SETTINGS_CHB,
+    parameter ADDR_SETTINGS_CHA = `__ADDR_SETTINGS_CHA,
+    parameter ADDR_SETTINGS_CHB = `__ADDR_SETTINGS_CHB,
     parameter ADDR_DAC_CHA = `__ADDR_DAC_CHA,
     parameter ADDR_DAC_CHB = `__ADDR_DAC_CHB,
     parameter ADDR_PRETRIGGER = `__ADDR_PRETRIGGER,
@@ -101,7 +103,7 @@ module top_level #(
     input ext_trigger,
 
     // FT245 interface
-    inout [`FT245_WIDTH-1:0] in_out_245,
+    inout [FT245_DATA_WIDTH-1:0] in_out_245,
     input rxf_245,
     output rx_245,
     input txe_245,
