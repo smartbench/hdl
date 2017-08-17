@@ -211,5 +211,5 @@ def test (dut):
     ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
     #for i in range(10): yield RisingEdge(dut.clk_100M)
     i = ft245.read_data(data, 1)
-    print ("read" + repr(i) + "bytes, data= " + str(data))
+    print ("read " + repr(i) + " bytes, data= " + str(data))
     for i in range(10000): yield RisingEdge(dut.clk_100M)
