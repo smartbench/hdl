@@ -5,7 +5,7 @@
 //`define FT245_WIDTH 8
 
 module ft245_block #(
-    parameter FT245_WIDTH = `FT245_WIDTH,
+    parameter FT245_WIDTH = 8,
     parameter CLOCK_PERIOD_NS = 10
 )(
     //
