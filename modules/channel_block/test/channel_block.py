@@ -149,7 +149,9 @@ def adc_block_test (dut):
 
     cocotb.fork( Clock(dut.clk,10,units='ns').start() )
 
+    dut.tx_ack <= 1
     dut.we <= 0
+    dut.num_samples <= 100
     yield Reset(dut)
 
     dut.we <= 1
@@ -161,8 +163,10 @@ def adc_block_test (dut):
         yield RisingEdge(dut.adc_clk_o)
         yield Timer(1,units='ps')
 
+    dut.we <= 0
     cocotb.fork( tx_protocol.request_data() )
 
-    for i in range(1000):
+    for i in range(53):
+        print i
         yield RisingEdge(dut.clk)
         yield Timer(1,units='ps')
