@@ -121,7 +121,7 @@ module trigger_block  #(
         .REG_ADDR_WIDTH (REG_ADDR_WIDTH),
         .REG_DATA_WIDTH (REG_DATA_WIDTH),
         .MY_ADDR        (ADDR_TRIGGER_VALUE),
-        .MY_RESET_VALUE (DEFAULT_TRIGGER_VALUE)
+        .MY_RESET_VALUE ({8'd0, DEFAULT_TRIGGER_VALUE})
     ) reg_trigger_value (
         .clk            (clk),
         .rst            (rst),

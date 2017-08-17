@@ -124,11 +124,11 @@ module top_level #(
     wire reg_rdy;
 
     // FT245 SI
-    wire [RX_WIDTH-1:0] si_ft245_rx_data;
+    wire [RX_DATA_WIDTH-1:0] si_ft245_rx_data;
     wire                si_ft245_rx_rdy;
     wire                si_ft245_rx_ack;
 
-    wire [TX_WIDTH-1:0] si_ft245_tx_data;
+    wire [TX_DATA_WIDTH-1:0] si_ft245_tx_data;
     wire                si_ft245_tx_rdy;
     wire                si_ft245_tx_ack;
 
@@ -347,7 +347,7 @@ module top_level #(
         // Registers Bus
         .register_addr(reg_addr),
         .register_data(reg_data),
-        .reg_rdy(reg_rdy),
+        .register_rdy(reg_rdy),
         // Trigger source
         .adc_data_o(chA_adc_data),
         .adc_rdy_o(chA_adc_rdy),
@@ -390,7 +390,7 @@ module top_level #(
         // Registers Bus
         .register_addr(reg_addr),
         .register_data(reg_data),
-        .reg_rdy(reg_rdy),
+        .register_rdy(reg_rdy),
         // Trigger source
         .adc_data_o(chB_adc_data),
         .adc_rdy_o(chB_adc_rdy),
