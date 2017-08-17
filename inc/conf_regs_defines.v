@@ -48,18 +48,20 @@
 `define __ADDR_REQUESTS                 0
 
 // Conf regs addresses
-`define __ADDR_CONF_CH1                 1
-`define __ADDR_CONF_CH2                 2
-`define __ADDR_DAC_CH1                  3
-`define __ADDR_DAC_CH2                  4
-`define __ADDR_TRIGGER_CONF             5
+`define __ADDR_SETTINGS_CHA             1
+`define __ADDR_SETTINGS_CHB             2
+`define __ADDR_DAC_CHA                  3
+`define __ADDR_DAC_CHB                  4
+`define __ADDR_TRIGGER_SETTINGS         5
 `define __ADDR_TRIGGER_VALUE            6
 `define __ADDR_NUM_SAMPLES              7
-`define __ADDR_PRE_TRIGGER              8
-`define __ADDR_DECIMATION_L             9
-`define __ADDR_DECIMATION_H             10
-`define __ADDR_N_MOVING_AVERAGE_CH1     11
-`define __ADDR_N_MOVING_AVERAGE_CH2     12
+`define __ADDR_PRETRIGGER               8
+`define __ADDR_ADC_CLK_DIV_CHA_L        9
+`define __ADDR_ADC_CLK_DIV_CHA_H        10
+`define __ADDR_ADC_CLK_DIV_CHB_L        11
+`define __ADDR_ADC_CLK_DIV_CHB_H        12
+`define __ADDR_N_MOVING_AVERAGE_CHA     13
+`define __ADDR_N_MOVING_AVERAGE_CHB     14
 
 /*******************************************************************************
                                 BIT FIELDS
@@ -96,8 +98,8 @@
 `define __IV_TRIGGER_VALUE          (1 << (`__BITS_ADC-1)) // 16'b10000000
 `define __IV_NUM_SAMPLES            16'b10000000
 `define __IV_PRE_TRIGGER            16'b0
-`define __IV_DECIMATION_L           16'b0
-`define __IV_DECIMATION_H           16'b0
+`define __IV_ADC_CLK_DIV_L          16'b0
+`define __IV_ADC_CLK_DIV_H          16'b0
 `define __IV_AVERAGE_N              16'b1
 `define __IV_N_MOVING_AVERAGE_CH1   16'b0
 `define __IV_N_MOVING_AVERAGE_CH2   16'b0

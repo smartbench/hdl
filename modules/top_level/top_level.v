@@ -33,14 +33,17 @@ module top_level #(
     parameter REG_ADDR_WIDTH = `__ADDR_WIDTH,
 
     // registers addresses
-    parameter ADDR_ADC_CLK_DIV_L = `__ADDR_ADC_CLK_DIV_L,
-    parameter ADDR_ADC_CLK_DIV_H = `__ADDR_ADC_CLK_DIV_H,
-    parameter ADDR_MOV_AVE_K_CHA = `__ADDR_MOV_AVE_K_CHA,
-    parameter ADDR_MOV_AVE_K_CHB = `__ADDR_MOV_AVE_K_CHB,
-    parameter ADDR_SETTINGS_CHA = `__ADDR_CONF_CHA,
-    parameter ADDR_SETTINGS_CHB = `__ADDR_CONF_CHB,
-    parameter ADDR_DAC_VALUE_CHA = `__ADDR_DAC_CHA,
-    parameter ADDR_DAC_VALUE_CHB = `__ADDR_DAC_CHB,
+    parameter ADDR_REQUESTS = `__ADDR_REQUESTS,
+    parameter ADDR_ADC_CLK_DIV_CHA_L = `__ADDR_ADC_CLK_DIV_CHA_L,
+    parameter ADDR_ADC_CLK_DIV_CHA_H = `__ADDR_ADC_CLK_DIV_CHA_H,
+    parameter ADDR_ADC_CLK_DIV_CHB_L = `__ADDR_ADC_CLK_DIV_CHB_L,
+    parameter ADDR_ADC_CLK_DIV_CHB_H = `__ADDR_ADC_CLK_DIV_CHB_H,
+    parameter ADDR_N_MOVING_AVERAGE_CHA = `__ADDR_N_MOVING_AVERAGE_CHA,
+    parameter ADDR_N_MOVING_AVERAGE_CHB = `__ADDR_N_MOVING_AVERAGE_CHB,
+    parameter ADDR_SETTINGS_CHA = `ADDR_SETTINGS_CHA,
+    parameter ADDR_SETTINGS_CHB = `ADDR_SETTINGS_CHB,
+    parameter ADDR_DAC_CHA = `__ADDR_DAC_CHA,
+    parameter ADDR_DAC_CHB = `__ADDR_DAC_CHB,
     parameter ADDR_PRETRIGGER = `__ADDR_PRETRIGGER,
     parameter ADDR_NUM_SAMPLES = `__ADDR_NUM_SAMPLES,
     parameter ADDR_TRIGGER_VALUE = `__ADDR_TRIGGER_VALUE,
@@ -48,20 +51,22 @@ module top_level #(
     // default values
 
     // registers default values
-    parameter DEFAULT_ADC_CLK_DIV_H = `__IV_DECIMATION_H,
-    parameter DEFAULT_ADC_CLK_DIV_L = `__IV_DECIMATION_L,
-    parameter DEFAULT_MOV_AVE_K_CHA = `__IV_MOV_AVE_K_CHA,
-    parameter DEFAULT_MOV_AVE_K_CHB = `__IV_MOV_AVE_K_CHB,
+    parameter DEFAULT_ADC_CLK_DIV_CHA_H = `__IV_ADC_CLK_DIV_CHA_H,
+    parameter DEFAULT_ADC_CLK_DIV_CHA_L = `__IV_ADC_CLK_DIV_CHA_L,
+    parameter DEFAULT_ADC_CLK_DIV_CHB_H = `__IV_ADC_CLK_DIV_CHB_H,
+    parameter DEFAULT_ADC_CLK_DIV_CHB_L = `__IV_ADC_CLK_DIV_CHB_L,
+    parameter DEFAULT_N_MOVING_AVERAGE_CHA = `__IV_N_MOVING_AVERAGE_CHA,
+    parameter DEFAULT_N_MOVING_AVERAGE_CHB = `__IV_N_MOVING_AVERAGE_CHB,
     parameter DEFAULT_SETTINGS_CHA = `__IV_CONF_CHA,
     parameter DEFAULT_SETTINGS_CHB = `__IV_CONF_CHB,
-    parameter DEFAULT_DAC_VALUE_CHA = `__IV_DAC_CHA,
-    parameter DEFAULT_DAC_VALUE_CHB = `__IV_DAC_CHB,
+    parameter DEFAULT_DAC_CHA = `__IV_DAC_CHA,
+    parameter DEFAULT_DAC_CHB = `__IV_DAC_CHB,
     parameter DEFAULT_PRETRIGGER = `__IV_PRETRIGGER,
     parameter DEFAULT_NUM_SAMPLES = `__IV_NUM_SAMPLES,
     parameter DEFAULT_TRIGGER_VALUE = `__IV_TRIGGER_VALUE,
     parameter DEFAULT_TRIGGER_SETTINGS = `__IV_TRIGGER_SETTINGS
         // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
-    //parameter DEFAULT_ADC_DF_DV_REG = (`__IV_DECIMATION_H << 16) | (`__IV_DECIMATION_L),
+    //parameter DEFAULT_ADC_DF_DV_REG = (`__IV_ADC_CLK_DIV_H << 16) | (`__IV_ADC_CLK_DIV_L),
 
     //
     parameter ADC_DF_WIDTH   = `__ADC_DF_WIDTH,     // ADC decimation
@@ -318,9 +323,9 @@ module top_level #(
         .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
         .RAM_SIZE(RAM_SIZE),
         .ADDR_CH_SETTINGS(ADDR_SETTINGS_CHA),
-        .ADDR_DAC_VALUE(ADDR_DAC_VALUE_CHA),
+        .ADDR_DAC_VALUE(ADDR_DAC_CHA),
         .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHA),
-        .DEFAULT_DAC_VALUE(DEFAULT_DAC_VALUE_CHA)
+        .DEFAULT_DAC_VALUE(DEFAULT_DAC_CHA)
     ) channel_block_A(
         clk(clk_100M),
         rst(rst),
@@ -361,9 +366,9 @@ module top_level #(
         .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
         .RAM_SIZE(RAM_SIZE),
         .ADDR_CH_SETTINGS(ADDR_SETTINGS_CHB),
-        .ADDR_DAC_VALUE(ADDR_DAC_VALUE_CHB),
+        .ADDR_DAC_VALUE(ADDR_DAC_CHB),
         .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHB),
-        .DEFAULT_DAC_VALUE(DEFAULT_DAC_VALUE_CHB)
+        .DEFAULT_DAC_VALUE(DEFAULT_DAC_CHB)
     ) channel_block_B(
         clk(clk_100M),
         rst(rst),

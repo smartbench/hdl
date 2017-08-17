@@ -11,6 +11,8 @@
 
 `timescale 1ns/1ps
 
+`include "conf_regs_defines.v"
+
 module requests_handler  #(
     parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
     parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
