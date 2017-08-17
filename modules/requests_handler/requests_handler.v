@@ -44,12 +44,12 @@ module requests_handler  #(
     // this is important!!
     // When a request for data arrives, a STOP must be send to stop writing RAM, avoiding
     //  data corruption.
-    // Also, if you ask for CH1 and later CH2, you probably want them both in the same
+    // Also, if you ask for CHA and later CHB, you probably want them both in the same
     //  time interval.
     // This won't be necessary if the channel data request is made with both STOP and RQST_CHx bits set.
-    assign stop_o = rqst_array[`__RQST_STOP_IDX] | rqst_array[`__RQST_CH1_IDX] | rqst_array[`__RQST_CH2_IDX];
-    assign rqst_ch1 = rqst_array[`__RQST_CH1_IDX];
-    assign rqst_ch2 = rqst_array[`__RQST_CH2_IDX];
+    assign stop_o = rqst_array[`__RQST_STOP_IDX] | rqst_array[`__RQST_CHA_IDX] | rqst_array[`__RQST_CHB_IDX];
+    assign rqst_ch1 = rqst_array[`__RQST_CHA_IDX];
+    assign rqst_ch2 = rqst_array[`__RQST_CHB_IDX];
     assign rqst_trigger_status_o = rqst_array[`__RQST_TRIG_IDX];
     assign reset_o = rqst_array[`__RQST_RST_IDX];
 
