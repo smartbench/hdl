@@ -53,6 +53,7 @@ module top_level #(
     // default values
 
     // registers default values
+    parameter DEFAULT_REQUESTS = `__IV_REQUESTS,
     parameter DEFAULT_ADC_CLK_DIV_CHA_H = `__IV_ADC_CLK_DIV_CHA_H,
     parameter DEFAULT_ADC_CLK_DIV_CHA_L = `__IV_ADC_CLK_DIV_CHA_L,
     parameter DEFAULT_ADC_CLK_DIV_CHB_H = `__IV_ADC_CLK_DIV_CHB_H,
@@ -186,7 +187,9 @@ module top_level #(
     registers_rx_block  #(
         .RX_DATA_WIDTH(RX_DATA_WIDTH),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-        .REG_DATA_WIDTH(REG_DATA_WIDTH)
+        .REG_DATA_WIDTH(REG_DATA_WIDTH),
+        .ADDR_REQUESTS(ADDR_REQUESTS),
+        .DEFAULT_REQUESTS(DEFAULT_REQUESTS)
     ) rx_block_u (
         .clk(clk_100M),
         .rst(rst),
