@@ -72,7 +72,7 @@ module channel_block #(
     // ADC ---> Trigger Source Selector
     wire    [BITS_ADC-1:0] si_adc_data;
     wire    si_adc_rdy;
-    wire    si_adc_ack;
+    wire    si_adc_ack; // not used!
 
     wire [REG_DATA_WIDTH-1:0] dac_val;
 
@@ -133,7 +133,7 @@ module channel_block #(
         // Internal (ADC)
         .din(si_adc_data),
         .si_rdy_adc(si_adc_rdy),
-        .si_ack_adc(si_adc_ack),
+        .si_ack_adc(si_adc_ack), //not used!
         // Output (Tx Protocol)
         .data_out(tx_data),
         .data_rdy(tx_rdy),

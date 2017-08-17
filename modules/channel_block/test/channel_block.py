@@ -41,7 +41,7 @@ class SI_REG_Master:
         self.fifo_data = []
         self.fifo_addr = []
 
-        self.reg_si_data <= 0
+        self.reg_si_addr <= 0
         self.reg_si_data <= 0
         self.reg_si_rdy <= 0
 
