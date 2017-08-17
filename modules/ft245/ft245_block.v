@@ -1,7 +1,8 @@
 
 `timescale 1ns/1ps
 
-`define FT245_WIDTH 8
+`include "conf_regs_defines.v"
+//`define FT245_WIDTH 8
 
 module ft245_block #(
     parameter FT245_WIDTH = `FT245_WIDTH,
