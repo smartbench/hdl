@@ -38,6 +38,8 @@
 `define __REG_ADDR_WIDTH            ( $rtoi( $ceil( $itor(`__REG_ADDR_WIDTH_MIN) / `__RX_WIDTH ) ) * 8 )
 `define __REGS_STARTING_ADDR        1                                           // First reg addr after request regs.
 
+`define __ADC_CLK_DIV_WIDTH         32
+`define __MOVING_AVERAGE_ACUM_WIDTH 12
 
 /*******************************************************************************
                                 ADDRESSES
@@ -66,7 +68,7 @@
                                 BIT FIELDS
 *******************************************************************************/
 
-// CONF_CHA, CONF_CHB
+// SETTINGS_CHA, SETTINGS_CHB
 `define __CONF_CH_ATT                       7:5
 `define __CONF_CH_GAIN                      4:2
 `define __CONF_CH_DC_COUPLING               1:1
@@ -89,20 +91,19 @@
                         INITIAL VALUES OF REGESTERS
 *******************************************************************************/
 
-`define __IV_CONF_CHA               16'b11100001
-`define __IV_CONF_CHB               16'b11100001
-`define __IV_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
-`define __IV_DAC_CHB                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
-`define __IV_TRIGGER_SETTINGS       16'b0
-`define __IV_TRIGGER_VALUE          (1 << (`__BITS_ADC-1)) // 16'b10000000
-`define __IV_NUM_SAMPLES            16'b10000000
-`define __IV_PRETRIGGER             16'b0
-`define __IV_ADC_CLK_DIV_CHA_H      16'd0
-`define __IV_ADC_CLK_DIV_CHA_L      16'd4
-`define __IV_ADC_CLK_DIV_CHB_H      16'd0
-`define __IV_ADC_CLK_DIV_CHB_L      16'd4
-`define __IV_AVERAGE_N              16'b1
-`define __IV_N_MOVING_AVERAGE_CHA   16'b0
-`define __IV_N_MOVING_AVERAGE_CHB   16'b0
+`define __DEFAULT_REQUESTS               16'd0
+`define __DEFAULT_SETTINGS_CHA           16'b11100001
+`define __DEFAULT_SETTINGS_CHB           16'b11100001
+`define __DEFAULT_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
+`define __DEFAULT_DAC_CHB                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
+`define __DEFAULT_TRIGGER_SETTINGS       16'b0
+`define __DEFAULT_TRIGGER_VALUE          (1 << (`__BITS_ADC-1)) // 16'b10000000
+`define __DEFAULT_NUM_SAMPLES            16'b10000000
+`define __DEFAULT_PRETRIGGER             16'b0
+`define __DEFAULT_ADC_CLK_DIV_CHA        16'd4
+`define __DEFAULT_ADC_CLK_DIV_CHB        16'd4
+`define __DEFAULT_AVERAGE_N              16'b1
+`define __DEFAULT_N_MOVING_AVERAGE_CHA   16'b0
+`define __DEFAULT_N_MOVING_AVERAGE_CHB   16'b0
 
 `endif

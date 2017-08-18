@@ -32,10 +32,8 @@ module top_level #(
     parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,       // Simple Interface
     parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
     parameter FT245_DATA_WIDTH = `__FT245_DATA_WIDTH,
-    parameter ADC_CLK_DIV_WIDTH = ` ,
-    parameter MOVING_AVERAGE_ACUM_WIDTH = ` ,
-
-
+    parameter ADC_CLK_DIV_WIDTH = `__ADC_CLK_DIV_WIDTH,
+    parameter MOVING_AVERAGE_ACUM_WIDTH = `__MOVING_AVERAGE_ACUM_WIDTH,
 
     // registers addresses
     parameter ADDR_REQUESTS = `__ADDR_REQUESTS,
@@ -55,27 +53,21 @@ module top_level #(
     parameter ADDR_TRIGGER_SETTINGS = `__ADDR_TRIGGER_SETTINGS,
 
     // registers default values
-    parameter DEFAULT_REQUESTS = `__IV_REQUESTS,
-    parameter DEFAULT_ADC_CLK_DIV_CHA_H = `__IV_ADC_CLK_DIV_CHA_H,
-    parameter DEFAULT_ADC_CLK_DIV_CHA_L = `__IV_ADC_CLK_DIV_CHA_L,
-    parameter DEFAULT_ADC_CLK_DIV_CHB_H = `__IV_ADC_CLK_DIV_CHB_H,
-    parameter DEFAULT_ADC_CLK_DIV_CHB_L = `__IV_ADC_CLK_DIV_CHB_L,
-    parameter DEFAULT_N_MOVING_AVERAGE_CHA = `__IV_N_MOVING_AVERAGE_CHA,
-    parameter DEFAULT_N_MOVING_AVERAGE_CHB = `__IV_N_MOVING_AVERAGE_CHB,
-    parameter DEFAULT_SETTINGS_CHA = `__IV_CONF_CHA,
-    parameter DEFAULT_SETTINGS_CHB = `__IV_CONF_CHB,
-    parameter DEFAULT_DAC_CHA = `__IV_DAC_CHA,
-    parameter DEFAULT_DAC_CHB = `__IV_DAC_CHB,
-    parameter DEFAULT_PRETRIGGER = `__IV_PRETRIGGER,
-    parameter DEFAULT_NUM_SAMPLES = `__IV_NUM_SAMPLES,
-    parameter DEFAULT_TRIGGER_VALUE = `__IV_TRIGGER_VALUE,
-    parameter DEFAULT_TRIGGER_SETTINGS = `__IV_TRIGGER_SETTINGS,
+    parameter DEFAULT_REQUESTS = `__DEFAULT_REQUESTS,
+    parameter DEFAULT_ADC_CLK_DIV_CHA = `__DEFAULT_ADC_CLK_DIV_CHA,
+    parameter DEFAULT_ADC_CLK_DIV_CHB = `__DEFAULT_ADC_CLK_DIV_CHB,
+    parameter DEFAULT_N_MOVING_AVERAGE_CHA = `__DEFAULT_N_MOVING_AVERAGE_CHA,
+    parameter DEFAULT_N_MOVING_AVERAGE_CHB = `__DEFAULT_N_MOVING_AVERAGE_CHB,
+    parameter DEFAULT_SETTINGS_CHA = `__DEFAULT_SETTINGS_CHA,
+    parameter DEFAULT_SETTINGS_CHB = `__DEFAULT_SETTINGS_CHB,
+    parameter DEFAULT_DAC_CHA = `__DEFAULT_DAC_CHA,
+    parameter DEFAULT_DAC_CHB = `__DEFAULT_DAC_CHB,
+    parameter DEFAULT_PRETRIGGER = `__DEFAULT_PRETRIGGER,
+    parameter DEFAULT_NUM_SAMPLES = `__DEFAULT_NUM_SAMPLES,
+    parameter DEFAULT_TRIGGER_VALUE = `__DEFAULT_TRIGGER_VALUE,
+    parameter DEFAULT_TRIGGER_SETTINGS = `__DEFAULT_TRIGGER_SETTINGS
         // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
-    //parameter DEFAULT_ADC_DF_DV_REG = (`__IV_ADC_CLK_DIV_H << 16) | (`__IV_ADC_CLK_DIV_L),
-
-    //
-    parameter ADC_DF_WIDTH   = `__ADC_DF_WIDTH,     // ADC decimation
-    parameter MA_ACUM_WIDTH = `__MA_ACUM_WIDTH      // Moving Average Acumulator
+    //parameter DEFAULT_ADC_DF_DV_REG = (`__DEFAULT_ADC_CLK_DIV_H << 16) | (`__DEFAULT_ADC_CLK_DIV_L),
   )(
     // Basic
     input clk_i,
@@ -343,8 +335,7 @@ module top_level #(
         .ADDR_N_MOVING_AVERAGE(ADDR_N_MOVING_AVERAGE_CHA),
         .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHA),
         .DEFAULT_DAC_VALUE(DEFAULT_DAC_CHA),
-        .DEFAULT_ADC_CLK_DIV_H(DEFAULT_ADC_CLK_DIV_CHA_H),
-        .DEFAULT_ADC_CLK_DIV_L(DEFAULT_ADC_CLK_DIV_CHA_L),
+        .DEFAULT_ADC_CLK_DIV(DEFAULT_ADC_CLK_DIV_CHA),
         .DEFAULT_N_MOVING_AVERAGE(DEFAULT_N_MOVING_AVERAGE_CHA)
     ) channel_block_A(
         .clk(clk_100M),
@@ -394,8 +385,7 @@ module top_level #(
         .ADDR_N_MOVING_AVERAGE(ADDR_N_MOVING_AVERAGE_CHB),
         .DEFAULT_CH_SETTINGS(DEFAULT_SETTINGS_CHB),
         .DEFAULT_DAC_VALUE(DEFAULT_DAC_CHB),
-        .DEFAULT_ADC_CLK_DIV_H(DEFAULT_ADC_CLK_DIV_CHB_H),
-        .DEFAULT_ADC_CLK_DIV_L(DEFAULT_ADC_CLK_DIV_CHB_L),
+        .DEFAULT_ADC_CLK_DIV(DEFAULT_ADC_CLK_DIV_CHB),
         .DEFAULT_N_MOVING_AVERAGE(DEFAULT_N_MOVING_AVERAGE_CHB)
     ) channel_block_B(
         .clk(clk_100M),
