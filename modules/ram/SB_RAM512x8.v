@@ -5,8 +5,8 @@
 
 // When infering RAM cascading is supported
 module SB_RAM512x8 #(
-    parameter ADDR_WIDTH = `__ADDR_WIDTH,
-    parameter DATA_WIDTH = `__DATA_WIDTH
+    parameter ADDR_WIDTH = 32,
+    parameter DATA_WIDTH = 8
 )(
     input [ADDR_WIDTH-1:0] waddr,
     input [ADDR_WIDTH-1:0] raddr,

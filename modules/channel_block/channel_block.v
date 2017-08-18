@@ -16,20 +16,27 @@
 `timescale 1ns/1ps
 
 module channel_block #(
-    parameter BITS_ADC = `__BITS_ADC,
-    parameter BITS_DAC = `__BITS_DAC,
-    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
-    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
-    parameter TX_DATA_WIDTH = `__TX_WIDTH,
-    parameter RAM_DATA_WIDTH = `__BITS_ADC,
-    parameter RAM_SIZE = `__RAM_SIZE_CH,
+    parameter BITS_ADC = 8,
+    parameter BITS_DAC = 10,
+    parameter REG_ADDR_WIDTH = 8,
+    parameter REG_DATA_WIDTH = 16,
+    parameter TX_DATA_WIDTH = 8,
+    parameter RAM_DATA_WIDTH = 8,
+    parameter RAM_SIZE = 4096,
+
+    parameter ADC_CLK_DIV_WIDTH = 32,
+    parameter MOVING_AVERAGE_ACUM_WIDTH = 12,
 
     parameter ADDR_CH_SETTINGS = 0,
     parameter ADDR_DAC_VALUE = 1,
+    parameter ADDR_ADC_CLK_DIV_L = 2,
+    parameter ADDR_ADC_CLK_DIV_H = 3,
+    parameter ADDR_N_MOVING_AVERAGE = 4,
 
     parameter DEFAULT_CH_SETTINGS = 16'b11100001,
-    parameter DEFAULT_DAC_VALUE = (1 << (`__BITS_DAC-1))
-
+    parameter DEFAULT_DAC_VALUE = (1 << (BITS_DAC-1)),
+    parameter DEFAULT_ADC_CLK_DIV = 1,
+    parameter DEFAULT_N_MOVING_AVERAGE = 1
 ) (
     // Basic synchronous signals
     input   clk,
@@ -144,10 +151,15 @@ module channel_block #(
     // ADC
     adc_block #(
         .BITS_ADC(BITS_ADC),
-        .ADC_DF_WIDTH(32),
-        .MA_ACUM_WIDTH(12),
+        .ADC_CLK_DIV_WIDTH(ADC_CLK_DIV_WIDTH),
+        .MOVING_AVERAGE_ACUM_WIDTH(MOVING_AVERAGE_ACUM_WIDTH),
         .REG_DATA_WIDTH(REG_DATA_WIDTH),
-        .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .ADDR_ADC_CLK_DIV_L(ADDR_ADC_CLK_DIV_L),
+        .ADDR_ADC_CLK_DIV_H(ADDR_ADC_CLK_DIV_H),
+        .ADDR_N_MOVING_AVERAGE(ADDR_N_MOVING_AVERAGE),
+        .DEFAULT_ADC_CLK_DIV(DEFAULT_ADC_CLK_DIV),
+        .DEFAULT_N_MOVING_AVERAGE(DEFAULT_N_MOVING_AVERAGE)
     ) adc_block_u (
         .clk_i(clk),
         .rst(rst),
