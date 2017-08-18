@@ -89,7 +89,6 @@
                         INITIAL VALUES OF REGESTERS
 *******************************************************************************/
 
-`define __IV_REQUESTS               16'd0
 `define __IV_CONF_CHA               16'b11100001
 `define __IV_CONF_CHB               16'b11100001
 `define __IV_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
