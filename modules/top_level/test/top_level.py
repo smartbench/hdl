@@ -62,7 +62,10 @@ class ADC:
             self.adc_data <= 0 # invalid data here
             nsTimer(9.5)
             if ( len(self.fifo) > 0 ):
-                self.adc_data = self.fifo.pop(0)
+                aux = self.fifo.pop(0)
+                self.adc_data <= aux
+                print "DATA = " + repr(aux)
+                #self.adc_data = self.fifo.pop(0)
                 #print 'poping' # Pooping? there is no more toilet paper!
             else:
                 self.adc_data <= 0
