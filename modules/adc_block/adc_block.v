@@ -38,8 +38,8 @@
 
 module adc_block #(
     parameter BITS_ADC = 8,//`__BITS_ADC,
-    parameter ADC_DF_WIDTH   = 32,      // ADC decimation
-    parameter MA_ACUM_WIDTH = 12,       // Moving Average Acumulator
+    parameter ADC_CLK_DIV_WIDTH   = 32,      // ADC decimation
+    parameter MOVING_AVERAGE_ACUM_WIDTH = 12,       // Moving Average Acumulator
     parameter REG_DATA_WIDTH = 16,//`REG_DATA_WIDTH,    // Simgle Interface
     parameter REG_ADDR_WIDTH = 8,//`REG_ADDR_WIDTH,
     parameter DEFAULT_ADC_CLK_DIV = 0,
@@ -70,15 +70,15 @@ module adc_block #(
     wire [BITS_ADC-1:0] adc_interface_si_data;
     wire adc_interface_si_rdy;
     wire adc_interface_si_ack;
-    reg [ADC_DF_WIDTH-1:0] adc_df  = DEFAULT_ADC_CLK_DIV;  // adc decimation factor DefaultValue  register
-    reg [$clog2(MA_ACUM_WIDTH-BITS_ADC)-1:0] ma_k = DEFAULT_N_MOVING_AVERAGE; // moving average k factor DefaultValue register
+    reg [ADC_CLK_DIV_WIDTH-1:0] adc_df  = DEFAULT_ADC_CLK_DIV;  // adc decimation factor DefaultValue  register
+    reg [$clog2(MOVING_AVERAGE_ACUM_WIDTH-BITS_ADC)-1:0] ma_k = DEFAULT_N_MOVING_AVERAGE; // moving average k factor DefaultValue register
 
     reg rst_restart = 1'b0;
     assign adc_interface_si_ack = adc_interface_si_rdy;
 
     adc_interface #(
       .DATA_WIDTH         (BITS_ADC),
-      .DF_WIDTH           (ADC_DF_WIDTH)
+      .CLK_DIV_WIDTH      (ADC_CLK_DIV_WIDTH)
     )adc_interface_inst(
       .clk_i              (clk_i),
       .rst                (rst_restart),
@@ -93,7 +93,7 @@ module adc_block #(
 
     moving_average #(
       .BITS_ADC           (BITS_ADC),
-      .BITS_ACUM          (MA_ACUM_WIDTH)
+      .BITS_ACUM          (MOVING_AVERAGE_ACUM_WIDTH)
     )moving_average_inst(
       .clk                (clk_i),
       .rst                (rst_restart),
@@ -116,7 +116,7 @@ module adc_block #(
         if (reg_si_rdy==1'b1) begin
 
           case (reg_si_addr)
-            // NOTE: not generic Description!! If ADC_DF_WIDTH or REG_DATA_WIDTH changes
+            // NOTE: not generic Description!! If ADC_CLK_DIV_WIDTH or REG_DATA_WIDTH changes
             // gotta check the lines below
             // NOTE ANSWER: added a 1 clock duration reset for each time something changes
             ADDR_ADC_CLK_DIV_L:
@@ -126,13 +126,13 @@ module adc_block #(
             end
             ADDR_ADC_CLK_DIV_H:
             begin
-              adc_df[ADC_DF_WIDTH-1:REG_DATA_WIDTH] <= reg_si_data;
+              adc_df[ADC_CLK_DIV_WIDTH-1:REG_DATA_WIDTH] <= reg_si_data;
               rst_restart <= 1'b1;
             end
 
             ADDR_N_MOVING_AVERAGE:
             begin
-              ma_k <= reg_si_data[$clog2(MA_ACUM_WIDTH-BITS_ADC)-1:0];
+              ma_k <= reg_si_data[$clog2(MOVING_AVERAGE_ACUM_WIDTH-BITS_ADC)-1:0];
               rst_restart <= 1'b1;
              end
 
