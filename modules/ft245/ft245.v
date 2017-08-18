@@ -75,7 +75,8 @@ module ft245_interface #(
     reg [$clog2(MAX_CNT):0] cnt=0;
 
     always @* tx_ack_si <=  (state==ST_IDLE) ?
-        (rxf_245 & rx_rdy_si & ~txe_245 & tx_rdy_si) : 1'b0;
+        ((rxf_245 | rx_rdy_si) & ~txe_245 & tx_rdy_si) : 1'b0;
+    //    (rxf_245 & rx_rdy_si & ~txe_245 & tx_rdy_si) : 1'b0;
 
     always @(posedge clk) begin
         if (rst == 1'b1) begin
