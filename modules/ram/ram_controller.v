@@ -75,6 +75,7 @@ module ram_controller #(
                     data_eof <= 1'b0;
                     data_rdy <= 1'b1;        // always ready, ram reading never delays.
                     if(data_ack == 1'b1) begin
+                        data_rdy <= 1'b0;
                         rd_addr <= rd_addr - 1;
                         counter <= counter - 1;
                         if(counter == 1) begin
