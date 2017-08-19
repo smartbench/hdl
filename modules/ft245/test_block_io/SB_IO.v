@@ -18,7 +18,7 @@ module SB_IO #(
        output D_IN_1
 );
 
-    assign PACKAGE_PIN = OUTPUT_ENABLE ? D_OUT_0 : 8'bzzzzzzzz ; // To drive the inout net
+    assign PACKAGE_PIN = OUTPUT_ENABLE ? D_OUT_0 : 1'bz ; // To drive the inout net
     assign D_IN_0 = PACKAGE_PIN;
 
 endmodule

@@ -5,6 +5,7 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge, FallingEdge, Edge
 from cocotb.result import TestFailure, TestError
+from cocotb.binary import BinaryValue
 
 @cocotb.coroutine
 def nsTimer (t):
@@ -33,15 +34,19 @@ class SI_Master:
 
     @cocotb.coroutine
     def driver (self):
+        myAck = 0
         while True:
             yield RisingEdge(self.clk)
             if len(self.fifo) > 0 :
+                #print ("----------- READY ------------")
                 self.rdy <= 1
                 self.data <= self.fifo.pop(0)
-                if(self.ack.value.integer == 0): yield RisingEdge(self.ack)
-                #while self.ack.value.integer != 1 : yield FallingEdge(self.clk)
+                myAck = 0
+                while(myAck == 0):
+                    yield FallingEdge(self.clk)
+                    myAck = self.ack.value.integer
+                    yield RisingEdge(self.clk)
                 self.rdy <= 0
-
 
 class SI_Slave:
     def __init__ ( self, clk, rst , data, rdy, ack):
@@ -66,7 +71,7 @@ class SI_Slave:
             yield RisingEdge(self.clk)
 
 
-class Ft245:
+class FT245:
     def __init__ (self,dut):
         self.dut = dut
 
@@ -82,18 +87,23 @@ class Ft245:
 
     @cocotb.coroutine
     def tx_monitor (self):
+        vec = BinaryValue()
+        vec.binstr = "zzzzzzzz"
         print ("-----------------------------------------------")
         yield nsTimer(TXE_INACTIVE)
         while True:
-            if True: # if BufferNotFull:
+            if True:
                 self.dut.txe_245 <= 0
                 if self.dut.wr_245.value.integer == 1: yield FallingEdge(self.dut.wr_245)
+                self.dut.in_out_245 <= vec
                 yield Timer(1, units='ps')
                 #print ("{WR_245, TXE_245} = " + repr(self.dut.wr_245.value.integer) + repr(self.dut.txe_245.value.integer) )
-                self.tx_fifo.append(self.dut.in_out_245.value.integer)
-                #print ("-----------------------------------------------")
-                print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
-                #print ("-----------------------------------------------")
+
+                aux  = self.dut.in_out_245.value.integer
+                #aux = 0xAA
+                self.tx_fifo.append(aux)
+                print ("FDTI TX: " + repr(aux))
+
                 yield nsTimer(WR_TO_INACTIVE)
                 self.dut.txe_245 <= 1
             yield nsTimer(TXE_INACTIVE)
@@ -132,9 +142,11 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
-    ft245 = Ft245(dut)
-    si_rx = SI_Slave(dut.clk,dut.rst,dut.rx_data_si,dut.rx_rdy_si,dut.rx_ack_si)
-    si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
+    test_fifo_RX = []
+    test_fifo_TX = []
+    ft245 = FT245(dut)
+    si_rx = SI_Slave( dut.clk, dut.rst, dut.rx_data_si, dut.rx_rdy_si, dut.rx_ack_si )
+    si_tx = SI_Master( dut.clk, dut.rst, dut.tx_data_si, dut.tx_rdy_si, dut.tx_ack_si )
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
     #for i in range(100): si_tx.write(i+1)
@@ -143,9 +155,13 @@ def test (dut):
     cocotb.fork(si_rx.monitor() )
     cocotb.fork(si_tx.driver() )
     for i in range(10): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i+1)
+    for i in range(50):
+        ft245.write(i+1)
+        test_fifo_RX.append(i+1)
     for i in range(10*130): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i+51)
+    for i in range(50):
+        ft245.write(i+51)
+        test_fifo_RX.append(i+51)
     for i in range(10*130): yield RisingEdge(dut.clk)
 
     #if (ft245.tx_fifo != [i for i in range(150)]):
@@ -154,4 +170,23 @@ def test (dut):
     if ( si_rx.fifo != [ i+1 for i in range(100)]):
         raise TestFailure("Simple Interface data != FT245 data (RX)")
 
-    print "-----------> EEEE-XITO <------------"
+    print "-----------> EEEE-XITO (RX) <------------"
+
+    for i in range(20):
+        aux = (1 << (i%8))# % 256
+        si_tx.write(aux)
+        test_fifo_TX.append(aux)
+
+    for i in range(200): yield RisingEdge(dut.clk)
+
+    print ("Len(test) = " + repr(len(test_fifo_TX)) + " ### Len(tx) = " + repr(len(ft245.tx_fifo)))
+    if (len(test_fifo_TX) != len(ft245.tx_fifo) ):
+        raise TestFailure("DIFFERENT SIZE")
+    for i in range(len(test_fifo_TX)):
+        if ft245.tx_fifo[i] != test_fifo_TX[i]:
+            print "ft245.tx_fifo[{}]={}\ttest_fifo_TX[{}]={}".format(i,ft245.tx_fifo[i],i,test_fifo_TX[i])
+            # print '%d %d' % (1, 2)
+            # print '{} {}'.format(1, 2)
+            raise TestFailure("Simple Interface data != FT245 data (TX)")
+
+    print "-----------> EEEE-XITO (TX) <------------"
