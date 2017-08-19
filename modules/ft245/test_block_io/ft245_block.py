@@ -34,14 +34,15 @@ class SI_Master:
     @cocotb.coroutine
     def driver (self):
         while True:
-            yield RisingEdge(self.clk)
             if len(self.fifo) > 0 :
+                print ("----------- READY ------------")
                 self.rdy <= 1
                 self.data <= self.fifo.pop(0)
+                #yield Timer(2, units='ps')
+                yield FallingEdge(self.clk)
                 if(self.ack.value.integer == 0): yield RisingEdge(self.ack)
-                #while self.ack.value.integer != 1 : yield FallingEdge(self.clk)
                 self.rdy <= 0
-
+            yield RisingEdge(self.clk)
 
 class SI_Slave:
     def __init__ ( self, clk, rst , data, rdy, ack):
@@ -85,15 +86,13 @@ class Ft245:
         print ("-----------------------------------------------")
         yield nsTimer(TXE_INACTIVE)
         while True:
-            if True: # if BufferNotFull:
+            if True:
                 self.dut.txe_245 <= 0
                 if self.dut.wr_245.value.integer == 1: yield FallingEdge(self.dut.wr_245)
                 yield Timer(1, units='ps')
                 #print ("{WR_245, TXE_245} = " + repr(self.dut.wr_245.value.integer) + repr(self.dut.txe_245.value.integer) )
                 self.tx_fifo.append(self.dut.in_out_245.value.integer)
-                #print ("-----------------------------------------------")
                 print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
-                #print ("-----------------------------------------------")
                 yield nsTimer(WR_TO_INACTIVE)
                 self.dut.txe_245 <= 1
             yield nsTimer(TXE_INACTIVE)
@@ -132,9 +131,11 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
+    test_fifo_RX = []
+    test_fifo_TX = []
     ft245 = Ft245(dut)
-    si_rx = SI_Slave(dut.clk,dut.rst,dut.rx_data_si,dut.rx_rdy_si,dut.rx_ack_si)
-    si_tx = SI_Master(dut.clk,dut.rst,dut.tx_data_si,dut.tx_rdy_si,dut.tx_ack_si)
+    si_rx = SI_Slave( dut.clk, dut.rst, dut.rx_data_si, dut.rx_rdy_si, dut.rx_ack_si )
+    si_tx = SI_Master( dut.clk, dut.rst, dut.tx_data_si, dut.tx_rdy_si, dut.tx_ack_si )
     cocotb.fork(Clock(dut.clk,10,units='ns').start())
     yield Reset(dut)
     #for i in range(100): si_tx.write(i+1)
@@ -143,9 +144,13 @@ def test (dut):
     cocotb.fork(si_rx.monitor() )
     cocotb.fork(si_tx.driver() )
     for i in range(10): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i+1)
+    for i in range(50):
+        ft245.write(i+1)
+        test_fifo_RX.append(i+1)
     for i in range(10*130): yield RisingEdge(dut.clk)
-    for i in range(50): ft245.write(i+51)
+    for i in range(50):
+        ft245.write(i+51)
+        test_fifo_RX.append(i+51)
     for i in range(10*130): yield RisingEdge(dut.clk)
 
     #if (ft245.tx_fifo != [i for i in range(150)]):
@@ -154,4 +159,22 @@ def test (dut):
     if ( si_rx.fifo != [ i+1 for i in range(100)]):
         raise TestFailure("Simple Interface data != FT245 data (RX)")
 
-    print "-----------> EEEE-XITO <------------"
+    print "-----------> EEEE-XITO (RX) <------------"
+
+    for i in range(10):
+        aux = 9-i
+        si_tx.write(aux)
+        test_fifo_TX.append(aux)
+
+    for i in range(200): yield RisingEdge(dut.clk)
+
+    #L=len(test_fifo_TX)
+
+    if (len(test_fifo_TX) != len(si_tx.fifo) ):
+        print ("Len(test) = " + repr(len(test_fifo_TX)) + " ### Len(tx) = " + repr(len(si_tx.fifo)))
+        raise TestFailure("Simple Interface data != FT245 data (TX)")
+    for i in range(len(test_fifo_TX)):
+        if si_tx.fifo[i] != test_fifo_TX[i]:
+            raise TestFailure("Simple Interface data != FT245 data (TX)")
+
+    print "-----------> EEEE-XITO (TX) <------------"
