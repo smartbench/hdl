@@ -36,8 +36,6 @@ RQST_CHB_BIT    = (1 << 3)
 RQST_TRIG_BIT   = (1 << 4)
 RQST_RST_BIT    = (1 << 5)
 
-#from "../../ft245/test_block_io/ft245_block.py" import Ft245
-
 @cocotb.coroutine
 def nsTimer (t):
     yield Timer(t,units='ns')
@@ -62,14 +60,9 @@ class ADC:
             nsTimer(10)
             self.adc_data <= 0 # invalid data here
             nsTimer(9.5)
-
-            print("ADC={}".format(self.analog_signal))
-            self.adc_data <= self.analog_signal
             #print("ADC={}".format(self.analog_signal))
-            # if ( len(self.fifo) > 0 ):
-            #     self.adc_data <= self.fifo.pop(0)
-            # else:
-            #     self.adc_data <= 0
+            self.adc_data <= self.analog_signal
+
 
     @cocotb.coroutine
     def generator(self, time_res, function):
@@ -175,40 +168,6 @@ class FT245:
                 else:
                     yield Timer(10, units='ns')
 
-    @cocotb.coroutine
-    def tx_monitor (self):
-        highZ = BinaryValue()
-        highZ.binstr = "zzzzzzzz"
-        yield nsTimer(TXE_INACTIVE)
-        while True:
-            if True: # replace with: if "Buffer Is Not Full"
-                self.dut.txe_245 <= 0
-                if self.dut.wr_245.value.integer == 1: yield FallingEdge(self.dut.wr_245)
-                self.dut.in_out_245 <= highZ
-                yield Timer(1, units='ps')
-                aux  = self.dut.in_out_245.value.integer
-                self.tx_fifo.append(aux)
-                #print ("FDTI TX: " + repr(aux))
-                yield nsTimer(WR_TO_INACTIVE)
-                self.dut.txe_245 <= 1
-            yield nsTimer(TXE_INACTIVE)
-
-    @cocotb.coroutine
-    def rx_driver (self):
-        while True:
-            if(len(self.rx_fifo) > 0):
-                self.dut.rxf_245 <= 0
-                if(self.dut.rx_245.value.integer == 1): yield FallingEdge(self.dut.rx_245)
-                yield nsTimer(RD_TO_DATA)
-                aux = self.rx_fifo.pop(0)
-                self.dut.in_out_245 <= aux #self.rx_fifo.pop(0)
-                #print "AUX = " + repr(aux)
-                yield Timer(1,units='ps')
-                if(self.dut.rx_245.value.integer == 0): yield RisingEdge(self.dut.rx_245)
-                yield nsTimer(14)
-                self.dut.rxf_245 <= 1
-            yield nsTimer(RFX_INACTIVE)
-
 
 @cocotb.coroutine
 def Reset (dut):
@@ -244,34 +203,17 @@ def test (dut):
     adc_chB = ADC(dut.chB_adc_in, dut.chB_adc_clk_o)
     ft245 = FT245(dut)
 
+    mySinWave_CHA = SINE_WAVE(100, 1e6, 0, 128, __NOISE_MAX)
+    mySinWave_CHB = SINE_WAVE(50, 0.2e6, 0, 80, __NOISE_MAX)
+
     cocotb.fork( Clock(dut.clk_i,10,units='ns').start() )
     yield Reset(dut)
 
     cocotb.fork( adc_chA.driver() )
     cocotb.fork( adc_chB.driver() )
-    #cocotb.fork( ft245.tx_monitor() )
-    #cocotb.fork( ft245.rx_driver() )
     cocotb.fork( ft245.driver_tx_rx() )
-
-    mySinWave_CHA = SINE_WAVE(100, 1e6, 0, 128)
-    mySinWave_CHB = SINE_WAVE(50, 0.2e6, 0, 80)
-
     cocotb.fork( adc_chA.generator(10, mySinWave_CHA.generator ) )
     cocotb.fork( adc_chB.generator(10, mySinWave_CHB.generator ) )
-
-
-    # load adc buffers
-    # add rand!
-    for t in range(10000):
-        x1 = 128 + int(100 * sin(2*pi*1e6*t*20e-9)) + randint(-__NOISE_MAX, __NOISE_MAX)
-        x2 = 128 - int(050 * sin(2*pi*1e6*t*20e-9)) + randint(-__NOISE_MAX, __NOISE_MAX)
-        if x1 < 0: x1 = 0
-        if x2 < 0: x2 = 0
-        if x1 > 256: x1 = 256
-        if x2 > 256: x2 = 256
-        adc_chA.write(x1)
-        adc_chB.write(x2)
-
 
     # initial config
     ft245.write_reg( ADDR_SETTINGS_CHA , __SETTINGS_CHA  )
@@ -306,12 +248,12 @@ def test (dut):
     # send stop and channel read:
     ft245.write_reg(ADDR_REQUESTS , RQST_STOP_BIT | RQST_CHA_BIT )
     #yield ft245.wait_bytes(35, 20000)
-    yield ft245.wait_bytes(100, 20000) # num_samples
+    yield ft245.wait_bytes(30, 10000) # num_samples
     n = ft245.read_data(data, 100)
-    print ">>>>>>>>>>>>>>> HERE!"
+    #print ">>>>>>>>>>>>>>> HERE!"
     print "read {} bytes:".format(n)
     for i in range(len(data)):
-        if i == __PRETRIGGER: print bcolors.OKGREEN
+        if i == __PRETRIGGER-1: print bcolors.OKGREEN
         print "data[{}] = {}".format(i, data[n-1-i])
         print bcolors.ENDC
 
@@ -329,10 +271,11 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 class SINE_WAVE:
-    def __init__ ( self, amp, frec, phase, offset):
+    def __init__ ( self, amp, frec, phase, offset, noise_max):
         self.amp = amp
         self.frec = frec
         self.phase = phase
         self.offset = offset
+        self.noise_max = noise_max
     def generator(self, t):
-        return self.offset + self.amp * sin(2*pi*self.frec * t * 1e-9 + self.phase)
+        return self.offset + self.amp * sin(2*pi*self.frec * t * 1e-9 + self.phase) + randint(-self.noise_max, self.noise_max)
