@@ -8,3 +8,4 @@
 *.vcd
 *sim_build/
 *.vvp
+*.gtkw
