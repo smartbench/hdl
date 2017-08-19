@@ -59,4 +59,12 @@ module fully_associative_register #(
         end
     end
 
+    `ifdef COCOTB_SIM                                                        // COCOTB macro
+        initial begin
+            $dumpfile ("waveform.vcd");
+            $dumpvars (0,fully_associative_register);
+            #1;
+        end
+    `endif
+
 endmodule

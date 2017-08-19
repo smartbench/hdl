@@ -112,13 +112,13 @@ module configuration_registers_rx #(
             endcase
         end
     end
-    /*
+
     `ifdef COCOTB_SIM           // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,configuration_registers_rx);
             #1;
         end
-    `endif*/
+    `endif
 
 endmodule

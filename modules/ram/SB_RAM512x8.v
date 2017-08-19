@@ -27,12 +27,12 @@ module SB_RAM512x8 #(
 
 
 
-/*`ifdef COCOTB_SIM
+`ifdef COCOTB_SIM
 initial begin
   $dumpfile ("waveform.vcd");
   $dumpvars (0,SB_RAM512x8);
   #1;
 end
-`endif*/
+`endif
 
 endmodule

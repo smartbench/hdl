@@ -116,7 +116,7 @@ def Reset (dut):
     yield Timer(1,units='ps')
 
 @cocotb.test()
-def adc_block_test (dut):
+def channel_block (dut):
 
     #REG_ADDR_CH_SETTINGS = 1
     #REG_ADDR_DAC_VALUE = 3

@@ -177,11 +177,11 @@ module channel_block #(
     );
 
     `ifdef COCOTB_SIM
-    initial begin
-      $dumpfile ("waveform_channel.vcd");
-      $dumpvars (0,channel_block);
-      #1;
-    end
+        initial begin
+            $dumpfile ("waveform.vcd");
+            $dumpvars (0,channel_block);
+            #1;
+        end
     `endif
 
 endmodule
