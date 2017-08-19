@@ -8,9 +8,9 @@ from random import randint
 
 RD_TO_DATA = 14.0
 RFX_INACTIVE = 49.0
-
 WR_TO_INACTIVE = 14.0
 TXE_INACTIVE = 50.0
+TX_FIFO_MAX = 100
 
 ADDR_REQUESTS =                 0
 ADDR_SETTINGS_CHA =             1
@@ -91,7 +91,7 @@ class FT245:
 
     @cocotb.coroutine
     def wait_bytes(self, n):
-        while(len(self.tx_fifo) < n): yield RisingEdge(self.dut.clk)
+        while(len(self.tx_fifo) < n): yield Timer(1, units='ns') # RisingEdge(self.dut.clk_o)
 
     def read_byte(self, data):
         if(len(self.tx_fifo) > 0):
@@ -112,6 +112,44 @@ class FT245:
                 i = i + 1
         return i
 
+    # @cocotb.coroutine
+    # def driver_tx_rx (self):
+    #     while True:
+    #         print ("AAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    #         if(len(self.tx_fifo) < TX_FIFO_MAX): self.dut.txe_245 <= 0
+    #         else: self.dut.txe_245 <= 1
+    #
+    #         if(len(self.rx_fifo) > 0): self.dut.rxf_245 <= 0
+    #         else: self.dut.rxf_245 <= 1
+    #         print ("BBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+    #
+    #         if(self.dut.txe_245.value.integer == 0 and self.dut.wr_245.value.integer == 0):
+    #             # start tx sequence
+    #             print ("CCCCCCCCCCCCCCCCCCCCCC")
+    #             yield Timer(1, units='ps')
+    #             self.tx_fifo.append(self.dut.in_out_245.value.integer)
+    #             print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
+    #             yield nsTimer(14+WR_TO_INACTIVE) #T6+...
+    #             if (self.dut.wr_245.value.integer == 0): yield RisingEdge(self.dut.wr_245)
+    #             self.dut.txe_245 <= 1
+    #             yield nsTimer(TXE_INACTIVE)
+    #         else:
+    #             if(self.dut.rxf_245.value.integer == 0 and self.dut.rx_245.value.integer == 0):
+    #                 print ("DDDDDDDDDDDDDDDDDDDDDDDDDD")
+    #                 yield Timer(1, units='ps')
+    #                 yield nsTimer(RD_TO_DATA)
+    #                 aux = self.rx_fifo.pop(0)
+    #                 self.dut.in_out_245 <= aux #self.rx_fifo.pop(0)
+    #                 #print "AUX = " + repr(aux)
+    #                 yield Timer(1,units='ps')
+    #                 if(self.dut.rx_245.value.integer == 0): yield RisingEdge(self.dut.rx_245)
+    #                 yield nsTimer(14)
+    #                 self.dut.rxf_245 <= 1
+    #                 yield nsTimer(RFX_INACTIVE)
+    #             else:
+    #                 print ("EEEEEEEEEEEEEEEEEEEEEEEEE")
+    #                 yield Timer(10, units='ns')
+
     @cocotb.coroutine
     def tx_monitor (self):
         print ("-----------------------------------------------")
@@ -121,12 +159,9 @@ class FT245:
                 self.dut.txe_245 <= 0
                 if self.dut.wr_245.value.integer == 1: yield FallingEdge(self.dut.wr_245)
                 yield Timer(1, units='ps')
-                #print ("{WR_245, TXE_245} = " + repr(self.dut.wr_245.value.integer) + repr(self.dut.txe_245.value.integer) )
                 self.tx_fifo.append(self.dut.in_out_245.value.integer)
-                #print ("-----------------------------------------------")
                 #print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
                 if(self.dut.in_out_245.value.integer > 0): print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
-                #print ("-----------------------------------------------")
                 yield nsTimer(WR_TO_INACTIVE)
                 self.dut.txe_245 <= 1
             yield nsTimer(TXE_INACTIVE)
@@ -138,16 +173,11 @@ class FT245:
                 self.dut.rxf_245 <= 0
                 if(self.dut.rx_245.value.integer == 1): yield FallingEdge(self.dut.rx_245)
                 yield nsTimer(RD_TO_DATA)
-                #self.dut.in_out_245 <= 0
                 aux = self.rx_fifo.pop(0)
                 self.dut.in_out_245 <= aux #self.rx_fifo.pop(0)
-                #print "-----------------------------------------------"
                 #print "AUX = " + repr(aux)
                 yield Timer(1,units='ps')
-                #print "FDTI RX: " + repr(self.dut.in_out_245.value.integer)
-                #print "-----------------------------------------------"
                 if(self.dut.rx_245.value.integer == 0): yield RisingEdge(self.dut.rx_245)
-                #self.dut.in_out_245 <= 0
                 yield nsTimer(14)
                 self.dut.rxf_245 <= 1
             yield nsTimer(RFX_INACTIVE)
@@ -178,6 +208,7 @@ def test (dut):
     cocotb.fork( adc_chB.driver() )
     cocotb.fork( ft245.tx_monitor() )
     cocotb.fork( ft245.rx_driver() )
+    #cocotb.fork( ft245.driver_tx_rx() )
 
     # load adc buffers
     # add rand!
@@ -212,9 +243,12 @@ def test (dut):
     ft245.write_reg(ADDR_REQUESTS, RQST_START_BIT)
     for i in range(100): yield RisingEdge(dut.clk_100M)
     #for i in range(10): yield RisingEdge(dut.clk_100M)
+    ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
+    yield ft245.wait_bytes(1)
     i = ft245.read_data(data, 1)
     print ("read " + repr(i) + " bytes, data= " + str(data))
-    ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
     for i in range(2000): yield RisingEdge(dut.clk_100M)
+    ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
+    yield ft245.wait_bytes(1)
     i = ft245.read_data(data, 1)
     print ("read " + repr(i) + " bytes, data= " + str(data))
