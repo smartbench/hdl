@@ -74,10 +74,6 @@ module ft245_interface #(
     reg [2:0] state = ST_IDLE;
     reg [$clog2(MAX_CNT):0] cnt=0;
 
-    always @* tx_ack_si <=  (state==ST_IDLE) ?
-        ((rxf_245 | rx_rdy_si) & ~txe_245 & tx_rdy_si) : 1'b0;
-    //    (rxf_245 & rx_rdy_si & ~txe_245 & tx_rdy_si) : 1'b0;
-
     always @(posedge clk) begin
         if (rst == 1'b1) begin
             state <= ST_IDLE;
@@ -86,9 +82,11 @@ module ft245_interface #(
             cnt <= 3'd0;
             wr_245 <= 1'b1;
             rx_rdy_si <= 1'b0;
+            tx_ack_si <= 1'b0;
         end else begin
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
             wr_245 <= 1'b1;
+            tx_ack_si <= 1'b0;
             case (state)
                 ST_IDLE:
                 begin
@@ -99,6 +97,7 @@ module ft245_interface #(
                     end else if(txe_245 == 1'b0 && tx_rdy_si == 1'b1) begin
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
+                        tx_ack_si <= 1'b1;
                         state <= ST_SETUP_TX;
                     end
                 end
