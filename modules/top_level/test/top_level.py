@@ -36,8 +36,6 @@ RQST_CHB_BIT    = (1 << 3)
 RQST_TRIG_BIT   = (1 << 4)
 RQST_RST_BIT    = (1 << 5)
 
-NOISE_MAX       = 8
-
 #from "../../ft245/test_block_io/ft245_block.py" import Ft245
 
 @cocotb.coroutine
@@ -52,6 +50,8 @@ class ADC:
         self.fifo = []
         self.adc_data <= 0
 
+        self.analog_signal = 9
+
     def write(self,val):
         self.fifo.append(val)
 
@@ -62,14 +62,31 @@ class ADC:
             nsTimer(10)
             self.adc_data <= 0 # invalid data here
             nsTimer(9.5)
-            if ( len(self.fifo) > 0 ):
-                #aux = self.fifo.pop(0)
-                #self.adc_data <= aux
-                #print "DATA = " + repr(aux)
-                self.adc_data <= self.fifo.pop(0)
-                #print 'poping' # Pooping? there is no more toilet paper!
-            else:
-                self.adc_data <= 0
+
+            print("ADC={}".format(self.analog_signal))
+            self.adc_data <= self.analog_signal
+            #print("ADC={}".format(self.analog_signal))
+            # if ( len(self.fifo) > 0 ):
+            #     self.adc_data <= self.fifo.pop(0)
+            # else:
+            #     self.adc_data <= 0
+
+    @cocotb.coroutine
+    def generator(self, time_res, function):
+        # time_res is the time resolution in ns (lower time_res simulates a "more analog" input signal)
+        # function is a reference to the function that generates the signal
+        aux = 0
+        t = 0
+        while True:
+            aux = int (function(t))
+            #print "AnalogInt={}\tAnalog={}".format(aux, function(t))
+            if aux < 0: aux = 0
+            if aux > 255: aux = 255
+            self.analog_signal = aux
+            yield nsTimer(time_res)
+            #print "AnalogSignalLoaded={}".format(self.analog_signal)
+            t = t + time_res
+
 
 class FT245:
     def __init__ (self,dut):
@@ -91,8 +108,12 @@ class FT245:
         self.rx_fifo.append( (data >> 8) % 256) # then HIGH
 
     @cocotb.coroutine
-    def wait_bytes(self, n):
-        while(len(self.tx_fifo) < n): yield Timer(1, units='ns') # RisingEdge(self.dut.clk_o)
+    def wait_bytes(self, n, timeout=0): #timeout in ns
+        step = 1    # in nanoseconds
+        i = 0
+        while(len(self.tx_fifo) < n and (timeout == 0 or i < timeout)):
+            yield Timer(step, units='ns') # RisingEdge(self.dut.clk_o)
+            i = i + step
 
     def read_byte(self, data):
         if(len(self.tx_fifo) > 0):
@@ -134,7 +155,7 @@ class FT245:
                 self.dut.in_out_245 <= highZ
                 yield Timer(1, units='ps')
                 self.tx_fifo.append(self.dut.in_out_245.value.integer)
-                print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
+                #print ("FDTI TX: " + repr(self.dut.in_out_245.value.integer))
                 yield nsTimer(14+WR_TO_INACTIVE) #T6+...
                 if (self.dut.wr_245.value.integer == 0): yield RisingEdge(self.dut.wr_245)
                 self.dut.txe_245 <= 1
@@ -203,6 +224,22 @@ def test (dut):
     i = 0
     data = []
 
+    __NOISE_MAX             = 8
+    __SETTINGS_CHA          = 1
+    __SETTINGS_CHB          = 255
+    __DAC_CHA               = 127
+    __DAC_CHB               = 127
+    __TRIGGER_SETTINGS      = 2
+    __TRIGGER_VALUE         = 150
+    __NUM_SAMPLES           = 30
+    __PRETRIGGER            = 10
+    __ADC_CLK_DIV_CHA_L     = 1
+    __ADC_CLK_DIV_CHA_H     = 0
+    __ADC_CLK_DIV_CHB_L     = 1
+    __ADC_CLK_DIV_CHB_H     = 0
+    __N_MOVING_AVERAGE_CHA  = 0
+    __N_MOVING_AVERAGE_CHB  = 0
+
     adc_chA = ADC(dut.chA_adc_in, dut.chA_adc_clk_o)
     adc_chB = ADC(dut.chB_adc_in, dut.chB_adc_clk_o)
     ft245 = FT245(dut)
@@ -216,11 +253,18 @@ def test (dut):
     #cocotb.fork( ft245.rx_driver() )
     cocotb.fork( ft245.driver_tx_rx() )
 
+    mySinWave_CHA = SINE_WAVE(100, 1e6, 0, 128)
+    mySinWave_CHB = SINE_WAVE(50, 0.2e6, 0, 80)
+
+    cocotb.fork( adc_chA.generator(10, mySinWave_CHA.generator ) )
+    cocotb.fork( adc_chB.generator(10, mySinWave_CHB.generator ) )
+
+
     # load adc buffers
     # add rand!
     for t in range(10000):
-        x1 = 128 + int(100 * sin(2*pi*1e6*t*20e-9)) + randint(-NOISE_MAX, NOISE_MAX)
-        x2 = 128 - int(050 * sin(2*pi*1e6*t*20e-9)) + randint(-NOISE_MAX, NOISE_MAX)
+        x1 = 128 + int(100 * sin(2*pi*1e6*t*20e-9)) + randint(-__NOISE_MAX, __NOISE_MAX)
+        x2 = 128 - int(050 * sin(2*pi*1e6*t*20e-9)) + randint(-__NOISE_MAX, __NOISE_MAX)
         if x1 < 0: x1 = 0
         if x2 < 0: x2 = 0
         if x1 > 256: x1 = 256
@@ -230,31 +274,65 @@ def test (dut):
 
 
     # initial config
-    ft245.write_reg(ADDR_SETTINGS_CHA,1)
-    ft245.write_reg(ADDR_SETTINGS_CHB,255)
-    ft245.write_reg(ADDR_DAC_CHA,127)
-    ft245.write_reg(ADDR_DAC_CHB,127)
-    ft245.write_reg(ADDR_TRIGGER_SETTINGS,2)
-    ft245.write_reg(ADDR_TRIGGER_VALUE,150)
-    ft245.write_reg(ADDR_NUM_SAMPLES,200)
-    ft245.write_reg(ADDR_PRETRIGGER,80)
-    ft245.write_reg(ADDR_ADC_CLK_DIV_CHA_L,4)
-    ft245.write_reg(ADDR_ADC_CLK_DIV_CHA_H,0)
-    ft245.write_reg(ADDR_ADC_CLK_DIV_CHB_L,4)
-    ft245.write_reg(ADDR_ADC_CLK_DIV_CHB_H,0)
-    ft245.write_reg(ADDR_N_MOVING_AVERAGE_CHA,1)
-    ft245.write_reg(ADDR_N_MOVING_AVERAGE_CHB,1)
+    ft245.write_reg( ADDR_SETTINGS_CHA , __SETTINGS_CHA  )
+    ft245.write_reg( ADDR_SETTINGS_CHB , __SETTINGS_CHB  )
+    ft245.write_reg( ADDR_DAC_CHA , __DAC_CHA  )
+    ft245.write_reg( ADDR_DAC_CHB , __DAC_CHB  )
+    ft245.write_reg( ADDR_TRIGGER_SETTINGS , __TRIGGER_SETTINGS  )
+    ft245.write_reg( ADDR_TRIGGER_VALUE , __TRIGGER_VALUE  )
+    ft245.write_reg( ADDR_NUM_SAMPLES ,  __NUM_SAMPLES  )
+    ft245.write_reg( ADDR_PRETRIGGER ,  __PRETRIGGER  )
+    ft245.write_reg( ADDR_ADC_CLK_DIV_CHA_L , __ADC_CLK_DIV_CHA_L  )
+    ft245.write_reg( ADDR_ADC_CLK_DIV_CHA_H , __ADC_CLK_DIV_CHA_H  )
+    ft245.write_reg( ADDR_ADC_CLK_DIV_CHB_L , __ADC_CLK_DIV_CHB_L  )
+    ft245.write_reg( ADDR_ADC_CLK_DIV_CHB_H , __ADC_CLK_DIV_CHB_H  )
+    ft245.write_reg( ADDR_N_MOVING_AVERAGE_CHA , __N_MOVING_AVERAGE_CHA  )
+    ft245.write_reg( ADDR_N_MOVING_AVERAGE_CHB , __N_MOVING_AVERAGE_CHB  )
     for i in range(1000): yield RisingEdge(dut.clk_100M)
 
-    ft245.write_reg(ADDR_REQUESTS, RQST_START_BIT)
+    ft245.write_reg( ADDR_REQUESTS , RQST_START_BIT )
     for i in range(100): yield RisingEdge(dut.clk_100M)
     #for i in range(10): yield RisingEdge(dut.clk_100M)
-    ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
+    ft245.write_reg( ADDR_REQUESTS , RQST_TRIG_BIT )
     yield ft245.wait_bytes(1)
     i = ft245.read_data(data, 1)
     print ("read " + repr(i) + " bytes, data= " + str(data))
     for i in range(2000): yield RisingEdge(dut.clk_100M)
-    ft245.write_reg(ADDR_REQUESTS, RQST_TRIG_BIT)
+    ft245.write_reg( ADDR_REQUESTS , RQST_TRIG_BIT)
     yield ft245.wait_bytes(1)
     i = ft245.read_data(data, 1)
     print ("read " + repr(i) + " bytes, data= " + str(data))
+
+    # send stop and channel read:
+    ft245.write_reg(ADDR_REQUESTS , RQST_STOP_BIT | RQST_CHA_BIT )
+    #yield ft245.wait_bytes(35, 20000)
+    yield ft245.wait_bytes(100, 20000) # num_samples
+    n = ft245.read_data(data, 100)
+    print ">>>>>>>>>>>>>>> HERE!"
+    print "read {} bytes:".format(n)
+    for i in range(len(data)):
+        if i == __PRETRIGGER: print bcolors.OKGREEN
+        print "data[{}] = {}".format(i, data[n-1-i])
+        print bcolors.ENDC
+
+
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+class SINE_WAVE:
+    def __init__ ( self, amp, frec, phase, offset):
+        self.amp = amp
+        self.frec = frec
+        self.phase = phase
+        self.offset = offset
+    def generator(self, t):
+        return self.offset + self.amp * sin(2*pi*self.frec * t * 1e-9 + self.phase)
