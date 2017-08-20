@@ -17,7 +17,7 @@
 
 */
 
-`include "../../../inc/conf_regs_defines.v"
+`include "conf_regs_defines.v"
 
 `timescale 1ns/1ps
 

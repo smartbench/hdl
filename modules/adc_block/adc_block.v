@@ -24,14 +24,6 @@
     Releases:   To be tested
 */
 
-/*
-`ifndef COCOTB_SIM                // COCOTB macro
-  `include "../moving_average/moving_average.v"
-  `include "../adc_interface/adc_interface.v"
-`endif*/
-
-`include "conf_regs_defines.v"
-
 `timescale 1ns/1ps
 
 `include "conf_regs_defines.v"

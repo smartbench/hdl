@@ -76,7 +76,7 @@
 
 // trigger_conf
 //`define __TRIGGER_CONF_MODE               3:3
-`define __TRIGGER_CONF_SOURCE_SEL           1:0
+`define __TRIGGER_CONF_SOURCE_SEL           2:1
 `define __TRIGGER_CONF_EDGE                 0
 
 // Requests handler
