@@ -102,7 +102,6 @@
 `define __DEFAULT_PRETRIGGER             16'b0
 `define __DEFAULT_ADC_CLK_DIV_CHA        16'd4
 `define __DEFAULT_ADC_CLK_DIV_CHB        16'd4
-`define __DEFAULT_AVERAGE_N              16'b1
 `define __DEFAULT_N_MOVING_AVERAGE_CHA   16'b0
 `define __DEFAULT_N_MOVING_AVERAGE_CHB   16'b0
 
