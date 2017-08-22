@@ -114,7 +114,7 @@ module adc_interface  #(
     `ifdef FAKE_ADC
         reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
         reg [8:0] idx = 8'd0;
-        reg [7:0] random = 8'b0;
+        reg [7:0] random = 8'b1;
         reg [7:0] tableADC [0:511];
         initial $readmemh("rom.hex", tableADC);
         //initial $readmemb("rom.bin", tableADC);
