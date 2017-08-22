@@ -27,6 +27,7 @@
 */
 
 `include "conf_regs_defines.v"
+`define FAKE_ADC
 
 `timescale 1ns/1ps
 
@@ -99,15 +100,35 @@ module adc_interface  #(
             if ( ( counter == (decimation_factor-1) && clk_o_divided == 0 ) || decimation_factor == 0 ) begin
                 if( SI_rdy == 1'b0 || ( SI_rdy == 1'b1 && SI_ack == 1'b1 ) ) begin
                 //if we were not sending or last data sended has been acknowledged
+                `ifdef FAKE_ADC
+                    SI_data <= fakeADC; //send new data
+                `else
                     SI_data <= ADC_data; //send new data
+                `endif
                     SI_rdy <= 1'b1;
                 end
             end
         end
     end
 
+    `ifdef FAKE_ADC
+        reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
+        reg [8:0] idx = 8'd0;
+        reg [7:0] random = 8'b0;
+        reg [7:0] tableADC [0:511];
+        initial $readmemh("rom.hex", tableADC);
+        //initial $readmemb("rom.bin", tableADC);
+        always @(posedge clk_i) begin
+            fakeADC <= tableADC[idx] + random[7:6];
+            idx <= idx + 1;
+            random[5:0] <= random[6:1];
+            random[6] <= random[5] ^ random[3] ^ random[0];
+            random[7] <= random[4] ^ random[3] ^ random[1];
+        end
+    `endif
 
-    `ifdef COCOTB_SIM                                                        // COCOTB macro
+
+    `ifdef COCOTB_SIM        // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,adc_interface);
