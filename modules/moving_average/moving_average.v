@@ -27,8 +27,8 @@
 `timescale 1ns/1ps
 
 module moving_average  #(
-    parameter BITS_ADC = `__BITS_ADC,
-    parameter BITS_ACUM = `__MA_ACUM_WIDTH
+    parameter BITS_ADC = 8,
+    parameter BITS_ACUM = 12
 ) (
                                     // Description              Type            Width
     // Basic
@@ -43,8 +43,8 @@ module moving_average  #(
     input rdy_in,
 
     // Output samples
-    output reg [BITS_ADC-1:0] sample_out,
-    output reg rdy_out
+    output reg [BITS_ADC-1:0] sample_out = 0,
+    output reg rdy_out = 0
 
 );
 

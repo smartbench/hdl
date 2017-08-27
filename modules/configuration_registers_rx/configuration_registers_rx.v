@@ -53,7 +53,7 @@ module configuration_registers_rx #(
     reg [RX_DATA_WIDTH-1:0] register_addr_pck [REG_ADDR_PACKETS-1:0];
 
     // Packet counter
-    reg [$clog2(REG_ADDR_PACKETS)-1:0 ] count = 0;
+    reg [$clog2(REG_ADDR_PACKETS+REG_DATA_PACKETS)-1:0 ] count = 0;
 
     // States local parameters
     localparam ST_RECEIVING_ADDR = 0;

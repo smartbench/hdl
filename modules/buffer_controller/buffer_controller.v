@@ -102,7 +102,7 @@ module buffer_controller  #(
     );
 
     // Finite State Machine
-     always @(posedge clk or posedge rst) begin
+    always @(posedge clk) begin
         if (rst) begin
             counter <= 0;
             buffer_full_o <= 1'b0;

@@ -33,7 +33,7 @@ module channel_block #(
     parameter ADDR_ADC_CLK_DIV_H = 3,
     parameter ADDR_N_MOVING_AVERAGE = 4,
 
-    parameter DEFAULT_CH_SETTINGS = 16'b11100001,
+    parameter DEFAULT_CH_SETTINGS = 16'b0000000011100001,
     parameter DEFAULT_DAC_VALUE = (1 << (BITS_DAC-1)),
     parameter DEFAULT_ADC_CLK_DIV = 1,
     parameter DEFAULT_N_MOVING_AVERAGE = 1
@@ -51,7 +51,7 @@ module channel_block #(
     output  [2:0] Att_Sel,
     output  [2:0] Gain_Sel,
     output  DC_Coupling,
-    // ChannelOn
+    output  ChannelOn,
 
     // Buffer Controller
     input   rqst_data,
@@ -101,8 +101,8 @@ module channel_block #(
         .si_addr        (register_addr),
         .si_data        (register_data),
         .si_rdy         (register_rdy),
-        // .data        ( { Att_Sel , Gain_Sel , DC_Coupling , Channel_On } )
         .data           (reg_Channel_settings_data)
+        // .data        ( { Att_Sel , Gain_Sel , DC_Coupling , Channel_On } )
     );
     assign Att_Sel = reg_Channel_settings_data[7:5] ;
     assign Gain_Sel = reg_Channel_settings_data[4:2];

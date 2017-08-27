@@ -67,8 +67,7 @@ module trigger_block  #(
     // Registers bus
     input [REG_ADDR_WIDTH-1:0] register_addr,
     input [REG_DATA_WIDTH-1:0] register_data,
-    input register_rdy
-);
+    input register_rdy );
 
     // Buffer Controller
     wire [BITS_ADC-1:0] trigger_source_data;

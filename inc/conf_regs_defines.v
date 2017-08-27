@@ -92,17 +92,17 @@
 *******************************************************************************/
 
 `define __DEFAULT_REQUESTS               16'd0
-`define __DEFAULT_SETTINGS_CHA           16'b11100001
-`define __DEFAULT_SETTINGS_CHB           16'b11100001
+`define __DEFAULT_SETTINGS_CHA           16'b0000000011100001
+`define __DEFAULT_SETTINGS_CHB           16'b0000000011100001
 `define __DEFAULT_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
 `define __DEFAULT_DAC_CHB                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
-`define __DEFAULT_TRIGGER_SETTINGS       16'b0
+`define __DEFAULT_TRIGGER_SETTINGS       16'd0
 `define __DEFAULT_TRIGGER_VALUE          (1 << (`__BITS_ADC-1)) // 16'b10000000
-`define __DEFAULT_NUM_SAMPLES            16'b10000000
-`define __DEFAULT_PRETRIGGER             16'b0
+`define __DEFAULT_NUM_SAMPLES            16'd128
+`define __DEFAULT_PRETRIGGER             16'd28
 `define __DEFAULT_ADC_CLK_DIV_CHA        16'd4
 `define __DEFAULT_ADC_CLK_DIV_CHB        16'd4
-`define __DEFAULT_N_MOVING_AVERAGE_CHA   16'b0
-`define __DEFAULT_N_MOVING_AVERAGE_CHB   16'b0
+`define __DEFAULT_N_MOVING_AVERAGE_CHA   16'd0
+`define __DEFAULT_N_MOVING_AVERAGE_CHB   16'd0
 
 `endif

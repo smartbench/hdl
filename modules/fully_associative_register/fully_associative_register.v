@@ -27,10 +27,10 @@
 `include "conf_regs_defines.v"
 
 module fully_associative_register #(
-    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
-    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
-    parameter MY_ADDR = 4'ha,
-    parameter MY_RESET_VALUE = 4'h0
+    parameter REG_ADDR_WIDTH = 8,
+    parameter REG_DATA_WIDTH = 16,
+    parameter MY_ADDR = 0,
+    parameter MY_RESET_VALUE = 0
 ) (
     // Basic signals
     input clk,

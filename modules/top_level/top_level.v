@@ -280,24 +280,25 @@ module top_level #(
 
     // echo
 `ifdef TESTING_ECHO
-    localparam N=5;
+    localparam N=10;
     wire [7:0] data_i;
     wire [7:0] data_o;
     reg [7:0] dl_data[0:N-1];
     wire rdy_i, ack_i, rdy_o, ack_o;
     reg [N-1:0] dl_rdy;
+    integer i,j;
 
     assign data_o = dl_data[N-1];
     assign rdy_o = dl_rdy[N-1];
     assign ack_i = rdy_i & ~dl_rdy[0] ;
 
-    integer i,j;
     initial begin
         for(i=0;i<N;i=i+1) begin
             dl_rdy[i] <= 1'b0;
-            dl_data[i] <= 8'b0;
+            dl_data[i] <= 8'd0;
         end
     end
+
     always @(posedge clk_100M) begin
         if(ack_o) begin
             // all to the left
@@ -323,9 +324,8 @@ module top_level #(
             dl_data[0] <= data_i;
             dl_rdy[0] <= rdy_i;
         end
-
-
     end
+
 `endif
 
     /*
@@ -484,6 +484,17 @@ module top_level #(
 
     always @(posedge clk_100M) begin
         if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+
+        /*if(rdy_i) begin
+            //leds <= 8'hAA;
+            //if (leds == 8'hAA) leds <= 8'h55;
+            leds <= data_i;
+        end*/
+        /*
+        if(rxf_245 == 1'b0 && rx_245 == 1'b0) begin
+            leds <= in_out_245;
+        end*/
+
     end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro

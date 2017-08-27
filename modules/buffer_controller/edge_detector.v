@@ -54,7 +54,7 @@ module edge_detector #( parameter BITS_ADC = 8
     localparam  ST_SEARCHING=0,    // First condition not met: waiting for signal to be under (over) trigger value, when ST_SEARCHING for positive (negative) edge
                 ST_VALIDATING=1;   // First contition met: signal under (over) trigger value, when ST_SEARCHING for positive (negative) edge
 
-     always @(posedge clk or posedge rst) begin
+     always @(posedge clk) begin
         triggered <= 1'b0;
         if (rst) begin
             state <= ST_SEARCHING;

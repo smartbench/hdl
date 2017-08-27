@@ -1,6 +1,6 @@
 
-TOP = breadboard_top
-#TOP = top_level
+#TOP = breadboard_top
+TOP = top_level
 #SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
 SRC = $(wildcard ../modules/**/*.v ../top/*.v)
 INC = ../inc/
@@ -8,8 +8,8 @@ INC = ../inc/
 # PNR OPT
 PACKAGE = ct256
 DEVICE = 8k
-PCF = breadboard.pcf
-#PCF = top_level.pcf
+#PCF = breadboard.pcf
+PCF = top_level.pcf
 
 all: syn pnr pack
 
@@ -26,10 +26,10 @@ $(TOP).asc: $(TOP).blif $(PCF)
 $(TOP).bin: $(TOP).asc
 	icepack $(TOP).asc $(TOP).bin
 
-prog:
+prog: $(TOP).bin
 	iceprog $(TOP).bin
 
-load-cram:
+load-cram: $(TOP).bin
 	iceprog -S $(TOP).bin
 
 clean:

@@ -68,7 +68,8 @@ module adc_interface  #(
     assign ADC_oe = 0;
 
 
-    always @( decimation_factor or clk_i or clk_o_divided ) begin           // Mux selecting between clk_i and clk_o_divided
+    //always @( decimation_factor or clk_i or clk_o_divided ) begin           // Mux selecting between clk_i and clk_o_divided
+    always @(*) begin           // Mux selecting between clk_i and clk_o_divided
         if ( decimation_factor == 0 ) begin
             clk_o = clk_i;
         end else begin
