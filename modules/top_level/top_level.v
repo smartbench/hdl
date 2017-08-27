@@ -18,6 +18,9 @@
     Releases:
 */
 
+
+//`define TESTING_ECHO
+
 `include "conf_regs_defines.v"
 
 `timescale 1ns/1ps
@@ -105,10 +108,11 @@ module top_level #(
     output wr_245,
 
     // I2C
-    inout SDA,
-    inout SCL,
+    //inout SDA,
+    //inout SCL,
 
-    output clk_o
+    output clk_o,
+    output reg [7:0] leds
 
 );
 
@@ -164,6 +168,7 @@ module top_level #(
     // Buffer Controller <--> RAM
     wire we;
     wire [REG_DATA_WIDTH-1:0] num_samples;
+
 
     // PLL instantiation
     SB_PLL40_CORE #(
@@ -273,6 +278,56 @@ module top_level #(
         .trig_ack(tx_trigger_status_ack)
     );
 
+    // echo
+`ifdef TESTING_ECHO
+    localparam N=5;
+    wire [7:0] data_i;
+    wire [7:0] data_o;
+    reg [7:0] dl_data[0:N-1];
+    wire rdy_i, ack_i, rdy_o, ack_o;
+    reg [N-1:0] dl_rdy;
+
+    assign data_o = dl_data[N-1];
+    assign rdy_o = dl_rdy[N-1];
+    assign ack_i = rdy_i & ~dl_rdy[0] ;
+
+    integer i,j;
+    initial begin
+        for(i=0;i<N;i=i+1) begin
+            dl_rdy[i] <= 1'b0;
+            dl_data[i] <= 8'b0;
+        end
+    end
+    always @(posedge clk_100M) begin
+        if(ack_o) begin
+            // all to the left
+            for (i=1;i<N;i=i+1) begin
+                dl_data[i] <= dl_data[i-1];
+                dl_rdy[i] <= dl_rdy[i-1];
+            end
+            dl_data[0] <= 0;
+            dl_rdy[0] <= 1'b0;
+        end else begin
+            for (i=1;i<N;i=i+1) begin
+                if(dl_rdy[i] == 1'b0) begin //free space
+                    for (j=1;j<=i;j=j+1) begin
+                        dl_data[j] <= dl_data[j-1];
+                        dl_rdy[j] <= dl_rdy[j-1];
+                    end
+                    dl_data[0] <= 0;
+                    dl_rdy[0] <= 1'b0;
+                end
+            end
+        end
+        if(dl_rdy[0] == 1'b0) begin
+            dl_data[0] <= data_i;
+            dl_rdy[0] <= rdy_i;
+        end
+
+
+    end
+`endif
+
     /*
     // FT245
     ft245_interface #(
@@ -308,14 +363,24 @@ module top_level #(
         .rx_245(rx_245),
         .txe_245(txe_245),
         .wr_245(wr_245),
+`ifndef TESTING_ECHO
         .rx_data_si(si_ft245_rx_data),
         .rx_rdy_si(si_ft245_rx_rdy),
         .rx_ack_si(si_ft245_rx_ack),
         .tx_data_si(si_ft245_tx_data),
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
-
+`else
+        .rx_data_si(data_i),
+        .rx_rdy_si(rdy_i),
+        .rx_ack_si(ack_i),
+        .tx_data_si(data_o),
+        .tx_rdy_si(rdy_o),
+        .tx_ack_si(ack_o)
+`endif
     );
+
+
 
     // Channel Block
     channel_block #(
@@ -416,6 +481,10 @@ module top_level #(
         .tx_eof(tx_chB_eof),
         .tx_ack(tx_chB_ack)
     );
+
+    always @(posedge clk_100M) begin
+        if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+    end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
