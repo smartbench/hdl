@@ -1,11 +1,15 @@
 
 TOP = breadboard_top
-SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
+#TOP = top_level
+#SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
+SRC = $(wildcard ../modules/**/*.v ../top/*.v)
+INC = ../inc/
 
 # PNR OPT
 PACKAGE = ct256
 DEVICE = 8k
-PCF = top.pcf
+PCF = breadboard.pcf
+#PCF = top_level.pcf
 
 all: syn pnr pack
 
@@ -14,7 +18,7 @@ pnr : $(TOP).asc
 pack: $(TOP).bin
 
 $(TOP).blif: $(SRC)
-	yosys -p "read_verilog -I$(INC) $(SRC); synth_ice40 -blif $(TOP).blif"
+	yosys -p "read_verilog -I$(INC) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
 
 $(TOP).asc: $(TOP).blif $(PCF)
 	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
@@ -30,3 +34,4 @@ load-cram:
 
 clean:
 	rm $(TOP).bin $(TOP).asc $(TOP).blif --force
+	rm *.bin *.asc *.blif *~ --force

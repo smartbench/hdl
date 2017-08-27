@@ -54,14 +54,14 @@ module top #(
     output i2c_scl,
 
     // LEDS (for testing)
-    output led_o_0;
-    output led_o_1;
-    output led_o_2;
-    output led_o_3;
-    output led_o_4;
-    output led_o_5;
-    output led_o_6;
-    output led_o_7;
+    output led_o_0,
+    output led_o_1,
+    output led_o_2,
+    output led_o_3,
+    output led_o_4,
+    output led_o_5,
+    output led_o_6,
+    output led_o_7
 
 );
 
