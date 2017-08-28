@@ -117,24 +117,32 @@ module adc_interface  #(
     `ifdef FAKE_ADC
         reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
         reg [8:0] idx = 8'd0;
-        reg [7:0] random = 8'b1;
-        reg [7:0] tableADC [0:511];
-        //initial $readmemh("rom.hex", tableADC);
-        initial $readmemh(`PATH_ROM, tableADC);
+        reg [7:0] random = 0;
+        reg [7:0] romADC [0:511];
+        reg [7:0] tmp = 0;
+
+        //initial $readmemh("rom.hex", romADC);
+        initial $readmemh(`PATH_ROM, romADC);
+
+        always @(posedge(clk_i)) begin
+            tmp <= romADC[idx];
+        end
+
         integer i;
         initial begin
             $display("loaded data:");
             for (i=0; i < 512; i=i+1)
-            $display("%d:%h",i,tableADC[i]);
+            $display("%d:%h",i,romADC[i]);
         end
-        //initial $readmemb("rom.bin", tableADC);
+        //initial $readmemb("rom.bin", romADC);
         always @(posedge clk_i) begin
             if(rst) begin
                 fakeADC <= 0;
                 idx <= 0;
                 random <= 1;
             end else begin
-                fakeADC <= tableADC[idx] + random[7:6];
+                //fakeADC <= romADC[idx] + random[7:6];
+                fakeADC <= tmp + random[7:6];
                 idx <= idx + 1;
                 random[5:0] <= random[6:1];
                 random[6] <= random[5] ^ random[3] ^ random[0];
