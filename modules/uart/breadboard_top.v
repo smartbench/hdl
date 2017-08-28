@@ -14,16 +14,19 @@ module breadboard_top (
 );
 
     wire clk_100M;
-    wire tx_clk, tx_rdy, tx_empty;
-    wire rx_clk, rx_ack, rx_empty;
+    wire tx_clk, tx_rdy;
+    wire rx_clk, rx_ack;
     wire [7:0] s_Q;
     wire [7:0] tx_data;
     wire [7:0] rx_data;
-    reg [7:0] data;
+    reg [7:0] data = 0, data_i = 0;
 
     //uart
-    uart u2(
-        .tx_clk(tx_clk),
+    uart u2 #(
+        .CLOCK(100e6),
+        .BAUDRATE(9600)
+    )(
+        .clk(clk_100M)
         .rx_clk(rx_clk),
 
         .tx_data(tx_data),
@@ -60,11 +63,10 @@ module breadboard_top (
         end
     end
 
-    reg [7:0] data_i = 0;
     always @ (posedge tx_clk) begin
         data_i <= data;
-        if(data_i != tx_data) begin
-            tx_data <= data;
+        if( tx_data != data_i ) begin
+            tx_data <= data_i;
             tx_rdy <= 1;
         end
         if(tx_ack) tx_rdy <= 0;
