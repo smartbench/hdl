@@ -1,38 +1,26 @@
 
 module breadboard_top (
-    clock_i,
-    led_o_0,
-    led_o_1,
-    led_o_2,
-    led_o_3,
-    led_o_4,
-    led_o_5,
-    led_o_6,
-    led_o_7,
-    rx_in,
-    tx_out,
+    input clock_i,
+    output led_o_0,
+    output led_o_1,
+    output led_o_2,
+    output led_o_3,
+    output led_o_4,
+    output led_o_5,
+    output led_o_6,
+    output led_o_7,
+    input rx_in,
+    output tx_out
 );
 
-    input clock_i;
-    output led_o_0;
-    output led_o_1;
-    output led_o_2;
-    output led_o_3;
-    output led_o_4;
-    output led_o_5;
-    output led_o_6;
-    output led_o_7;
-    input rx_in;
-    output tx_out;
-    
-    wire clk_100M, s_clear, s_count; 
+    wire clk_100M;
     wire tx_clk, tx_out, ld_tx_data, tx_empty;
     wire rx_clk, rx_in, uld_rx_data, rx_empty;
     wire [7:0] s_Q;
     wire [7:0] tx_data;
     wire [7:0] rx_data;
     reg [7:0] data;
-    
+
     //uart
     uart u2(
         .txclk(tx_clk),
@@ -41,7 +29,7 @@ module breadboard_top (
         .tx_empty(tx_empty),
         .ld_tx_data(ld_tx_data),
         .tx_out(tx_out),
-        
+
         .rxclk(rx_clk),
         .rx_data(rx_data),
         .uld_rx_data(uld_rx_data),
@@ -49,21 +37,21 @@ module breadboard_top (
         .rx_enable(1),
         .rx_in(rx_in)
     );
-    
+
     // clock uart
     freq_divider u3(
         .clk(clk_100M),
         .tx_clk(tx_clk),
         .rx_clk(rx_clk)
     );
-    
+
     // combinacional
     assign s_Q = rx_data;
     always @ (s_Q[7:0]) begin
         tx_data[7:0] = s_Q[7:0];
         tx_data[5] = ~s_Q[5];
     end
-    
+
     // secuencial
     always @ (posedge rx_clk) begin
         uld_rx_data <= 0;
@@ -92,8 +80,6 @@ module breadboard_top (
             .PLLOUTCORE(clk_100M)
         );
 
-    assign s_clear = 1;
-    assign s_count = 1;
     assign led_o_7 = s_Q[7];
     assign led_o_6 = s_Q[6];
     assign led_o_5 = s_Q[5];
