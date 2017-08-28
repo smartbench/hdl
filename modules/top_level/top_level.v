@@ -170,8 +170,8 @@ module top_level #(
 
     wire global_rst;
     wire pll_lock;
-    reg pll_lock_i;
-    reg pll_reset;
+    reg pll_lock_i = 0;
+    reg pll_reset = 0;
 
     always @(posedge clk_100M) begin
         // this delay is probably not necessary...
@@ -299,7 +299,7 @@ module top_level #(
     localparam N=10;
     wire [7:0] data_i;
     wire [7:0] data_o;
-    reg [7:0] dl_data[0:N-1];
+    reg [7:0] dl_data[0:N-1] ;
     wire rdy_i, ack_i, rdy_o, ack_o;
     reg [N-1:0] dl_rdy;
     integer i,j;
@@ -308,37 +308,37 @@ module top_level #(
     assign rdy_o = dl_rdy[N-1];
     assign ack_i = rdy_i & ~dl_rdy[0] ;
 
-    initial begin
-        for(i=0;i<N;i=i+1) begin
-            dl_rdy[i] <= 1'b0;
-            dl_data[i] <= 8'd0;
-        end
-    end
-
     always @(posedge clk_100M) begin
-        if(ack_o) begin
-            // all to the left
-            for (i=1;i<N;i=i+1) begin
-                dl_data[i] <= dl_data[i-1];
-                dl_rdy[i] <= dl_rdy[i-1];
+        if(global_rst) begin
+            for(i=0;i<N;i=i+1) begin
+                dl_rdy[i] <= 1'b0;
+                dl_data[i] <= 8'd0;
             end
-            dl_data[0] <= 0;
-            dl_rdy[0] <= 1'b0;
         end else begin
-            for (i=1;i<N;i=i+1) begin
-                if(dl_rdy[i] == 1'b0) begin //free space
-                    for (j=1;j<=i;j=j+1) begin
-                        dl_data[j] <= dl_data[j-1];
-                        dl_rdy[j] <= dl_rdy[j-1];
+            if(ack_o) begin
+                // all to the left
+                for (i=1;i<N;i=i+1) begin
+                    dl_data[i] <= dl_data[i-1];
+                    dl_rdy[i] <= dl_rdy[i-1];
+                end
+                dl_data[0] <= 0;
+                dl_rdy[0] <= 1'b0;
+            end else begin
+                for (i=1;i<N;i=i+1) begin
+                    if(dl_rdy[i] == 1'b0) begin //free space
+                        for (j=1;j<=i;j=j+1) begin
+                            dl_data[j] <= dl_data[j-1];
+                            dl_rdy[j] <= dl_rdy[j-1];
+                        end
+                        dl_data[0] <= 0;
+                        dl_rdy[0] <= 1'b0;
                     end
-                    dl_data[0] <= 0;
-                    dl_rdy[0] <= 1'b0;
                 end
             end
-        end
-        if(dl_rdy[0] == 1'b0) begin
-            dl_data[0] <= data_i;
-            dl_rdy[0] <= rdy_i;
+            if(dl_rdy[0] == 1'b0) begin
+                dl_data[0] <= data_i;
+                dl_rdy[0] <= rdy_i;
+            end
         end
     end
 

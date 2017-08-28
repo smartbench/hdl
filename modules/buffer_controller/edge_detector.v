@@ -45,11 +45,11 @@ module edge_detector #( parameter BITS_ADC = 8
     input [BITS_ADC-1:0] trigger_value,      // trigger value
     input [BITS_ADC-1:0] input_sample,       // input samples of the trigger source
     input       input_rdy,          // sample available for read
-    output reg  triggered         // trigger detected (delays ONE clock)
+    output reg  triggered = 0         // trigger detected (delays ONE clock)
 );
 
     // Finite State Machine
-    reg [1:0] state;            // State register
+    reg [1:0] state = 0;            // State register
     localparam  ST_SEARCHING=0,    // First condition not met: waiting for signal to be under (over) trigger value, when ST_SEARCHING for positive (negative) edge
                 ST_VALIDATING=1;   // First contition met: signal under (over) trigger value, when ST_SEARCHING for positive (negative) edge
 

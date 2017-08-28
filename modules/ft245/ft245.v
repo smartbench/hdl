@@ -77,11 +77,11 @@ module ft245_interface #(
     always @(posedge clk) begin
         if (rst == 1'b1) begin
             tx_data_245 <= 0;
+            rx_245 <= 1'b1;
             wr_245 <= 1'b1;
             tx_oe_245 <= 1'b0;
             rx_data_si <= 0;
             rx_rdy_si <= 1'b0;
-            rx_245 <= 1'b1;
             tx_ack_si <= 1'b0;
             state <= ST_IDLE;
             cnt <= 0;

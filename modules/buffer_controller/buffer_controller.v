@@ -78,7 +78,7 @@ module buffer_controller  #(
                 ST_POST_LOADING = 3;
 
     reg [1:0]  state;       // State register
-    reg [17:0] counter ;    // samples counter
+    reg [17:0] counter;    // samples counter
 
     reg triggered_o;
     reg buffer_full_o;
