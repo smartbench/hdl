@@ -28,6 +28,8 @@
 
 `include "conf_regs_defines.v"
 `define FAKE_ADC
+// yeah, hard coded... change later
+`define PATH_ROM "/home/ariel/ariel/utn/repo/hdl/inc/rom.hex"
 
 `timescale 1ns/1ps
 
@@ -117,7 +119,14 @@ module adc_interface  #(
         reg [8:0] idx = 8'd0;
         reg [7:0] random = 8'b1;
         reg [7:0] tableADC [0:511];
-        initial $readmemh("rom.hex", tableADC);
+        //initial $readmemh("rom.hex", tableADC);
+        initial $readmemh(`PATH_ROM, tableADC);
+        integer i;
+        initial begin
+            $display("loaded data:");
+            for (i=0; i < 512; i=i+1)
+            $display("%d:%h",i,tableADC[i]);
+        end
         //initial $readmemb("rom.bin", tableADC);
         always @(posedge clk_i) begin
             if(rst) begin
