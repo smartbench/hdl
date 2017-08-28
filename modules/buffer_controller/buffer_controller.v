@@ -66,9 +66,9 @@ module buffer_controller  #(
     // Communication with tx_control
                   //
 
-    output reg [7:0] trigger_status_data = 8'd0, // output frame [7:0] = {x,x,x,x,x,x,triggered_o,buffer_full_o}
-    output reg trigger_status_rdy = 1'b0,
-    output reg trigger_status_eof = 1'b1,        // end of frame
+    output reg [7:0] trigger_status_data, // output frame [7:0] = {x,x,x,x,x,x,triggered_o,buffer_full_o}
+    output reg trigger_status_rdy,
+    output reg trigger_status_eof,        // end of frame
     input trigger_status_ack
 );
 
@@ -77,11 +77,11 @@ module buffer_controller  #(
                 ST_WAITING_TRIGGER = 2,
                 ST_POST_LOADING = 3;
 
-    reg [1:0]  state = 2'd0;       // State register
-    reg [17:0] counter = 18'd0;    // samples counter
+    reg [1:0]  state;       // State register
+    reg [17:0] counter ;    // samples counter
 
-    reg triggered_o = 1'b0;
-    reg buffer_full_o = 1'b0;
+    reg triggered_o;
+    reg buffer_full_o;
 
     wire edge_detector_rst;
     wire triggered;
@@ -169,7 +169,7 @@ module buffer_controller  #(
     // Tx Protocol
     localparam  ST2_IDLE=0,
                 ST2_SENDING=1;
-    reg state_2 = ST2_IDLE;
+    reg state_2;
 
     //assign trigger_status_eof = (trigger_status_ack == 1'b1 || trigger_status_rdy == 1'b0) ? 1'b1 : 1'b0;
 
@@ -178,8 +178,10 @@ module buffer_controller  #(
         trigger_status_data[0] <= buffer_full_o;
         trigger_status_data[1] <= triggered_o;
         if(rst == 1'b1) begin
+            trigger_status_data <= 0;
             trigger_status_rdy <= 1'b0;
             trigger_status_eof <= 1'b1;
+            state_2 <= ST2_IDLE;
         end else begin
             case(state_2)
 

@@ -45,9 +45,8 @@ module edge_detector #( parameter BITS_ADC = 8
     input [BITS_ADC-1:0] trigger_value,      // trigger value
     input [BITS_ADC-1:0] input_sample,       // input samples of the trigger source
     input       input_rdy,          // sample available for read
-    output reg  triggered=0         // trigger detected (delays ONE clock)
+    output reg  triggered         // trigger detected (delays ONE clock)
 );
-    parameter CLOCK_PERIOD_NS = 10;
 
     // Finite State Machine
     reg [1:0] state;            // State register

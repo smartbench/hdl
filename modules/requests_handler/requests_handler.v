@@ -38,7 +38,7 @@ module requests_handler  #(
 
 );
 
-    reg  [REG_DATA_WIDTH-1:0]  rqst_array = 0;
+    reg  [REG_DATA_WIDTH-1:0]  rqst_array;
 
     assign start_o = rqst_array[`__RQST_START_IDX];
     // this is important!!

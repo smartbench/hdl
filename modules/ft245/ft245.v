@@ -10,22 +10,22 @@ module ft245_interface #(
     // ft245 rx interface
     input [7:0] rx_data_245,
     input rxf_245,
-    output reg rx_245=1'b1,
+    output reg rx_245,
 
     // ft245 tx interface
-    output reg [7:0] tx_data_245= 8'b0,
+    output reg [7:0] tx_data_245,
     input txe_245,
-    output reg wr_245= 1'b1,
-    output reg tx_oe_245=1'b0,
+    output reg wr_245,
+    output reg tx_oe_245,
 
     // simple interface
-    output reg [7:0] rx_data_si = 8'd0,
-    output reg rx_rdy_si = 1'b0,
+    output reg [7:0] rx_data_si,
+    output reg rx_rdy_si,
     input rx_ack_si,
 
     input [7:0] tx_data_si,
     input tx_rdy_si,
-    output reg tx_ack_si=1'b0
+    output reg tx_ack_si
 );
 
 
@@ -71,18 +71,20 @@ module ft245_interface #(
     localparam ST_SETUP_TX = 3;
     localparam ST_WAIT_TX = 4;
 
-    reg [2:0] state = ST_IDLE;
-    reg [$clog2(MAX_CNT):0] cnt=0;
+    reg [2:0] state;
+    reg [$clog2(MAX_CNT):0] cnt;
 
     always @(posedge clk) begin
         if (rst == 1'b1) begin
-            state <= ST_IDLE;
-            rx_245 <= 1'b1;
-            tx_oe_245 <= 1'b0;
-            cnt <= 3'd0;
+            tx_data_245 <= 0;
             wr_245 <= 1'b1;
+            tx_oe_245 <= 1'b0;
+            rx_data_si <= 0;
             rx_rdy_si <= 1'b0;
+            rx_245 <= 1'b1;
             tx_ack_si <= 1'b0;
+            state <= ST_IDLE;
+            cnt <= 0;
         end else begin
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
             wr_245 <= 1'b1;

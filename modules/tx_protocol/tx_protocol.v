@@ -59,12 +59,12 @@ module tx_protocol #(
     output reg trig_ack                   // Ack
 );
 
-    reg [$clog2(SOURCES)-1:0] i = 0;
+    reg [$clog2(SOURCES)-1:0] i;
 
     localparam  ST_IDLE = 0,
                 ST_SENDING = 1;
 
-    reg state = ST_IDLE;
+    reg state;
 
     reg [1:0] source_interface;
 

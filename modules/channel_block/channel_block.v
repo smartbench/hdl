@@ -51,7 +51,7 @@ module channel_block #(
     output  [2:0] Att_Sel,
     output  [2:0] Gain_Sel,
     output  DC_Coupling,
-    output  ChannelOn,
+    output  Channel_On,
 
     // Buffer Controller
     input   rqst_data,

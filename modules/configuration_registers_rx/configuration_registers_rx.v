@@ -53,14 +53,14 @@ module configuration_registers_rx #(
     reg [RX_DATA_WIDTH-1:0] register_addr_pck [REG_ADDR_PACKETS-1:0];
 
     // Packet counter
-    reg [$clog2(REG_ADDR_PACKETS+REG_DATA_PACKETS)-1:0 ] count = 0;
+    reg [$clog2(REG_ADDR_PACKETS+REG_DATA_PACKETS)-1:0 ] count;
 
     // States local parameters
     localparam ST_RECEIVING_ADDR = 0;
     localparam ST_RECEIVING_DATA = 1;
 
     // State register
-    reg state = ST_RECEIVING_ADDR;
+    reg state;
 
     // Flattened the arrays of packets in the data bits (this is why register_data and register_addr are wires)
     genvar i;

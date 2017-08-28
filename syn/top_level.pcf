@@ -22,3 +22,5 @@ set_io rxf_245 F15
 set_io rx_245 D15
 set_io txe_245 E14
 set_io wr_245 D14
+
+set_io rst A10

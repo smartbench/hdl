@@ -62,10 +62,10 @@ module adc_block #(
     wire [BITS_ADC-1:0] adc_interface_si_data;
     wire adc_interface_si_rdy;
     wire adc_interface_si_ack;
-    reg [ADC_CLK_DIV_WIDTH-1:0] adc_df  = DEFAULT_ADC_CLK_DIV;  // adc decimation factor DefaultValue  register
-    reg [$clog2(MOVING_AVERAGE_ACUM_WIDTH-BITS_ADC)-1:0] ma_k = DEFAULT_N_MOVING_AVERAGE; // moving average k factor DefaultValue register
+    reg [ADC_CLK_DIV_WIDTH-1:0] adc_df;  // adc decimation factor DefaultValue  register
+    reg [$clog2(MOVING_AVERAGE_ACUM_WIDTH-BITS_ADC)-1:0] ma_k; // moving average k factor DefaultValue register
 
-    reg rst_restart = 1'b0;
+    reg rst_restart;
     assign adc_interface_si_ack = adc_interface_si_rdy;
 
     adc_interface #(
