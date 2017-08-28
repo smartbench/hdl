@@ -42,11 +42,11 @@ module adc_interface  #(
     // ADC interface
     input [DATA_WIDTH-1:0] ADC_data,    // data
     output ADC_oe,                      // ouput enable, active low
-    output reg clk_o=1'b0,              // ADC clock
+    output reg clk_o,              // ADC clock
 
     // Simple interface
-    output reg [DATA_WIDTH-1:0] SI_data = 0,    // data
-    output reg SI_rdy = 1'b0,                   // ready
+    output reg [DATA_WIDTH-1:0] SI_data,    // data
+    output reg SI_rdy,                   // ready
     input SI_ack,                               // acknowledge
 
     // Configuration
@@ -63,13 +63,14 @@ module adc_interface  #(
     reg [CLK_DIV_WIDTH-1:0]  counter;
 
     // Divided clock. If decimation_factor!=0 then clk_o is assigned to clk_o_divided
-    reg clk_o_divided=1'b0;
+    reg clk_o_divided;
 
     //ADC_oe is always 0
     assign ADC_oe = 0;
 
 
-    always @( decimation_factor or clk_i or clk_o_divided ) begin           // Mux selecting between clk_i and clk_o_divided
+    //always @( decimation_factor or clk_i or clk_o_divided ) begin           // Mux selecting between clk_i and clk_o_divided
+    always @(*) begin           // Mux selecting between clk_i and clk_o_divided
         if ( decimation_factor == 0 ) begin
             clk_o = clk_i;
         end else begin

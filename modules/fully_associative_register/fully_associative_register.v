@@ -27,10 +27,10 @@
 `include "conf_regs_defines.v"
 
 module fully_associative_register #(
-    parameter REG_ADDR_WIDTH = `__REG_ADDR_WIDTH,
-    parameter REG_DATA_WIDTH = `__REG_DATA_WIDTH,
-    parameter MY_ADDR = 4'ha,
-    parameter MY_RESET_VALUE = 4'h0
+    parameter REG_ADDR_WIDTH = 8,
+    parameter REG_DATA_WIDTH = 16,
+    parameter MY_ADDR = 0,
+    parameter MY_RESET_VALUE = 0
 ) (
     // Basic signals
     input clk,
@@ -43,7 +43,7 @@ module fully_associative_register #(
     output si_ack,
 
     // Register value
-    output reg [REG_DATA_WIDTH-1:0] data = MY_RESET_VALUE
+    output reg [REG_DATA_WIDTH-1:0] data
 );
 
     // Asynchronous acknowledge.

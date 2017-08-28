@@ -59,12 +59,12 @@ module tx_protocol #(
     output reg trig_ack                   // Ack
 );
 
-    reg [$clog2(SOURCES)-1:0] i = 0;
+    reg [$clog2(SOURCES)-1:0] i;
 
     localparam  ST_IDLE = 0,
                 ST_SENDING = 1;
 
-    reg state = ST_IDLE;
+    reg state;
 
     reg [1:0] source_interface;
 
@@ -106,24 +106,24 @@ module tx_protocol #(
     reg [0:SOURCES-1]input_ack;
 
     always @* begin
-        input_data[0] <= trig_data;
-        input_data[1] <= ch1_data;
-        input_data[2] <= ch2_data;
+        input_data[0] = trig_data;
+        input_data[1] = ch1_data;
+        input_data[2] = ch2_data;
 
-        input_rdy[0] <= trig_rdy;
-        input_rdy[1] <= ch1_rdy;
-        input_rdy[2] <= ch2_rdy;
+        input_rdy[0] = trig_rdy;
+        input_rdy[1] = ch1_rdy;
+        input_rdy[2] = ch2_rdy;
 
-        input_eof[0] <= trig_eof;
-        input_eof[1] <= ch1_eof;
-        input_eof[2] <= ch2_eof;
+        input_eof[0] = trig_eof;
+        input_eof[1] = ch1_eof;
+        input_eof[2] = ch2_eof;
 
-        trig_ack <= input_ack[0];
-        ch1_ack <= input_ack[1];
-        ch2_ack <= input_ack[2];
+        trig_ack = input_ack[0];
+        ch1_ack = input_ack[1];
+        ch2_ack = input_ack[2];
 
-        tx_data <= (state == ST_SENDING && input_eof[source_interface] == 1'b0) ? input_data[source_interface] : 0;
-        tx_rdy <= (state == ST_SENDING && input_eof[source_interface] == 1'b0) ? input_rdy[source_interface] : 0;
+        tx_data = (state == ST_SENDING && input_eof[source_interface] == 1'b0) ? input_data[source_interface] : 0;
+        tx_rdy = (state == ST_SENDING && input_eof[source_interface] == 1'b0) ? input_rdy[source_interface] : 0;
     end
 
     genvar h;

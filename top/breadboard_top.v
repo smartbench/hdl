@@ -5,6 +5,7 @@
 
 module breadboard_top (
     input clock_i,
+    input rst,
 
     inout [7:0] in_out_245,
 
@@ -19,6 +20,9 @@ module breadboard_top (
 );
 
     wire clk_100M;
+    wire global_rst;
+
+    assign global_rst = 1'b0;
 
     // PLL instantiation
     SB_PLL40_CORE #(
@@ -50,7 +54,7 @@ module breadboard_top (
         .CLOCK_PERIOD_NS(10)
     ) ft245_block_u (
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
 
         .in_out_245(in_out_245),
 
@@ -81,7 +85,7 @@ module breadboard_top (
     assign tx_data_si = ~rx_data_si;
 
     always @(posedge clk_100M) begin
-        if(rst) begin
+        if(global_rst) begin
         end else begin
             if(rx_rdy_si == 1'b1) leds <= rx_data_si;
             //if(tx_ack_si == 1'b1 && txe_245 == 1'b0) leds <= 8'hAA;

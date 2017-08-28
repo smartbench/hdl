@@ -18,6 +18,9 @@
     Releases:
 */
 
+
+//`define TESTING_ECHO
+
 `include "conf_regs_defines.v"
 
 `timescale 1ns/1ps
@@ -83,7 +86,6 @@ module top_level #(
     output chA_dc_coupling_sel,
     output chA_on_sel,
 
-
     // Channel 2 - ADC
     input [BITS_ADC-1:0] chB_adc_in,
     output chB_adc_oe,
@@ -105,10 +107,11 @@ module top_level #(
     output wr_245,
 
     // I2C
-    inout SDA,
-    inout SCL,
+    //inout SDA,
+    //inout SCL,
 
-    output clk_o
+    output clk_o,
+    output reg [7:0] leds
 
 );
 
@@ -165,7 +168,24 @@ module top_level #(
     wire we;
     wire [REG_DATA_WIDTH-1:0] num_samples;
 
+    wire global_rst;
+    wire pll_lock;
+    reg pll_lock_i = 0;
+    reg pll_reset = 0;
+
+    always @(posedge clk_100M) begin
+        // this delay is probably not necessary...
+        pll_lock_i <= pll_lock;
+        pll_reset <= ~pll_lock_i;
+    end
+
+    assign global_rst = pll_reset | rqst_reset ;
+    //assign global_rst = pll_reset | rqst_reset | rst;
+
     // PLL instantiation
+    // Sources of info
+    // https://github.com/cliffordwolf/yosys/issues/103
+    // http://www.latticesemi.com/~/media/LatticeSemi/Documents/TechnicalBriefs/SBTICETechnologyLibrary201504.pdf#page93
     SB_PLL40_CORE #(
         .FEEDBACK_PATH("SIMPLE"),
         .PLLOUT_SELECT("GENCLK"),
@@ -177,7 +197,8 @@ module top_level #(
         .RESETB(1'b1),
         .BYPASS(1'b0),
         .REFERENCECLK(clk_i),
-        .PLLOUTCORE(clk_100M)
+        .PLLOUTCORE(clk_100M),
+        .LOCK(pll_lock)
     );
 
     // Registers Rx Block
@@ -189,7 +210,7 @@ module top_level #(
         .DEFAULT_REQUESTS(DEFAULT_REQUESTS)
     ) rx_block_u (
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         .rx_data(si_ft245_rx_data),
         .rx_rdy(si_ft245_rx_rdy),
         .rx_ack(si_ft245_rx_ack),
@@ -219,7 +240,7 @@ module top_level #(
         .DEFAULT_TRIGGER_SETTINGS(DEFAULT_TRIGGER_SETTINGS) // trigger_settings: source_sel(00,01,10,11), edge(pos/neg)
     ) trigger_block_u (
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         // Request handler
         .start(rqst_start),
         .stop(rqst_stop),     // must be ORed with rqst_chA and rqst_chB!!
@@ -251,7 +272,7 @@ module top_level #(
         .SOURCES(3)
     ) tx_protocol_u (
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         // SI - Output (FT245)
         .tx_data(si_ft245_tx_data),
         .tx_rdy(si_ft245_tx_rdy),
@@ -273,13 +294,63 @@ module top_level #(
         .trig_ack(tx_trigger_status_ack)
     );
 
+    // echo
+`ifdef TESTING_ECHO
+    localparam N=10;
+    wire [7:0] data_i;
+    wire [7:0] data_o;
+    reg [7:0] dl_data[0:N-1] ;
+    wire rdy_i, ack_i, rdy_o, ack_o;
+    reg [N-1:0] dl_rdy;
+    integer i,j;
+
+    assign data_o = dl_data[N-1];
+    assign rdy_o = dl_rdy[N-1];
+    assign ack_i = rdy_i & ~dl_rdy[0] ;
+
+    always @(posedge clk_100M) begin
+        if(global_rst) begin
+            for(i=0;i<N;i=i+1) begin
+                dl_rdy[i] <= 1'b0;
+                dl_data[i] <= 8'd0;
+            end
+        end else begin
+            if(ack_o) begin
+                // all to the left
+                for (i=1;i<N;i=i+1) begin
+                    dl_data[i] <= dl_data[i-1];
+                    dl_rdy[i] <= dl_rdy[i-1];
+                end
+                dl_data[0] <= 0;
+                dl_rdy[0] <= 1'b0;
+            end else begin
+                for (i=1;i<N;i=i+1) begin
+                    if(dl_rdy[i] == 1'b0) begin //free space
+                        for (j=1;j<=i;j=j+1) begin
+                            dl_data[j] <= dl_data[j-1];
+                            dl_rdy[j] <= dl_rdy[j-1];
+                        end
+                        dl_data[0] <= 0;
+                        dl_rdy[0] <= 1'b0;
+                    end
+                end
+            end
+            if(dl_rdy[0] == 1'b0) begin
+                dl_data[0] <= data_i;
+                dl_rdy[0] <= rdy_i;
+            end
+        end
+    end
+
+`endif
+
     /*
     // FT245
     ft245_interface #(
         .CLOCK_PERIOD_NS(10)
     )(
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         // ft245 rx interface
         .rx_data_245(rx_data_245),
         .rxf_245(rxf_245),
@@ -302,20 +373,30 @@ module top_level #(
         .CLOCK_PERIOD_NS(10)
     ) ft245_block_u (
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         .in_out_245(in_out_245),
         .rxf_245(rxf_245),
         .rx_245(rx_245),
         .txe_245(txe_245),
         .wr_245(wr_245),
+`ifndef TESTING_ECHO
         .rx_data_si(si_ft245_rx_data),
         .rx_rdy_si(si_ft245_rx_rdy),
         .rx_ack_si(si_ft245_rx_ack),
         .tx_data_si(si_ft245_tx_data),
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
-
+`else
+        .rx_data_si(data_i),
+        .rx_rdy_si(rdy_i),
+        .rx_ack_si(ack_i),
+        .tx_data_si(data_o),
+        .tx_rdy_si(rdy_o),
+        .tx_ack_si(ack_o)
+`endif
     );
+
+
 
     // Channel Block
     channel_block #(
@@ -339,7 +420,7 @@ module top_level #(
         .DEFAULT_N_MOVING_AVERAGE(DEFAULT_N_MOVING_AVERAGE_CHA)
     ) channel_block_A(
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         // iInterface with ADC pins
         .adc_input(chA_adc_in),
         .adc_oe(chA_adc_oe),
@@ -348,7 +429,7 @@ module top_level #(
         .Att_Sel(chA_att_sel),
         .Gain_Sel(chA_gain_sel),
         .DC_Coupling(chA_dc_coupling_sel),
-        // ChannelOn
+        .Channel_On(chA_on_sel),
         // Buffer Controller
         .rqst_data(rqst_chA_data),
         .we(we),
@@ -389,7 +470,7 @@ module top_level #(
         .DEFAULT_N_MOVING_AVERAGE(DEFAULT_N_MOVING_AVERAGE_CHB)
     ) channel_block_B(
         .clk(clk_100M),
-        .rst(rst),
+        .rst(global_rst),
         // iInterface with ADC pins
         .adc_input(chB_adc_in),
         .adc_oe(chB_adc_oe),
@@ -398,7 +479,7 @@ module top_level #(
         .Att_Sel(chB_att_sel),
         .Gain_Sel(chB_gain_sel),
         .DC_Coupling(chB_dc_coupling_sel),
-        // ChannelOn
+        .Channel_On(chB_on_sel),
         // Buffer Controller
         .rqst_data(rqst_chB_data),
         .we(we),
@@ -416,6 +497,10 @@ module top_level #(
         .tx_eof(tx_chB_eof),
         .tx_ack(tx_chB_ack)
     );
+
+    always @(posedge clk_100M) begin
+        if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+    end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin

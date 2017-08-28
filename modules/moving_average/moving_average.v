@@ -27,8 +27,8 @@
 `timescale 1ns/1ps
 
 module moving_average  #(
-    parameter BITS_ADC = `__BITS_ADC,
-    parameter BITS_ACUM = `__MA_ACUM_WIDTH
+    parameter BITS_ADC = 8,
+    parameter BITS_ACUM = 12
 ) (
                                     // Description              Type            Width
     // Basic
@@ -63,8 +63,8 @@ module moving_average  #(
     wire [BIT_DIFF-1:0] DF;
     wire [BITS_ACUM-1:0] sum_tmp;
 
-    reg [BIT_DIFF-1:0] count = 1;
-    reg [BITS_ACUM-1:0] acum = 0;
+    reg [BIT_DIFF-1:0] count; // IDEALLY, WOULD BE ONE (1)
+    reg [BITS_ACUM-1:0] acum;
 
     // Decimation Factor = 2^k = 1 << k
     assign DF = (1 << k);
@@ -78,6 +78,8 @@ module moving_average  #(
     always @( posedge(clk) ) begin
         rdy_out <= 1'b0;
         sample_out <= 0;
+        if(count == 0) count <= 1;  //just in case everything goes to hell.
+                                    // remove later...
         if ( rst == 1'b1 ) begin
             acum <= 0;
             count <= DF; // Starts from DF

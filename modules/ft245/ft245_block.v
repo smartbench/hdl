@@ -38,7 +38,7 @@ module ft245_block #(
         .CLOCK_PERIOD_NS(CLOCK_PERIOD_NS)
     ) ft245_test (
         .clk(clk),
-        .rst(1'b0),
+        .rst(rst),
 
         .rx_data_245(in_245),
         .rxf_245(rxf_245),

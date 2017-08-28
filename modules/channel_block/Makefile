@@ -1,14 +1,11 @@
 
-#TOP = breadboard_top
-TOP = top_level
-#SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
-SRC = $(wildcard ../modules/**/*.v ../top/*.v)
-INC = ../inc/
+TOP = channel_block
+SRC = $(wildcard ../**/*.v)
+INC = ../../inc/
 
 # PNR OPT
 PACKAGE = ct256
 DEVICE = 8k
-#PCF = breadboard.pcf
 PCF = top_level.pcf
 
 all: syn pnr pack
@@ -35,3 +32,4 @@ load-cram: $(TOP).bin
 clean:
 	rm $(TOP).bin $(TOP).asc $(TOP).blif --force
 	rm *.bin *.asc *.blif *~ --force
+
