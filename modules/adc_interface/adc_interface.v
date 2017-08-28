@@ -120,11 +120,17 @@ module adc_interface  #(
         initial $readmemh("rom.hex", tableADC);
         //initial $readmemb("rom.bin", tableADC);
         always @(posedge clk_i) begin
-            fakeADC <= tableADC[idx] + random[7:6];
-            idx <= idx + 1;
-            random[5:0] <= random[6:1];
-            random[6] <= random[5] ^ random[3] ^ random[0];
-            random[7] <= random[4] ^ random[3] ^ random[1];
+            if(rst) begin
+                fakeADC <= 0;
+                idx <= 0;
+                random <= 1;
+            end else begin
+                fakeADC <= tableADC[idx] + random[7:6];
+                idx <= idx + 1;
+                random[5:0] <= random[6:1];
+                random[6] <= random[5] ^ random[3] ^ random[0];
+                random[7] <= random[4] ^ random[3] ^ random[1];
+            end
         end
     `endif
 
