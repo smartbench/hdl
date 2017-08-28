@@ -116,7 +116,7 @@ module adc_interface  #(
 
     `ifdef FAKE_ADC
         reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
-        reg [8:0] idx = 8'd0;
+        reg [8:0] idx = 9'd0;
         reg [7:0] random = 0;
         reg [7:0] romADC [0:511];
         reg [7:0] tmp = 0;
@@ -128,13 +128,14 @@ module adc_interface  #(
             tmp <= romADC[idx];
         end
 
+        /*
         integer i;
         initial begin
             $display("loaded data:");
             for (i=0; i < 512; i=i+1)
-            $display("%d:%h",i,romADC[i]);
-        end
-        //initial $readmemb("rom.bin", romADC);
+                $display("%d:",i);
+                //$display("%d:%h",i,romADC[i]);
+        end*/
         always @(posedge clk_i) begin
             if(rst) begin
                 fakeADC <= 0;
@@ -153,7 +154,11 @@ module adc_interface  #(
 
 
     `ifdef COCOTB_SIM        // COCOTB macro
+        integer i;
         initial begin
+            $display("loaded data:");
+            for (i=0; i < 512; i=i+1)
+                $display("%d:%h",i,romADC[i]);
             $dumpfile ("waveform.vcd");
             $dumpvars (0,adc_interface);
             #1;
