@@ -9,13 +9,13 @@ module breadboard_top (
     output led_o_5,
     output led_o_6,
     output led_o_7,
-    input rx_in,
-    output tx_out
+    input rx,
+    output tx
 );
 
     wire clk_100M;
-    wire tx_clk, tx_out, ld_tx_data, tx_empty;
-    wire rx_clk, rx_in, uld_rx_data, rx_empty;
+    wire tx_clk, tx_rdy, tx_empty;
+    wire rx_clk, rx_ack, rx_empty;
     wire [7:0] s_Q;
     wire [7:0] tx_data;
     wire [7:0] rx_data;
@@ -23,19 +23,22 @@ module breadboard_top (
 
     //uart
     uart u2(
-        .txclk(tx_clk),
-        .tx_enable(1),
-        .tx_data(tx_data), /*.tx_data(s_Q),*/
-        .tx_empty(tx_empty),
-        .ld_tx_data(ld_tx_data),
-        .tx_out(tx_out),
+        .tx_clk(tx_clk),
+        .rx_clk(rx_clk),
 
-        .rxclk(rx_clk),
+        .tx_data(tx_data),
+        .tx_rdy(tx_rdy),
+        .tx_ack(tx_ack),
+
         .rx_data(rx_data),
-        .uld_rx_data(uld_rx_data),
-        .rx_empty(rx_empty),
+        .rx_rdy(rx_rdy),
+        .rx_ack(rx_ack),
+
+        .tx_enable(1),
         .rx_enable(1),
-        .rx_in(rx_in)
+
+        .tx(tx),
+        .rx(rx)
     );
 
     // clock uart
@@ -47,23 +50,24 @@ module breadboard_top (
 
     // combinacional
     assign s_Q = rx_data;
-    always @ (s_Q[7:0]) begin
-        tx_data[7:0] = s_Q[7:0];
-        tx_data[5] = ~s_Q[5];
-    end
 
     // secuencial
     always @ (posedge rx_clk) begin
-        uld_rx_data <= 0;
-        if(!rx_empty) uld_rx_data <= 1;
+        rx_ack <= 0;
+        if(rx_rdy) begin
+            rx_ack <= 1;
+            data <= { rx_data[7:6], ~rx_data[5:5] , rx_data[4:0]  };
+        end
     end
 
+    reg [7:0] data_i = 0;
     always @ (posedge tx_clk) begin
-        ld_tx_data <= 0;
-        if ( tx_empty && !(data[7:0] == s_Q[7:0]) ) begin
-            ld_tx_data <= 1;
-            data[7:0] <= s_Q[7:0];
+        data_i <= data;
+        if(data_i != tx_data) begin
+            tx_data <= data;
+            tx_rdy <= 1;
         end
+        if(tx_ack) tx_rdy <= 0;
     end
 
     SB_PLL40_CORE #(

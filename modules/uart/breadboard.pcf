@@ -9,8 +9,5 @@ set_io led_o_7 C3
 
 set_io clock_i J3
 
-set_io rx_in B10
-set_io tx_out B12
-
-
-
+set_io rx B10
+set_io tx B12
