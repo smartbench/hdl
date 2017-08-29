@@ -114,11 +114,11 @@ module adc_interface  #(
     end
 
     `ifdef FAKE_ADC
-        localparam N = 128;
+        localparam N = 512;
         reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
         reg [8:0] idx = 9'd0;
         reg [7:0] random = 0;
-        reg [7:0] romADC [0:N-1];
+        reg [7:0] romADC [0:511];
         reg [7:0] tmp = 0;
 
         //initial $readmemh("rom.hex", romADC);
