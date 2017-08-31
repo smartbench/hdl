@@ -12,13 +12,14 @@
 // baudrate = 9600
 // parameter rx_div = 651; // 100e6/(9600*16) = 651
 
+`timescale 1ns/1ps
 
 module uart #(
-    parameter CLOCK = 100e6,
-    parameter BAUDRATE = 9600
+    parameter CLOCK = 100.0e6,
+    parameter BAUDRATE = 921600.0
 )(
     input       clk,
-    input       reset,  // async
+    input       rst,  // async
 
     // tx simple interface
     input [7:0] tx_data,
@@ -59,8 +60,8 @@ module uart #(
     assign rx_rdy = ~rx_empty;
 
     // UART RX Logic
-    always @ (posedge clk or posedge reset)
-    if (reset) begin
+    always @ (posedge clk or posedge rst)
+    if (rst) begin
         rx_reg        <= 0;
         rx_data       <= 0;
         rx_sample_cnt <= 0;
@@ -74,7 +75,6 @@ module uart #(
     end else begin
         // Uload the rx data
         if (rx_ack) begin
-            rx_data  <= rx_reg;
             rx_empty <= 1;
         end
         if(rx_signal) begin
@@ -111,6 +111,7 @@ module uart #(
                                 end else begin
                                     rx_empty     <= 0;
                                     rx_frame_err <= 0;
+                                    rx_data  <= rx_reg;
                                     // Check if last rx data was not unloaded,
                                     rx_over_run  <= (rx_empty) ? 0 : 1;
                                 end
@@ -125,8 +126,8 @@ module uart #(
     end
 
     // UART TX Logic
-    always @ (posedge clk or posedge reset) begin
-        if (reset) begin
+    always @ (posedge clk or posedge rst) begin
+        if (rst) begin
             tx_reg        <= 0;
             tx_empty      <= 1;
             tx_over_run   <= 0;
@@ -161,20 +162,26 @@ module uart #(
     end
 
     // counters as pseudo-clocks at uart speed
-    reg rx_signal;
-    parameter rx_divisor = (CLOCK*16/BAUDRATE)-1; // 100e6/(9600*16) = 651
+    reg rx_signal=0;
+    parameter [15:0] RX_DIVISOR = $ceil(CLOCK/BAUDRATE/16); // 100e6/(9600*16) = 651
     reg [15:0] rx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         rx_signal <= 0;
         rx_div_counter = rx_div_counter + 1;
-        if(rx_div_counter == rx_divisor) begin
+        if(rx_div_counter == RX_DIVISOR) begin
             rx_div_counter <= 0;
             rx_signal <= 1;
         end
     end
+    initial begin
+        //$display("CLOCK_PERIOD_NS:: CLOCK_PERIOD_NS=%s", CLOCK_PERIOD_NS);
+        $display("RX_DIVISOR = %d", RX_DIVISOR);
+        //$display("rx_div = %d", CNT_WAIT_RX);
+        //$display("CNT_INACTIVE_RX:: CNT_INACTIVE_RX=%d", CNT_INACTIVE_RX);
+    end
 
     reg tx_signal;
-    parameter tx_divisor = (CLOCK/BAUDRATE)-1; // 100e6/(9600*16) = 651
+    parameter tx_divisor = (CLOCK/BAUDRATE); // 100e6/(9600*16) = 651
     reg [15:0] tx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         tx_signal <= 0;
@@ -184,5 +191,13 @@ module uart #(
             tx_signal <= 1;
         end
     end
+
+    `ifdef COCOTB_SIM   // COCOTB macro
+        initial begin
+            $dumpfile ("waveform.vcd");
+            $dumpvars (0,uart);
+            #1;
+        end
+    `endif
 
 endmodule
