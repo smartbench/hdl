@@ -152,6 +152,8 @@ module uart #(
                         end
                         if (tx_cnt == 9) begin
                             tx <= 1;
+                        end
+                        if (tx_cnt == 10) begin
                             tx_cnt <= 0;
                             tx_empty <= 1;
                         end
@@ -163,7 +165,7 @@ module uart #(
 
     // counters as pseudo-clocks at uart speed
     reg rx_signal=0;
-    parameter [15:0] RX_DIVISOR = $ceil(CLOCK/BAUDRATE/16); // 100e6/(9600*16) = 651
+    parameter [31:0] RX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE/16)); // 100e6/(9600*16) = 651
     reg [15:0] rx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         rx_signal <= 0;
@@ -180,14 +182,14 @@ module uart #(
         //$display("CNT_INACTIVE_RX:: CNT_INACTIVE_RX=%d", CNT_INACTIVE_RX);
     end
 
-    reg tx_signal;
-    parameter tx_divisor = (CLOCK/BAUDRATE); // 100e6/(9600*16) = 651
-    reg [15:0] tx_div_counter = 0;  // todo: dinamic size
+    reg tx_signal = 0;
+    parameter TX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE)); // 100e6/(9600*16) = 651
+    reg [31:0] tx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         tx_signal <= 0;
         tx_div_counter = tx_div_counter + 1;
-        if(tx_div_counter == tx_divisor) begin
-            tx_signal <= 0;
+        if(tx_div_counter == TX_DIVISOR) begin
+            tx_div_counter <= 0;
             tx_signal <= 1;
         end
     end

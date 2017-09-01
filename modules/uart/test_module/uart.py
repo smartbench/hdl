@@ -40,12 +40,12 @@ class UART:
             yield FallingEdge(self.clk)
             data = 0
             if(self.tx.value.integer == 1):
-                for i in range(8):
+                for idx in range(8):
                     #yield nsTimer(PERIOD_NS)
                     for i in range(DIV): yield RisingEdge(self.clk)
                     yield FallingEdge(self.clk)
                     aux  = self.tx.value.integer
-                    data = data | (aux << i)
+                    data = data | (aux << idx)
                 #yield nsTimer(PERIOD_NS)
                 for i in range(DIV): yield RisingEdge(self.clk)
                 yield FallingEdge(self.clk)
