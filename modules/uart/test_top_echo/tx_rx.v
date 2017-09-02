@@ -6,9 +6,9 @@
 `timescale 1ns/1ps
 
 `define WIDTH 8
-//`define BAUDRATE 921600.0
-`define F_CLK 100.0e6
-`define BAUDRATE 9600.0
+//`define BAUDRATE 921600
+`define F_CLK 99000000
+`define BAUDRATE 9600
 
 module tx_rx (
     input clk_i,
@@ -62,16 +62,16 @@ module tx_rx (
         si_ft245_tx_data <= myRAM[rd_addr];
     end
 
-    reg [24:0] ledDiv = 0;
-    reg [7:0] ledCounter = 0;
+    //reg [31:0] ledCounter = 0;
+    //localparam [31:0] aa = 32'd99000000;
     always @(posedge clk_100M) begin
-        /*ledDiv <= ledDiv + 1;
-        if(ledDiv == 0) begin
-            ledCounter <= ledCounter + 1;
-            leds <= ledCounter;
+        //if(rst) leds <= 8'h81;
+        //if(rx==1'b0) leds <= 8'h55;
+        /*ledCounter <= ledCounter + 1;
+        if(ledCounter == aa) begin
+            ledCounter <= 0;
+            leds <= leds + 1;
         end*/
-        if(rst) leds <= 8'h81;
-        if(rx==1'b0) leds <= 8'h55;
         if(si_ft245_rx_rdy) begin
             init <= 1;
             wr_addr <= wr_addr + 1;
@@ -79,8 +79,8 @@ module tx_rx (
         end
         // if wr_addr is multiple of 64 (should avoid on zero)
         //if(wr_addr[6:0]==0 && |wr_addr[8:7] && !si_ft245_tx_rdy) begin
-        if(init && wr_addr[5:0]==0 && !si_ft245_tx_rdy) begin
-            counter <= 63;
+        if(init && wr_addr[4:0]==0 && !si_ft245_tx_rdy) begin
+            counter <= 31;
             si_ft245_tx_rdy <= 1;
         end
         if(si_ft245_tx_rdy) begin
@@ -93,6 +93,8 @@ module tx_rx (
     end
 
     // PLL instantiation
+    // Input 12MHz
+    //
     SB_PLL40_CORE #(
         .FEEDBACK_PATH("SIMPLE"),
         .PLLOUT_SELECT("GENCLK"),

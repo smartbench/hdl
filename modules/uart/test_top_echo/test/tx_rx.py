@@ -12,9 +12,10 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 BAUDRATE = 921600.0
-F_CLK = 100.0e6
-PERIOD_NS = (1.0e9/BAUDRATE)
+F_CLK = 99.0e6
+T_CLK = 1.0e9/F_CLK
 DIV = int(F_CLK/BAUDRATE)
+PERIOD_NS = (1.0e9/BAUDRATE)
 
 class UART:
     def __init__ (self,dut):
@@ -94,7 +95,7 @@ def test (dut):
     test_fifo_RX = []
     test_fifo_TX = []
     uart = UART(dut)
-    cocotb.fork(Clock(dut.clk_i,10,units='ns').start())
+    cocotb.fork(Clock(dut.clk_i,T_CLK_NS,units='ns').start())
     yield Reset(dut)
     #for i in range(100): si_tx.write(i+1)
     cocotb.fork(uart.rx_driver() )

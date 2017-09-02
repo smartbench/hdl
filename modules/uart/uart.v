@@ -15,8 +15,8 @@
 `timescale 1ns/1ps
 
 module uart #(
-    parameter CLOCK = 100.0e6,
-    parameter BAUDRATE = 921600.0
+    parameter CLOCK = 99000000,
+    parameter BAUDRATE = 9600
 )(
     input       clk,
     input       rst,  // async
@@ -27,7 +27,7 @@ module uart #(
     output      tx_ack,
 
     // rx simple interface
-    output reg [7:0] rx_data,
+    output reg [7:0] rx_data=0,
     output      rx_rdy,
     input       rx_ack, // uld_rx_data,
 
@@ -60,7 +60,7 @@ module uart #(
     assign rx_rdy = ~rx_empty;
 
     // UART RX Logic
-    always @ (posedge clk or posedge rst)
+    always @ (posedge clk)
     if (rst) begin
         rx_reg        <= 0;
         rx_data       <= 0;
@@ -74,9 +74,7 @@ module uart #(
         rx_busy       <= 0;
     end else begin
         // Uload the rx data
-        if (rx_ack) begin
-            rx_empty <= 1;
-        end
+        if (rx_ack) rx_empty <= 1;
         if(rx_signal) begin
             // Synchronize the asynch signal
             rx_d1 <= rx;
@@ -85,9 +83,9 @@ module uart #(
             if (rx_enable) begin
                 // Check if just received start of frame
                 if (!rx_busy && !rx_d2) begin
-                  rx_busy       <= 1;   // indicates that it's receiving a frame
-                  rx_sample_cnt <= 1;   // counter of samples (Fsampling=16*Fuart)
-                  rx_cnt        <= 0;   // counter of bits of data.
+                    rx_busy       <= 1;   // indicates that it's receiving a frame
+                    rx_sample_cnt <= 1;   // counter of samples (Fsampling=16*Fuart)
+                    rx_cnt        <= 0;   // counter of bits of data.
                 end
                 // Start of frame detected, Proceed with rest of data
                 if (rx_busy) begin
@@ -126,7 +124,7 @@ module uart #(
     end
 
     // UART TX Logic
-    always @ (posedge clk or posedge rst) begin
+    always @ (posedge clk) begin
         if (rst) begin
             tx_reg        <= 0;
             tx_empty      <= 1;
@@ -166,7 +164,7 @@ module uart #(
     // counters as pseudo-clocks at uart speed
     reg rx_signal=0;
     parameter [31:0] RX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE/16)); // 100e6/(9600*16) = 651
-    reg [15:0] rx_div_counter = 0;  // todo: dinamic size
+    reg [31:0] rx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         rx_signal <= 0;
         rx_div_counter = rx_div_counter + 1;
@@ -183,7 +181,7 @@ module uart #(
     end
 
     reg tx_signal = 0;
-    parameter TX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE)); // 100e6/(9600*16) = 651
+    parameter [31:0] TX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE)); // 100e6/(9600*16) = 651
     reg [31:0] tx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         tx_signal <= 0;
