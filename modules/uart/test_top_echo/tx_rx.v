@@ -6,7 +6,9 @@
 `timescale 1ns/1ps
 
 `define WIDTH 8
-`define BAUDRATE 921600.0
+//`define BAUDRATE 921600.0
+`define F_CLK 100.0e6
+`define BAUDRATE 9600.0
 
 module tx_rx (
     input clk_i,
@@ -60,7 +62,16 @@ module tx_rx (
         si_ft245_tx_data <= myRAM[rd_addr];
     end
 
+    reg [24:0] ledDiv = 0;
+    reg [7:0] ledCounter = 0;
     always @(posedge clk_100M) begin
+        /*ledDiv <= ledDiv + 1;
+        if(ledDiv == 0) begin
+            ledCounter <= ledCounter + 1;
+            leds <= ledCounter;
+        end*/
+        if(rst) leds <= 8'h81;
+        if(rx==1'b0) leds <= 8'h55;
         if(si_ft245_rx_rdy) begin
             init <= 1;
             wr_addr <= wr_addr + 1;
@@ -98,7 +109,7 @@ module tx_rx (
 
 
     uart #(
-        .CLOCK(100.0e6),
+        .CLOCK(`F_CLK),
         .BAUDRATE(`BAUDRATE)
     ) uart_u(
         .clk(clk_100M),
