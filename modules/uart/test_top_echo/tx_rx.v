@@ -29,20 +29,17 @@ module tx_rx (
     wire                si_ft245_rx_rdy;
     wire                si_ft245_rx_ack;
 
-    reg [`WIDTH-1:0]    si_ft245_tx_data=0;
-    reg                 si_ft245_tx_rdy = 0;
+    wire [`WIDTH-1:0]   si_ft245_tx_data;
+    wire                si_ft245_tx_rdy;
     wire                si_ft245_tx_ack;
-
-    reg [8:0] wr_addr = 0;
-    reg [8:0] rd_addr = 0;
-    reg [15:0] counter = 0;
-    reg init = 0;
 
     reg start=0;
     reg [15:0] rst_cnt = 0;
     wire rst;
 
-    assign si_ft245_rx_ack = si_ft245_rx_rdy;
+    assign si_ft245_tx_data = si_ft245_rx_data;
+    assign si_ft245_tx_rdy = si_ft245_rx_rdy;
+    assign si_ft245_rx_ack = si_ft245_tx_ack;
 
     // initial reset
     assign rst = ~start | rst_i;
@@ -52,20 +49,10 @@ module tx_rx (
         if(rst_cnt == 1000) start <= 1;
     end
 
-    // RAM
-    localparam  N = 512;
-    reg [7:0] myRAM [0:N-1];
-    always @(posedge clk_100M) begin
-        if(si_ft245_rx_rdy) myRAM[wr_addr] <= si_ft245_rx_data;
-    end
-    always @(posedge clk_100M) begin
-        si_ft245_tx_data <= myRAM[rd_addr];
-    end
-
     //reg [31:0] ledCounter = 0;
     //localparam [31:0] aa = 32'd99000000;
     always @(posedge clk_100M) begin
-        //if(rst) leds <= 8'h81;
+        if(rst) leds <= 8'h81;
         //if(rx==1'b0) leds <= 8'h55;
         /*ledCounter <= ledCounter + 1;
         if(ledCounter == aa) begin
@@ -73,28 +60,14 @@ module tx_rx (
             leds <= leds + 1;
         end*/
         if(si_ft245_rx_rdy) begin
-            init <= 1;
-            wr_addr <= wr_addr + 1;
             leds <= si_ft245_rx_data;
-        end
-        // if wr_addr is multiple of 64 (should avoid on zero)
-        //if(wr_addr[6:0]==0 && |wr_addr[8:7] && !si_ft245_tx_rdy) begin
-        if(init && wr_addr[4:0]==0 && !si_ft245_tx_rdy) begin
-            counter <= 31;
-            si_ft245_tx_rdy <= 1;
-        end
-        if(si_ft245_tx_rdy) begin
-            if(si_ft245_tx_ack) begin
-                counter <= counter - 1;
-                rd_addr <= rd_addr + 1;
-                if(!counter) si_ft245_tx_rdy <= 0;
-            end
         end
     end
 
     // PLL instantiation
-    // Input 12MHz
-    //
+    // Input 12 MHz
+    // Output 99 MHz
+    // Fo = Fi * (DIVF+1) / [ 2^DIVQ * (DIVR+1) ]
     SB_PLL40_CORE #(
         .FEEDBACK_PATH("SIMPLE"),
         .PLLOUT_SELECT("GENCLK"),
