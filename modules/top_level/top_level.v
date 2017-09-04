@@ -124,7 +124,11 @@ module top_level #(
     wire [REG_DATA_WIDTH-1:0] reg_data;
     wire reg_rdy;
 
-    // FT245 SI
+    // FT245
+    wire [7:0] in_245;
+    wire [7:0] out_245;
+    wire tx_oe_245;
+
     wire [RX_DATA_WIDTH-1:0] si_ft245_rx_data;
     wire                si_ft245_rx_rdy;
     wire                si_ft245_rx_ack;
@@ -344,57 +348,50 @@ module top_level #(
 
 `endif
 
-    /*
-    // FT245
     ft245_interface #(
-        .CLOCK_PERIOD_NS(10)
-    )(
+        .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
+    ) ft245_u (
         .clk(clk_100M),
         .rst(global_rst),
-        // ft245 rx interface
-        .rx_data_245(rx_data_245),
+
+        .rx_data_245(in_245),
         .rxf_245(rxf_245),
         .rx_245(rx_245),
-        // ft245 tx interface
-        .tx_data_245(tx_data_245),
+
+        .tx_data_245(out_245),
         .txe_245(txe_245),
         .wr_245(wr_245),
         .tx_oe_245(tx_oe_245),
-        // simple interface
+
         .rx_data_si(si_ft245_rx_data),
         .rx_rdy_si(si_ft245_rx_rdy),
         .rx_ack_si(si_ft245_rx_ack),
+
         .tx_data_si(si_ft245_tx_data),
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
-    );*/
-    ft245_block #(
-        .FT245_WIDTH(FT245_DATA_WIDTH),
-        .CLOCK_PERIOD_NS(10)
-    ) ft245_block_u (
-        .clk(clk_100M),
-        .rst(global_rst),
-        .in_out_245(in_out_245),
-        .rxf_245(rxf_245),
-        .rx_245(rx_245),
-        .txe_245(txe_245),
-        .wr_245(wr_245),
-`ifndef TESTING_ECHO
-        .rx_data_si(si_ft245_rx_data),
-        .rx_rdy_si(si_ft245_rx_rdy),
-        .rx_ack_si(si_ft245_rx_ack),
-        .tx_data_si(si_ft245_tx_data),
-        .tx_rdy_si(si_ft245_tx_rdy),
-        .tx_ack_si(si_ft245_tx_ack)
-`else
-        .rx_data_si(data_i),
-        .rx_rdy_si(rdy_i),
-        .rx_ack_si(ack_i),
-        .tx_data_si(data_o),
-        .tx_rdy_si(rdy_o),
-        .tx_ack_si(ack_o)
-`endif
     );
+
+    genvar h;
+    generate
+        for (h=0 ; h<8 ; h=h+1) begin
+            SB_IO #(
+                .PIN_TYPE(6'b101001),
+                .PULLUP(1'b0)
+            ) IO_PIN_INST (
+                .PACKAGE_PIN (in_out_245[h]),
+                .LATCH_INPUT_VALUE (),
+                .CLOCK_ENABLE (),
+                .INPUT_CLK (),
+                .OUTPUT_CLK (),
+                .OUTPUT_ENABLE (tx_oe_245),
+                .D_OUT_0 (out_245[h]),
+                .D_OUT_1 (),
+                .D_IN_0 (in_245[h]),
+                .D_IN_1 ()
+            );
+        end
+    endgenerate
 
 
 
