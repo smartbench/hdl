@@ -10,13 +10,13 @@ module ft245_interface #(
     // ft245 rx interface
     input [7:0] rx_data_245,
     input rxf_245,
-    output reg rx_245,
+    output reg rx_245=0,//1'b1,
 
     // ft245 tx interface
     output reg [7:0] tx_data_245,
     input txe_245,
-    output reg wr_245,
-    output reg tx_oe_245,
+    output reg wr_245= 0,//1'b1,
+    output reg tx_oe_245=1'b0,
 
     // simple interface
     output reg [7:0] rx_data_si,
