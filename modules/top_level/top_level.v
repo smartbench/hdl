@@ -497,10 +497,10 @@ module top_level #(
         .rqst_chB_data(rqst_chB_data),
         .n_samples(num_samples),
         // Internal (ADC)
-        .si_data__adc_chA(chA_adc_data),
+        .si_data_adc_chA(chA_adc_data),
         .si_rdy_adc_chA(chA_adc_rdy),
         .si_ack_adc_chA(cHA_adc_ack), //not used!
-        .si_data__adc_chB(chB_adc_data),
+        .si_data_adc_chB(chB_adc_data),
         .si_rdy_adc_chB(chB_adc_rdy),
         .si_ack_adc_chB(cHB_adc_ack), //not used!
         // Output (Tx Protocol)
