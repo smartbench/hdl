@@ -425,11 +425,12 @@ module top_level #(
         // Trigger source
         .adc_data_o(chA_adc_data),
         .adc_rdy_o(chA_adc_rdy),
+        .adc_ack_i(chA_adc_ack)//,
         // Tx Protocol
-        .tx_data(tx_chA_data),
-        .tx_rdy(tx_chA_rdy),
-        .tx_eof(tx_chA_eof),
-        .tx_ack(tx_chA_ack)
+        //.tx_data(tx_chA_data),
+        //.tx_rdy(tx_chA_rdy),
+        //.tx_eof(tx_chA_eof),
+        //.tx_ack(tx_chA_ack)
     );
 
     // Channel Block
@@ -475,11 +476,38 @@ module top_level #(
         // Trigger source
         .adc_data_o(chB_adc_data),
         .adc_rdy_o(chB_adc_rdy),
+        .adc_ack_i(chB_adc_ack)//,
         // Tx Protocol
-        .tx_data(tx_chB_data),
-        .tx_rdy(tx_chB_rdy),
-        .tx_eof(tx_chB_eof),
-        .tx_ack(tx_chB_ack)
+        //.tx_data(tx_chB_data),
+        //.tx_rdy(tx_chB_rdy),
+        //.tx_eof(tx_chB_eof),
+        //.tx_ack(tx_chB_ack)
+    );
+
+    // Source CH1
+    ram_controller #(
+        .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
+        .RAM_SIZE(RAM_SIZE)
+    ) ram_controller_ch1_u(
+        .clk(clk_100M),
+        .rst(rst),
+        // Input (Buffer Controller)
+        .wr_en(we),
+        .rqst_chA_data(rqst_chA_data),
+        .rqst_chB_data(rqst_chB_data),
+        .n_samples(num_samples),
+        // Internal (ADC)
+        .si_data__adc_chA(chA_adc_data),
+        .si_rdy_adc_chA(chA_adc_rdy),
+        .si_ack_adc_chA(cHA_adc_ack), //not used!
+        .si_data__adc_chB(chB_adc_data),
+        .si_rdy_adc_chB(chB_adc_rdy),
+        .si_ack_adc_chB(cHB_adc_ack), //not used!
+        // Output (Tx Protocol)
+        .data_out(tx_data),
+        .data_rdy(tx_rdy),
+        .data_eof(tx_eof),
+        .data_ack(tx_ack)
     );
 
     always @(posedge clk_100M) begin

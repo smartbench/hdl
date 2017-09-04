@@ -63,15 +63,16 @@ module channel_block #(
     input   [REG_DATA_WIDTH-1:0] register_data,
     input   register_rdy,
 
-    // Trigger source
+    // Trigger source and RAM
     output  [BITS_ADC-1:0] adc_data_o,
     output  adc_rdy_o,
+    input   adc_ack_i
 
     // Tx Protocol
-    output  [TX_DATA_WIDTH-1:0] tx_data,
-    output  tx_rdy,
-    output  tx_eof,
-    input   tx_ack
+    //output  [TX_DATA_WIDTH-1:0] tx_data,
+    //output  tx_rdy,
+    //output  tx_eof,
+    //input   tx_ack
 
 );
 
@@ -85,6 +86,7 @@ module channel_block #(
 
     assign  adc_data_o = si_adc_data;
     assign  adc_rdy_o = si_adc_rdy;
+    assign  adc_ack_o = si_adc_ack;
 
     // Register Channel Configuration (gain, att, coupling)
 
@@ -124,28 +126,6 @@ module channel_block #(
         .si_data        (register_data),
         .si_rdy         (register_rdy),
         .data           (dac_val)
-    );
-
-    // Source CH1
-    ram_controller #(
-        .RAM_DATA_WIDTH(RAM_DATA_WIDTH),
-        .RAM_SIZE(RAM_SIZE)
-    ) ram_controller_ch1_u(
-        .clk(clk),
-        .rst(rst),
-        // Input (Buffer Controller)
-        .wr_en(we),
-        .rqst_buff(rqst_data),
-        .n_samples(num_samples),
-        // Internal (ADC)
-        .din(si_adc_data),
-        .si_rdy_adc(si_adc_rdy),
-        .si_ack_adc(si_adc_ack), //not used!
-        // Output (Tx Protocol)
-        .data_out(tx_data),
-        .data_rdy(tx_rdy),
-        .data_eof(tx_eof),
-        .data_ack(tx_ack)
     );
 
     // ADC
