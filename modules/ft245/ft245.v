@@ -99,6 +99,7 @@ module ft245_interface #(
                         tx_oe_245 <= 1'b1;
                         tx_ack_si <= 1'b1;
                         state <= ST_SETUP_TX;
+                        cnt <= CNT_SETUP_TX;
                     end
                 end
 
@@ -124,9 +125,12 @@ module ft245_interface #(
 
                 ST_SETUP_TX:
                 begin
-                    state <= ST_WAIT_TX;
-                    wr_245 <= 1'b0;
-                    cnt <= 0;
+                    cnt <= cnt + 1;
+                    if(cnt == CNT_SETUP_TX) begin
+                        state <= ST_WAIT_TX;
+                        wr_245 <= 1'b0;
+                        cnt <= 0;
+                    end
                 end
 
                 ST_WAIT_TX: // Espera ACTIVE_TIME_TX
