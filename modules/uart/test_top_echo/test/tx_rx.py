@@ -12,8 +12,8 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 BAUDRATE = 921600.0
-F_CLK = 99.0e6
-T_CLK = 1.0e9/F_CLK
+F_CLK = 100.0e6
+T_CLK_NS = 1.0e9/F_CLK
 DIV = int(F_CLK/BAUDRATE)
 PERIOD_NS = (1.0e9/BAUDRATE)
 
@@ -92,6 +92,7 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
+    CANT = 8
     test_fifo_RX = []
     test_fifo_TX = []
     uart = UART(dut)
@@ -100,15 +101,16 @@ def test (dut):
     #for i in range(100): si_tx.write(i+1)
     cocotb.fork(uart.rx_driver() )
     cocotb.fork(uart.tx_monitor() )
+
     for i in range(10): yield RisingEdge(dut.clk_100M)
-    for i in range(128):
+    for i in range(CANT):
         uart.write((i+1)%256)
         test_fifo_RX.append((i+1)%256)
     # for i in range(10*600): yield RisingEdge(dut.clk_100M)
     # for i in range(150):
     #     uart.write((i+1)%256)
     #     test_fifo_RX.append((i+1)%256)
-    for i in range(10*600): yield RisingEdge(dut.clk_100M)
+    #for i in range(10*600): yield RisingEdge(dut.clk_100M)
 
     #if (uart.tx_fifo != [i for i in range(150)]):
     #    raise TestFailure("Simple Interface data != FT245 data (TX)")
@@ -116,7 +118,7 @@ def test (dut):
     #for i in range(10*2000): yield RisingEdge(dut.clk_100M)
     while(len(uart.rx_fifo) > 0): yield RisingEdge(dut.clk_100M)
     #for i in range(10*20000): yield RisingEdge(dut.clk_100M)
-    while(len(uart.tx_fifo) < 128): yield RisingEdge(dut.clk_100M)
+    while(len(uart.tx_fifo) < len(test_fifo_RX)): yield RisingEdge(dut.clk_100M)
 
     print("Length: Test_RX={}\tRX_remaining={}\tTX_fifo={}".format(len(test_fifo_RX), len(uart.rx_fifo), len(uart.tx_fifo)))
     if (len(test_fifo_RX) != len(uart.tx_fifo)):

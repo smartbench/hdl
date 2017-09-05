@@ -2,11 +2,12 @@ from pyftdi.ftdi import Ftdi
 import codecs
 import sys
 import time
+from random import randint
 
 VID = 0x0403
 PID = 0x6010
-BAUDRATE_9600 = 9600
-BAUDRATE_921600 = 921600
+#BAUDRATE = 9600
+BAUDRATE = 921600
 
 if __name__ == '__main__' :
     ft = Ftdi()
@@ -22,22 +23,42 @@ if __name__ == '__main__' :
         print ("Device not connected!")
         exit()
 
-    ft.set_baudrate(BAUDRATE_9600)
+    ft.set_baudrate(BAUDRATE)
+    print("Baudrate set to {}".format(BAUDRATE))
     #ft.read_data_bytes(1)
+    N = 2
     i = 0
     fifo_rd = []
+
+    # print ("______________")
+    # print( "CTS? {}\tDSR? {}\tRI? {}".format( ft.get_cts(), ft.get_dsr(), ft.get_ri() ) )
+    # print( "Poll Modem status? {}\tModem Status? {}".format( ft.poll_modem_status(), ft.modem_status() ) )
+    # print ("______________")
+    ft.set_flowctrl('')
+    ft.purge_buffers()
+    ft.purge_tx_buffer()
+    ft.purge_rx_buffer()
+    ft.set_break(False)
+    #ft.set_flowctrl()
+    ft.read_data_bytes(5).tolist()
+
     fifo_wr = []
-    for i in range(20):
+    for i in range(N):
         aux = (i+1)%256
+        aux = randint(0,255)
         fifo_wr.append(aux)
-        print("write: " + str( ft.write_data(bytes([aux])) ) , aux )
-        time.sleep(0.1)
+        print ("______________")
+        print( "CTS? {}\tDSR? {}\tRI? {}".format( ft.get_cts(), ft.get_dsr(), ft.get_ri() ) )
+        print( "Poll Modem status? {}\tModem Status? {}".format( ft.poll_modem_status(), ft.modem_status() ) )
+        print ("______________")
+        print("\twrite: " + str( ft.write_data(bytes([aux])) ) , aux )
+        time.sleep(0.01)
         aux = ft.read_data_bytes(5).tolist()
         if(len(aux) > 0):
-            print("read = {}".format(aux))
+            print("\tread = {}".format(aux))
             fifo_rd = fifo_rd + aux
         else:
-            print ("...")
+            print ("\t...")
 
     print("\n... Reading more...")
     while True:

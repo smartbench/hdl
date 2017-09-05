@@ -13,10 +13,12 @@ module SB_PLL40_CORE #(
     input RESETB,
     input BYPASS,
     input REFERENCECLK,
-    output PLLOUTCORE
+    output PLLOUTCORE,
+    output LOCK
 );
 
     // a wire for tests!
     assign PLLOUTCORE = REFERENCECLK;
+    assign LOCK = 1'b1;
 
 endmodule

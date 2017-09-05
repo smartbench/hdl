@@ -6,9 +6,9 @@
 `timescale 1ns/1ps
 
 `define WIDTH 8
-//`define BAUDRATE 921600
 `define F_CLK 99000000
-`define BAUDRATE 9600
+//`define BAUDRATE 9600
+`define BAUDRATE 921600
 
 module tx_rx (
     input clk_i,
@@ -23,6 +23,7 @@ module tx_rx (
 
     // PLL output clock
     wire clk_100M;
+    wire pll_lock;
 
     // FT245 SI
     wire [`WIDTH-1:0]   si_ft245_rx_data;
@@ -52,16 +53,16 @@ module tx_rx (
     //reg [31:0] ledCounter = 0;
     //localparam [31:0] aa = 32'd99000000;
     always @(posedge clk_100M) begin
-        if(rst) leds <= 8'h81;
+        if(rst)
+            if(pll_lock) leds <= 8'h81;
+            else leds <= 8'hFF;
         //if(rx==1'b0) leds <= 8'h55;
         /*ledCounter <= ledCounter + 1;
         if(ledCounter == aa) begin
             ledCounter <= 0;
             leds <= leds + 1;
         end*/
-        if(si_ft245_rx_rdy) begin
-            leds <= si_ft245_rx_data;
-        end
+        if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
     end
 
     // PLL instantiation
@@ -79,10 +80,11 @@ module tx_rx (
         .RESETB(1'b1),
         .BYPASS(1'b0),
         .REFERENCECLK(clk_i),
-        .PLLOUTCORE(clk_100M)
+        .PLLOUTCORE(clk_100M),
+        .LOCK(pll_lock)
     );
 
-
+    assign tx = rx;
     uart #(
         .CLOCK(`F_CLK),
         .BAUDRATE(`BAUDRATE)
@@ -91,7 +93,7 @@ module tx_rx (
         .rst(rst),
 
         .rx(rx),
-        .tx(tx),
+        //.tx(tx),
 
         .tx_data(si_ft245_tx_data),
         .tx_rdy(si_ft245_tx_rdy),
