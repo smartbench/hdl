@@ -26,8 +26,8 @@
     Releases:   In development ...
 */
 
-`include "conf_regs_defines.v"
-//`define FAKE_ADC // <-- in conf_regs_defines
+`include "HDL_defines.v"
+//`define FAKE_ADC // <-- in HDL_defines
 
 `ifdef FAKE_ADC
     // yeah, hard coded... change later

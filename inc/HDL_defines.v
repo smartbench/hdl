@@ -8,8 +8,8 @@
 */
 
 
-`ifndef __CONF_REGS_DEFINES_V
-`define __CONF_REGS_DEFINES_V
+`ifndef __HDL_DEFINES_V
+`define __HDL_DEFINES_V
 
 /////////////////////////////
 // COMMENT TO USE REAL ADCS

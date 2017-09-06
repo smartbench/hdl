@@ -21,7 +21,7 @@
 
 //`define TESTING_ECHO
 
-`include "conf_regs_defines.v"
+`include "HDL_defines.v"
 
 `timescale 1ns/1ps
 

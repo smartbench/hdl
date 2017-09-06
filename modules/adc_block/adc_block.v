@@ -26,7 +26,7 @@
 
 `timescale 1ns/1ps
 
-`include "conf_regs_defines.v"
+`include "HDL_defines.v"
 
 module adc_block #(
     parameter BITS_ADC = 8,//`__BITS_ADC,

@@ -1,7 +1,7 @@
 
 `timescale 1ns/1ps
 
-`include "conf_regs_defines.v"
+`include "HDL_defines.v"
 //`define FT245_WIDTH 8
 
 module ft245_block #(

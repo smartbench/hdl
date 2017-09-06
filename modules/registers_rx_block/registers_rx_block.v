@@ -18,7 +18,7 @@
 
 `timescale 1ns/1ps
 
-`include "conf_regs_defines.v"
+`include "HDL_defines.v"
 
 module registers_rx_block  #(
     parameter RX_DATA_WIDTH = 8,

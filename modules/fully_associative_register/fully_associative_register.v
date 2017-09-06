@@ -24,7 +24,7 @@
 
 `timescale 1ns/1ps
 
-`include "conf_regs_defines.v"
+`include "HDL_defines.v"
 
 module fully_associative_register #(
     parameter REG_ADDR_WIDTH = 8,
