@@ -38,6 +38,7 @@
     `define PATH_ROM "/home/ariel/ariel/utn/repo/hdl/inc/rom.hex"
 `endif
 
+
 `timescale 1ns/1ps
 
 module adc_interface  #(
@@ -122,6 +123,7 @@ module adc_interface  #(
     end
 
     `ifdef FAKE_ADC
+        localparam N = 512;
         reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
         reg [8:0] idx = 9'd0;
         reg [7:0] random = 0;
@@ -152,6 +154,7 @@ module adc_interface  #(
                 //fakeADC <= romADC[idx] + random[7:6];
                 fakeADC <= tmp + random[7:6];
                 idx <= idx + 1;
+                if(idx == N-1) idx <= 0;
                 random[5:0] <= random[6:1];
                 random[6] <= random[5] ^ random[3] ^ random[0];
                 random[7] <= random[4] ^ random[3] ^ random[1];
@@ -163,9 +166,11 @@ module adc_interface  #(
     `ifdef COCOTB_SIM        // COCOTB macro
         integer i;
         initial begin
-            $display("loaded data:");
-            for (i=0; i < 512; i=i+1)
-                $display("%d:%h",i,romADC[i]);
+            `ifdef FAKE_ADC
+                $display("loaded data:");
+                for (i=0; i < 512; i=i+1)
+                    $display("%d:%h",i,romADC[i]);
+            `endif
             $dumpfile ("waveform.vcd");
             $dumpvars (0,adc_interface);
             #1;

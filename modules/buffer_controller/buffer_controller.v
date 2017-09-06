@@ -177,7 +177,7 @@ module buffer_controller  #(
     always @(posedge clk) begin
         trigger_status_data[0] <= buffer_full_o;
         trigger_status_data[1] <= triggered_o;
-        if(rst == 1'b1) begin
+        if(rst) begin
             trigger_status_data <= 0;
             trigger_status_rdy <= 1'b0;
             trigger_status_eof <= 1'b1;

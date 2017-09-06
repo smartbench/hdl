@@ -59,14 +59,14 @@ module tx_protocol #(
     output reg trig_ack                   // Ack
 );
 
-    reg [$clog2(SOURCES)-1:0] i;
+    reg [$clog2(SOURCES):0] i;
 
     localparam  ST_IDLE = 0,
                 ST_SENDING = 1;
 
-    reg state;
+    reg state = 0;
 
-    reg [1:0] source_interface;
+    reg [$clog2(SOURCES)-1:0] source_interface = 0;
 
     // 2D array packing input interfaces.
     /*wire [DATA_WIDTH-1:0] input_data [0:2];

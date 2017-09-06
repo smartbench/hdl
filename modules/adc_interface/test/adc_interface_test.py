@@ -91,6 +91,7 @@ def adc_interface_test (dut):
     if( si_adc.fifo != [i for i in range(150)]):
         print "Houston, we have a problem here ..."
         print si_adc.fifo
+        #print '[{}]'.format(', '.join(hex(x) for x in si_adc.fifo))
         raise TestFailure("Simple Interface data != ADC samples")
 
     dut.decimation_factor <= 1
