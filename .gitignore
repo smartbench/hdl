@@ -9,3 +9,4 @@
 *sim_build/
 *.vvp
 *.gtkw
+*log.txt
