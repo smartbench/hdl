@@ -13,7 +13,9 @@
 
 /////////////////////////////
 // COMMENT TO USE REAL ADCS
+/* default version: loads rom.hex into a ROM (sinewave) + noise */
 `define FAKE_ADC
+`define FAKE_ADC_ALT    /* alternative version: counter */
 /////////////////////////////
 
 `define CLOCK_PERIOD_NS 10

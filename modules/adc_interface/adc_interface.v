@@ -123,43 +123,50 @@ module adc_interface  #(
     end
 
     `ifdef FAKE_ADC
-        localparam N = 512;
-        reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
-        reg [8:0] idx = 9'd0;
-        reg [7:0] random = 0;
-        reg [7:0] romADC [0:511];
-        reg [7:0] tmp = 0;
+        `ifndef FAKE_ADC_ALT
+            localparam N = 512;
+            reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
+            reg [8:0] idx = 9'd0;
+            reg [7:0] random = 0;
+            reg [7:0] romADC [0:511];
+            reg [7:0] tmp = 0;
 
-        //initial $readmemh("rom.hex", romADC);
-        initial $readmemh(`PATH_ROM, romADC);
+            //initial $readmemh("rom.hex", romADC);
+            initial $readmemh(`PATH_ROM, romADC);
 
-        always @(posedge(clk_i)) begin
-            tmp <= romADC[idx];
-        end
-
-        /*
-        integer i;
-        initial begin
-            $display("loaded data:");
-            for (i=0; i < 512; i=i+1)
-                $display("%d:",i);
-                //$display("%d:%h",i,romADC[i]);
-        end*/
-        always @(posedge clk_i) begin
-            if(rst) begin
-                fakeADC <= 0;
-                idx <= 0;
-                random <= 1;
-            end else begin
-                //fakeADC <= romADC[idx] + random[7:6];
-                fakeADC <= tmp + random[7:6];
-                idx <= idx + 1;
-                if(idx == N-1) idx <= 0;
-                random[5:0] <= random[6:1];
-                random[6] <= random[5] ^ random[3] ^ random[0];
-                random[7] <= random[4] ^ random[3] ^ random[1];
+            always @(posedge(clk_i)) begin
+                tmp <= romADC[idx];
             end
-        end
+
+            /*
+            integer i;
+            initial begin
+                $display("loaded data:");
+                for (i=0; i < 512; i=i+1)
+                    $display("%d:",i);
+                    //$display("%d:%h",i,romADC[i]);
+            end*/
+            always @(posedge clk_i) begin
+                if(rst) begin
+                    fakeADC <= 0;
+                    idx <= 0;
+                    random <= 1;
+                end else begin
+                    //fakeADC <= romADC[idx] + random[7:6];
+                    fakeADC <= tmp + random[7:6];
+                    idx <= idx + 1;
+                    if(idx == N-1) idx <= 0;
+                    random[5:0] <= random[6:1];
+                    random[6] <= random[5] ^ random[3] ^ random[0];
+                    random[7] <= random[4] ^ random[3] ^ random[1];
+                end
+            end
+        `else
+            reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
+            always @(posedge(clk_o)) begin
+                fakeADC <= fakeADC+1;
+            end
+        `endif
     `endif
 
 
