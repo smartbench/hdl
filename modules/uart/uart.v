@@ -37,7 +37,11 @@ module uart #(
 
     // Hardware
     input       rx,
-    output reg  tx
+    output reg  tx,
+
+    // optional
+    output reg  rx_over_run,
+    output reg  rx_frame_err
 
 );
 
@@ -49,8 +53,6 @@ module uart #(
     reg [7:0]    rx_reg         ;
     reg [3:0]    rx_sample_cnt  ;
     reg [3:0]    rx_cnt         ;
-    reg          rx_frame_err   ;
-    reg          rx_over_run    ;
     reg          rx_empty       ;
     reg          rx_d1          ;
     reg          rx_d2          ;
@@ -163,7 +165,7 @@ module uart #(
 
     // counters as pseudo-clocks at uart speed
     reg rx_signal=0;
-    parameter [31:0] RX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE/16)); // 100e6/(9600*16) = 651
+    parameter [31:0] RX_DIVISOR = $rtoi($ceil($itor(CLOCK)/BAUDRATE/16)); // 100e6/(9600*16) = 651
     reg [31:0] rx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         rx_signal <= 0;
@@ -173,15 +175,9 @@ module uart #(
             rx_signal <= 1;
         end
     end
-    initial begin
-        //$display("CLOCK_PERIOD_NS:: CLOCK_PERIOD_NS=%s", CLOCK_PERIOD_NS);
-        $display("RX_DIVISOR = %d", RX_DIVISOR);
-        //$display("rx_div = %d", CNT_WAIT_RX);
-        //$display("CNT_INACTIVE_RX:: CNT_INACTIVE_RX=%d", CNT_INACTIVE_RX);
-    end
 
     reg tx_signal = 0;
-    parameter [31:0] TX_DIVISOR = $rtoi($ceil(CLOCK/BAUDRATE)); // 100e6/(9600*16) = 651
+    parameter [31:0] TX_DIVISOR = $rtoi($ceil($itor(CLOCK)/BAUDRATE)); // 100e6/(9600*16) = 651
     reg [31:0] tx_div_counter = 0;  // todo: dinamic size
     always @(posedge clk) begin
         tx_signal <= 0;
@@ -190,6 +186,14 @@ module uart #(
             tx_div_counter <= 0;
             tx_signal <= 1;
         end
+    end
+
+    initial begin
+        //$display("CLOCK_PERIOD_NS:: CLOCK_PERIOD_NS=%s", CLOCK_PERIOD_NS);
+        $display("RX_DIVISOR = %d", RX_DIVISOR);
+        $display("TX_DIVISOR = %d", TX_DIVISOR);
+        //$display("rx_div = %d", CNT_WAIT_RX);
+        //$display("CNT_INACTIVE_RX:: CNT_INACTIVE_RX=%d", CNT_INACTIVE_RX);
     end
 
     `ifdef COCOTB_SIM   // COCOTB macro
