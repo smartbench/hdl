@@ -1,7 +1,7 @@
 
 TOP = tx_rx
-SRC = $(wildcard ../../*.v ../*.v)
-INC = ../../../../inc/
+SRC = $(wildcard ../../../*.v ../*.v)
+INC = ../../../../../inc/
 
 # PNR OPT
 PACKAGE = ct256
