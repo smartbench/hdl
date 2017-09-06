@@ -74,7 +74,7 @@ module top_level #(
   )(
     // Basic
     input clk_i,
-    input rst,
+    input rst_i,
 
     // Channel 1 - ADC
     input [BITS_ADC-1:0] chA_adc_in,
@@ -183,8 +183,7 @@ module top_level #(
         pll_reset <= ~pll_lock_i;
     end
 
-    assign global_rst = pll_reset | rqst_reset ;
-    //assign global_rst = pll_reset | rqst_reset | rst;
+    assign global_rst = pll_reset | rqst_reset | rst_i;
 
     // PLL instantiation
     // Sources of info
@@ -298,55 +297,6 @@ module top_level #(
         .trig_ack(tx_trigger_status_ack)
     );
 
-    // echo
-`ifdef TESTING_ECHO
-    localparam N=10;
-    wire [7:0] data_i;
-    wire [7:0] data_o;
-    reg [7:0] dl_data[0:N-1] ;
-    wire rdy_i, ack_i, rdy_o, ack_o;
-    reg [N-1:0] dl_rdy;
-    integer i,j;
-
-    assign data_o = dl_data[N-1];
-    assign rdy_o = dl_rdy[N-1];
-    assign ack_i = rdy_i & ~dl_rdy[0] ;
-
-    always @(posedge clk_100M) begin
-        if(global_rst) begin
-            for(i=0;i<N;i=i+1) begin
-                dl_rdy[i] <= 1'b0;
-                dl_data[i] <= 8'd0;
-            end
-        end else begin
-            if(ack_o) begin
-                // all to the left
-                for (i=1;i<N;i=i+1) begin
-                    dl_data[i] <= dl_data[i-1];
-                    dl_rdy[i] <= dl_rdy[i-1];
-                end
-                dl_data[0] <= 0;
-                dl_rdy[0] <= 1'b0;
-            end else begin
-                for (i=1;i<N;i=i+1) begin
-                    if(dl_rdy[i] == 1'b0) begin //free space
-                        for (j=1;j<=i;j=j+1) begin
-                            dl_data[j] <= dl_data[j-1];
-                            dl_rdy[j] <= dl_rdy[j-1];
-                        end
-                        dl_data[0] <= 0;
-                        dl_rdy[0] <= 1'b0;
-                    end
-                end
-            end
-            if(dl_rdy[0] == 1'b0) begin
-                dl_data[0] <= data_i;
-                dl_rdy[0] <= rdy_i;
-            end
-        end
-    end
-
-`endif
 
     ft245_interface #(
         .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
@@ -392,7 +342,6 @@ module top_level #(
             );
         end
     endgenerate
-
 
 
     // Channel Block
