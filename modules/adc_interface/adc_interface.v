@@ -28,8 +28,15 @@
 
 `include "conf_regs_defines.v"
 `define FAKE_ADC
-// yeah, hard coded... change later
-`define PATH_ROM "/home/ariel/ariel/utn/repo/hdl/inc/rom.hex"
+
+`ifdef FAKE_ADC
+    // yeah, hard coded... change later
+    // TODO:
+    // add path to test Makefile(s)
+    // add path to syn Makefile(s)
+    // `define PATH_ROM "rom.hex"
+    `define PATH_ROM "/home/ariel/ariel/utn/repo/hdl/inc/rom.hex"
+`endif
 
 `timescale 1ns/1ps
 
