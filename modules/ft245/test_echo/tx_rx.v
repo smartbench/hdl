@@ -54,9 +54,10 @@ module tx_rx (
     end
 
     always @(posedge clk_100M) begin
-        if(rst)
+        if(rst) begin
             if(pll_lock) leds <= 8'h81;
             else leds <= 8'hFF;
+        end
         //if(rx==1'b0) leds <= 8'h55;
         /*ledCounter <= ledCounter + 1;
         if(ledCounter == aa) begin
@@ -64,6 +65,7 @@ module tx_rx (
             leds <= leds + 1;
         end*/
         if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        //if(si_ft245_tx_rdy) leds <= si_ft245_rx_data;
     end
 
     // PLL instantiation

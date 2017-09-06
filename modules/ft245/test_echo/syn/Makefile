@@ -1,12 +1,12 @@
+
 TOP = tx_rx
-#SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
 SRC = $(wildcard ../../*.v ../*.v)
 INC = ../../../../inc/
 
 # PNR OPT
 PACKAGE = ct256
 DEVICE = 8k
-PCF = top_level.pcf
+PCF = $(TOP).pcf
 
 all: syn pnr pack
 

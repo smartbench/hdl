@@ -74,8 +74,26 @@ module ft245_interface #(
     reg [2:0] state;
     reg [$clog2(MAX_CNT):0] cnt;
 
+    reg rxf_245_i=0, rxf_245_ii=0, txe_245_i=0, txe_245_ii=0;
+
     always @(posedge clk) begin
+        rxf_245_i <= rxf_245;
+        rxf_245_ii <= rxf_245_i;
+        txe_245_i <= txe_245;
+        txe_245_ii <= txe_245_i;
         if (rst == 1'b1) begin
+            /* // FT245_ECHO (OK)
+            state <= ST_IDLE;
+            rx_245 <= 1'b1;
+            tx_oe_245 <= 1'b0;
+            cnt <= 3'd0;
+            wr_245 <= 1'b1;
+            rx_rdy_si <= 1'b0;
+            tx_ack_si <= 1'b0;
+            rxf_245_i <= 1'b1;
+            rxf_245_ii <= 1'b1;
+            txe_245_i <= 1'b1;
+            */
             tx_data_245 <= 0;
             rx_245 <= 1'b1;
             wr_245 <= 1'b1;
@@ -85,6 +103,10 @@ module ft245_interface #(
             tx_ack_si <= 1'b0;
             state <= ST_IDLE;
             cnt <= 0;
+            rxf_245_i <= 1'b1;
+            rxf_245_ii <= 1'b1;
+            txe_245_i <= 1'b1;
+            txe_245_ii <= 1'b1;
         end else begin
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
             wr_245 <= 1'b1;
@@ -92,15 +114,16 @@ module ft245_interface #(
             case (state)
                 ST_IDLE:
                 begin
-                    if (rxf_245 == 1'b0  && rx_rdy_si == 1'b0) begin
+                    if (rxf_245_ii == 1'b0  && rx_rdy_si == 1'b0) begin
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
-                    end else if(txe_245 == 1'b0 && tx_rdy_si == 1'b1) begin
+                    end else if(txe_245_ii == 1'b0 && tx_rdy_si == 1'b1) begin
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         tx_ack_si <= 1'b1;
                         state <= ST_SETUP_TX;
+                        cnt <= CNT_SETUP_TX;
                     end
                 end
 
@@ -126,9 +149,12 @@ module ft245_interface #(
 
                 ST_SETUP_TX:
                 begin
-                    state <= ST_WAIT_TX;
-                    wr_245 <= 1'b0;
-                    cnt <= 0;
+                    cnt <= cnt + 1;
+                    if(cnt == CNT_SETUP_TX) begin
+                        state <= ST_WAIT_TX;
+                        wr_245 <= 1'b0;
+                        cnt <= 0;
+                    end
                 end
 
                 ST_WAIT_TX: // Espera ACTIVE_TIME_TX
