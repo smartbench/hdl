@@ -1,22 +1,17 @@
-
-TOP = top_level
-SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../modules/**/*.v ../top/$(TOP).v) )
-INC = ../inc/
+TOP = tx_rx
+SRC = $(wildcard ../*.v) ../../../uart.v
+INC = ./
 
 # PNR OPT
 PACKAGE = ct256
 DEVICE = 8k
-PCF = top_level.pcf
+PCF = tx_rx.pcf
 
 all: syn pnr pack
-.phony: show, prog, load-cram, clean
 
 syn: $(TOP).blif
 pnr : $(TOP).asc
 pack: $(TOP).bin
-
-show:
-	echo $(SRC)
 
 $(TOP).blif: $(SRC)
 	yosys -p "read_verilog -I$(INC) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
@@ -27,10 +22,10 @@ $(TOP).asc: $(TOP).blif $(PCF)
 $(TOP).bin: $(TOP).asc
 	icepack $(TOP).asc $(TOP).bin
 
-prog: $(TOP).bin
+prog:
 	iceprog $(TOP).bin
 
-load-cram: $(TOP).bin
+load-cram:
 	iceprog -S $(TOP).bin
 
 clean:

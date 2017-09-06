@@ -7,7 +7,7 @@ set_io leds[5] C4
 set_io leds[6] B3
 set_io leds[7] C3
 
-set_io clock_i J3
+set_io clk_i J3
 
 set_io in_out_245[0] B10
 set_io in_out_245[1] B12

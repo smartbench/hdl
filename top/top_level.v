@@ -74,7 +74,7 @@ module top_level #(
   )(
     // Basic
     input clk_i,
-    input rst,
+    input rst_i,
 
     // Channel 1 - ADC
     input [BITS_ADC-1:0] chA_adc_in,
@@ -124,7 +124,11 @@ module top_level #(
     wire [REG_DATA_WIDTH-1:0] reg_data;
     wire reg_rdy;
 
-    // FT245 SI
+    // FT245
+    wire [7:0] in_245;
+    wire [7:0] out_245;
+    wire tx_oe_245;
+
     wire [RX_DATA_WIDTH-1:0] si_ft245_rx_data;
     wire                si_ft245_rx_rdy;
     wire                si_ft245_rx_ack;
@@ -179,8 +183,7 @@ module top_level #(
         pll_reset <= ~pll_lock_i;
     end
 
-    assign global_rst = pll_reset | rqst_reset ;
-    //assign global_rst = pll_reset | rqst_reset | rst;
+    assign global_rst = pll_reset | rqst_reset | rst_i;
 
     // PLL instantiation
     // Sources of info
@@ -294,108 +297,51 @@ module top_level #(
         .trig_ack(tx_trigger_status_ack)
     );
 
-    // echo
-`ifdef TESTING_ECHO
-    localparam N=10;
-    wire [7:0] data_i;
-    wire [7:0] data_o;
-    reg [7:0] dl_data[0:N-1] ;
-    wire rdy_i, ack_i, rdy_o, ack_o;
-    reg [N-1:0] dl_rdy;
-    integer i,j;
 
-    assign data_o = dl_data[N-1];
-    assign rdy_o = dl_rdy[N-1];
-    assign ack_i = rdy_i & ~dl_rdy[0] ;
-
-    always @(posedge clk_100M) begin
-        if(global_rst) begin
-            for(i=0;i<N;i=i+1) begin
-                dl_rdy[i] <= 1'b0;
-                dl_data[i] <= 8'd0;
-            end
-        end else begin
-            if(ack_o) begin
-                // all to the left
-                for (i=1;i<N;i=i+1) begin
-                    dl_data[i] <= dl_data[i-1];
-                    dl_rdy[i] <= dl_rdy[i-1];
-                end
-                dl_data[0] <= 0;
-                dl_rdy[0] <= 1'b0;
-            end else begin
-                for (i=1;i<N;i=i+1) begin
-                    if(dl_rdy[i] == 1'b0) begin //free space
-                        for (j=1;j<=i;j=j+1) begin
-                            dl_data[j] <= dl_data[j-1];
-                            dl_rdy[j] <= dl_rdy[j-1];
-                        end
-                        dl_data[0] <= 0;
-                        dl_rdy[0] <= 1'b0;
-                    end
-                end
-            end
-            if(dl_rdy[0] == 1'b0) begin
-                dl_data[0] <= data_i;
-                dl_rdy[0] <= rdy_i;
-            end
-        end
-    end
-
-`endif
-
-    /*
-    // FT245
     ft245_interface #(
-        .CLOCK_PERIOD_NS(10)
-    )(
+        .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
+    ) ft245_u (
         .clk(clk_100M),
         .rst(global_rst),
-        // ft245 rx interface
-        .rx_data_245(rx_data_245),
+
+        .rx_data_245(in_245),
         .rxf_245(rxf_245),
         .rx_245(rx_245),
-        // ft245 tx interface
-        .tx_data_245(tx_data_245),
+
+        .tx_data_245(out_245),
         .txe_245(txe_245),
         .wr_245(wr_245),
         .tx_oe_245(tx_oe_245),
-        // simple interface
+
         .rx_data_si(si_ft245_rx_data),
         .rx_rdy_si(si_ft245_rx_rdy),
         .rx_ack_si(si_ft245_rx_ack),
+
         .tx_data_si(si_ft245_tx_data),
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
-    );*/
-    ft245_block #(
-        .FT245_WIDTH(FT245_DATA_WIDTH),
-        .CLOCK_PERIOD_NS(10)
-    ) ft245_block_u (
-        .clk(clk_100M),
-        .rst(global_rst),
-        .in_out_245(in_out_245),
-        .rxf_245(rxf_245),
-        .rx_245(rx_245),
-        .txe_245(txe_245),
-        .wr_245(wr_245),
-`ifndef TESTING_ECHO
-        .rx_data_si(si_ft245_rx_data),
-        .rx_rdy_si(si_ft245_rx_rdy),
-        .rx_ack_si(si_ft245_rx_ack),
-        .tx_data_si(si_ft245_tx_data),
-        .tx_rdy_si(si_ft245_tx_rdy),
-        .tx_ack_si(si_ft245_tx_ack)
-`else
-        .rx_data_si(data_i),
-        .rx_rdy_si(rdy_i),
-        .rx_ack_si(ack_i),
-        .tx_data_si(data_o),
-        .tx_rdy_si(rdy_o),
-        .tx_ack_si(ack_o)
-`endif
     );
 
+    genvar h;
+    generate
+        for (h=0 ; h<8 ; h=h+1) begin
+            SB_IO #(
+                .PIN_TYPE(6'b101001),
+                .PULLUP(1'b0)
+            ) IO_PIN_INST (
+                .PACKAGE_PIN (in_out_245[h]),
+                .LATCH_INPUT_VALUE (),
+                .CLOCK_ENABLE (),
+                .INPUT_CLK (),
+                .OUTPUT_CLK (),
+                .OUTPUT_ENABLE (tx_oe_245),
+                .D_OUT_0 (out_245[h]),
+                .D_OUT_1 (),
+                .D_IN_0 (in_245[h]),
+                .D_IN_1 ()
+            );
+        end
+    endgenerate
 
 
     // Channel Block

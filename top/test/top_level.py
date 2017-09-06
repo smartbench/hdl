@@ -173,11 +173,11 @@ class FT245:
 
 @cocotb.coroutine
 def Reset (dut):
-    dut.rst <= 0
+    dut.rst_i <= 0
     for i in range(10): yield RisingEdge(dut.clk_i)
-    dut.rst <= 1
+    dut.rst_i <= 1
     yield RisingEdge(dut.clk_i)
-    dut.rst <= 0
+    dut.rst_i <= 0
     yield RisingEdge(dut.clk_i)
 
 @cocotb.test()
@@ -233,6 +233,7 @@ def test (dut):
     ft245.write_reg( ADDR_N_MOVING_AVERAGE_CHA , __N_MOVING_AVERAGE_CHA  )
     ft245.write_reg( ADDR_N_MOVING_AVERAGE_CHB , __N_MOVING_AVERAGE_CHB  )
     for i in range(1000): yield RisingEdge(dut.clk_100M)
+
 
     ft245.write_reg( ADDR_REQUESTS , RQST_START_BIT )
 

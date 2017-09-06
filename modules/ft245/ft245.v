@@ -10,13 +10,13 @@ module ft245_interface #(
     // ft245 rx interface
     input [7:0] rx_data_245,
     input rxf_245,
-    output reg rx_245,
+    output reg rx_245=0,//1'b1,
 
     // ft245 tx interface
     output reg [7:0] tx_data_245,
     input txe_245,
-    output reg wr_245,
-    output reg tx_oe_245,
+    output reg wr_245= 0,//1'b1,
+    output reg tx_oe_245=1'b0,
 
     // simple interface
     output reg [7:0] rx_data_si,
@@ -36,7 +36,8 @@ module ft245_interface #(
     localparam ACTIVE_TIME_TX = 30.0;
 
     localparam CNT_WAIT_RX = $rtoi($ceil(WAIT_TIME_RX/CLOCK_PERIOD_NS));
-    localparam CNT_INACTIVE_RX = $rtoi($ceil(INACTIVE_TIME_RX/CLOCK_PERIOD_NS));
+    localparam CNT_INACTIVE_RX = $rtoi($ceil(INACTIVE_TIME_RX/CLOCK_PERIOD_NS))+2; // <-- this is important
+                                                            // the "+2" is because of the delay
     localparam CNT_SETUP_TX = $rtoi($ceil(SETUP_TIME_TX/CLOCK_PERIOD_NS));
     localparam CNT_ACTIVE_TX = $rtoi($ceil(ACTIVE_TIME_TX/CLOCK_PERIOD_NS));
     localparam MAX_CNT = CNT_WAIT_RX;
@@ -74,8 +75,27 @@ module ft245_interface #(
     reg [2:0] state;
     reg [$clog2(MAX_CNT):0] cnt;
 
+    reg rxf_245_i=0, rxf_245_ii=0, txe_245_i=0, txe_245_ii=0;
+
     always @(posedge clk) begin
+        rxf_245_i <= rxf_245;
+        rxf_245_ii <= rxf_245_i;
+        txe_245_i <= txe_245;
+        txe_245_ii <= txe_245_i;
         if (rst == 1'b1) begin
+            /* // FT245_ECHO (OK)
+            state <= ST_IDLE;
+            rx_245 <= 1'b1;
+            tx_oe_245 <= 1'b0;
+            cnt <= 3'd0;
+            wr_245 <= 1'b1;
+            rx_rdy_si <= 1'b0;
+            tx_ack_si <= 1'b0;
+            rxf_245_i <= 1'b1;
+            rxf_245_ii <= 1'b1;
+            txe_245_i <= 1'b1;
+            txe_245_ii <= 1'b1;
+            */
             tx_data_245 <= 0;
             rx_245 <= 1'b1;
             wr_245 <= 1'b1;
@@ -85,6 +105,10 @@ module ft245_interface #(
             tx_ack_si <= 1'b0;
             state <= ST_IDLE;
             cnt <= 0;
+            rxf_245_i <= 1'b1;
+            rxf_245_ii <= 1'b1;
+            txe_245_i <= 1'b1;
+            txe_245_ii <= 1'b1;
         end else begin
             rx_rdy_si <= rx_rdy_si & ~rx_ack_si;
             wr_245 <= 1'b1;
@@ -92,15 +116,24 @@ module ft245_interface #(
             case (state)
                 ST_IDLE:
                 begin
-                    if (rxf_245 == 1'b0  && rx_rdy_si == 1'b0) begin
+                    if (rxf_245_ii == 1'b0  && rx_rdy_si == 1'b0) begin
+                        rxf_245_i <= 1'b1;
+                        rxf_245_ii <= 1'b1;
+                        txe_245_i <= 1'b1;
+                        txe_245_ii <= 1'b1;
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
-                    end else if(txe_245 == 1'b0 && tx_rdy_si == 1'b1) begin
+                    end else if(txe_245_ii == 1'b0 && tx_rdy_si == 1'b1) begin
+                        rxf_245_i <= 1'b1;
+                        rxf_245_ii <= 1'b1;
+                        txe_245_i <= 1'b1;
+                        txe_245_ii <= 1'b1;
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         tx_ack_si <= 1'b1;
                         state <= ST_SETUP_TX;
+                        cnt <= CNT_SETUP_TX;
                     end
                 end
 
@@ -126,9 +159,12 @@ module ft245_interface #(
 
                 ST_SETUP_TX:
                 begin
-                    state <= ST_WAIT_TX;
-                    wr_245 <= 1'b0;
-                    cnt <= 0;
+                    cnt <= cnt + 1;
+                    if(cnt == CNT_SETUP_TX) begin
+                        state <= ST_WAIT_TX;
+                        wr_245 <= 1'b0;
+                        cnt <= 0;
+                    end
                 end
 
                 ST_WAIT_TX: // Espera ACTIVE_TIME_TX

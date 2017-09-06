@@ -11,6 +11,7 @@
 `ifndef __CONF_REGS_DEFINES_V
 `define __CONF_REGS_DEFINES_V
 
+`define CLOCK_PERIOD_NS 10
 
 `define __ADC_DF_WIDTH  32
 `define __RAM_SIZE_CH   (4096*4)          // RAM for each channel
