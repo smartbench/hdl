@@ -27,7 +27,7 @@
 */
 
 `include "conf_regs_defines.v"
-`define FAKE_ADC
+//`define FAKE_ADC // <-- in conf_regs_defines
 
 `ifdef FAKE_ADC
     // yeah, hard coded... change later

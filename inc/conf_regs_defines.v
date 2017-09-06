@@ -11,6 +11,11 @@
 `ifndef __CONF_REGS_DEFINES_V
 `define __CONF_REGS_DEFINES_V
 
+/////////////////////////////
+// COMMENT TO USE REAL ADCS
+`define FAKE_ADC
+/////////////////////////////
+
 `define CLOCK_PERIOD_NS 10
 
 `define __ADC_DF_WIDTH  32
