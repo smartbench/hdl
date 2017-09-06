@@ -1,21 +1,22 @@
 
-#TOP = breadboard_top
 TOP = top_level
-#SRC = $(wildcard ../modules/**/*.v) ../top/$(TOP).v
-SRC = $(wildcard ../modules/**/*.v ../top/*.v)
+SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../modules/**/*.v ../top/$(TOP).v) )
 INC = ../inc/
 
 # PNR OPT
 PACKAGE = ct256
 DEVICE = 8k
-#PCF = breadboard.pcf
 PCF = top_level.pcf
 
 all: syn pnr pack
+.phony: show, prog, load-cram, clean
 
 syn: $(TOP).blif
 pnr : $(TOP).asc
 pack: $(TOP).bin
+
+show:
+	echo $(SRC)
 
 $(TOP).blif: $(SRC)
 	yosys -p "read_verilog -I$(INC) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
