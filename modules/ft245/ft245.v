@@ -36,7 +36,8 @@ module ft245_interface #(
     localparam ACTIVE_TIME_TX = 30.0;
 
     localparam CNT_WAIT_RX = $rtoi($ceil(WAIT_TIME_RX/CLOCK_PERIOD_NS));
-    localparam CNT_INACTIVE_RX = $rtoi($ceil(INACTIVE_TIME_RX/CLOCK_PERIOD_NS));
+    localparam CNT_INACTIVE_RX = $rtoi($ceil(INACTIVE_TIME_RX/CLOCK_PERIOD_NS))+2; // <-- this is important
+                                                            // the "+2" is because of the delay
     localparam CNT_SETUP_TX = $rtoi($ceil(SETUP_TIME_TX/CLOCK_PERIOD_NS));
     localparam CNT_ACTIVE_TX = $rtoi($ceil(ACTIVE_TIME_TX/CLOCK_PERIOD_NS));
     localparam MAX_CNT = CNT_WAIT_RX;
@@ -93,6 +94,7 @@ module ft245_interface #(
             rxf_245_i <= 1'b1;
             rxf_245_ii <= 1'b1;
             txe_245_i <= 1'b1;
+            txe_245_ii <= 1'b1;
             */
             tx_data_245 <= 0;
             rx_245 <= 1'b1;
@@ -115,10 +117,18 @@ module ft245_interface #(
                 ST_IDLE:
                 begin
                     if (rxf_245_ii == 1'b0  && rx_rdy_si == 1'b0) begin
+                        rxf_245_i <= 1'b1;
+                        rxf_245_ii <= 1'b1;
+                        txe_245_i <= 1'b1;
+                        txe_245_ii <= 1'b1;
                         rx_245 <= 1'b0;
                         cnt <= 0;
                         state <= ST_WAIT_RX;
                     end else if(txe_245_ii == 1'b0 && tx_rdy_si == 1'b1) begin
+                        rxf_245_i <= 1'b1;
+                        rxf_245_ii <= 1'b1;
+                        txe_245_i <= 1'b1;
+                        txe_245_ii <= 1'b1;
                         tx_data_245 <= tx_data_si;
                         tx_oe_245 <= 1'b1;
                         tx_ack_si <= 1'b1;
