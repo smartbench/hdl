@@ -1,5 +1,5 @@
 TOP = tx_rx
-SRC = $(wildcard ./*.v) ../uart.v
+SRC = $(wildcard ../*.v) ../../../uart.v
 INC = ./
 
 # PNR OPT

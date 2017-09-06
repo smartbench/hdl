@@ -1,4 +1,4 @@
-VERILOG_SOURCES = $(PWD)/../uart.v
+VERILOG_SOURCES = $(PWD)/../../uart.v
 TOPLEVEL=uart
 MODULE=uart
 EXTRA_ARGS= -I../../../inc/

@@ -12,8 +12,8 @@ def nsTimer (t):
     yield Timer(t,units='ns')
 
 BAUDRATE = 921600.0
-F_CLK = 99.0e6
-T_CLK = 1.0e9/F_CLK
+F_CLK = 100e6
+T_CLK_NS = 1.0e9/F_CLK
 DIV = int(F_CLK/BAUDRATE)
 PERIOD_NS = (1.0e9/BAUDRATE)
 
