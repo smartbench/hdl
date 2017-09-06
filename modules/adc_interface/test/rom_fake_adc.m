@@ -1,4 +1,4 @@
-% Inicializacion del entorno
+%% Inicializacion del entorno
 %
 clc;          % limpia la consola
 clear;        % borra workspace
@@ -41,7 +41,7 @@ q = quantizer('mode', 'ufixed', 'format', [wordLength fracLength], ...
         'roundmode', 'nearest', 'overflowmode', 'saturate');
 x_q = quantize(q, x); % señal cuantizada
 
-% Plot
+%% Plot
 %
 stem(t,x_q,'.');
 grid on;
@@ -49,7 +49,7 @@ ylim([0,255]);
 hold on;
 plot(t,xx,'.');
 
-% Escritura de archivo
+%% Escritura de archivo
 %
 fileID = fopen('rom.bin','w');
 fwrite(fileID, x_q, 'uint8');

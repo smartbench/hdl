@@ -2,7 +2,7 @@
 /*
     Edge detector module
 
-    This module detects when the input signal crosses a determinated value.
+    This module detects when the input signal crosses a determined value.
     It can be configured to detect positive and negative edges.
     The output is a single bit that becames one during one clock each time the
     crossing condition is met.

@@ -37,7 +37,7 @@
 `timescale 1ns/1ps
 
 module trigger_input_selector  #(
-    parameter REG_ADDR_WIDTH = 16,
+    parameter REG_ADDR_WIDTH = 8,
     parameter REG_DATA_WIDTH = 16,
     parameter BITS_DAC = 10,
     parameter BITS_ADC = 8
