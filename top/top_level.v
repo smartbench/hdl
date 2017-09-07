@@ -297,7 +297,39 @@ module top_level #(
         .trig_ack(tx_trigger_status_ack)
     );
 
+wire over_run, frame_err; //NOT USED
+`ifdef USING_UART
+    module uart #(
+        .CLOCK (99000000), // clock frequency in hz
+        .BAUDRATE (921600) // baudrate in bps
+    )(
+        .clk (clk_100M),
+        .rst (global_rst),
 
+        // tx internal simple interface
+        .tx_data(si_ft245_tx_data),
+        .tx_rdy(si_ft245_tx_rdy),
+        .tx_ack(si_ft245_tx_ack),
+
+        // rx internal simple interface
+        .rx_data(si_ft245_rx_data),
+        .rx_rdy(si_ft245_rx_rdy),
+        .rx_ack(si_ft245_rx_ack),
+
+        // always enabled both tx and rx
+        .tx_enable (1'b1),
+        .rx_enable (1'b1),
+
+        // external uart signals
+        .rx (rx_uart),
+        .tx (tx_uart),
+
+        // optional ( not used )
+        .rx_over_run (over_run),
+        .rx_frame_err (frame_err)
+
+    );
+`else
     ft245_interface #(
         .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
     ) ft245_u (
@@ -321,6 +353,7 @@ module top_level #(
         .tx_rdy_si(si_ft245_tx_rdy),
         .tx_ack_si(si_ft245_tx_ack)
     );
+`endif
 
     genvar h;
     generate

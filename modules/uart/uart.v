@@ -16,7 +16,7 @@
 
 module uart #(
     parameter CLOCK = 99000000,
-    parameter BAUDRATE = 9600
+    parameter BAUDRATE = 921600
 )(
     input       clk,
     input       rst,  // async
