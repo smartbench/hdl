@@ -12,10 +12,13 @@
 `define __HDL_DEFINES_V
 
 /////////////////////////////
-// COMMENT TO USE REAL ADCS
-/* default version: loads rom.hex into a ROM (sinewave) + noise */
-`define FAKE_ADC
-//`define FAKE_ADC_ALT    /* alternative version: counter */
+// USE REAL/FAKE ADCS
+// real adc: ADC1175
+// default fake adc version: loads rom.hex into a ROM (sinewave) + noise
+// alternative fake adc version: counter
+// To use fake adcs, add this defines when synthetising:
+//  make syn DEF=FAKE_ADC                   # `define FAKE_ADC
+//  make syn DEF="FAKE_ADC FAKE_ADC_ALT"    # `define FAKE_ADC_ALT
 /////////////////////////////
 
 `define CLOCK_PERIOD_NS 10
