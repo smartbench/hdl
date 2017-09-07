@@ -34,8 +34,8 @@
     // TODO:
     // add path to test Makefile(s)
     // add path to syn Makefile(s)
-    // `define PATH_ROM "rom.hex"
-    `define PATH_ROM "/home/ariel/ariel/utn/repo/hdl/inc/rom.hex"
+    `define PATH_ROM "./rom.hex"
+    // `define PATH_ROM "/home/ariel/ariel/utn/repo/hdl/inc/rom.hex"
 `endif
 
 
