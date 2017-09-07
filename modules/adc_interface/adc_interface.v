@@ -123,6 +123,8 @@ module adc_interface  #(
     end
 
     `ifdef FAKE_ADC
+        initial $display("FAKE_ADC ON");
+
         `ifndef FAKE_ADC_ALT
             localparam N = 512;
             reg [DATA_WIDTH-1:0] fakeADC = 8'd0;
