@@ -22,6 +22,11 @@ show:
 show-defines:
 	echo $(DEFINES)
 
+show-blocks: $(SRC)
+	# http://www.clifford.at/yosys/cmd_show.html
+	#yosys -p "read_verilog -I$(INC) $(DEFINES) ../top/$(TOP).v; show"
+	yosys -p "read_verilog -I$(INC) $(DEFINES) ../top/$(TOP).v; show -format svg -prefix ./show"
+
 $(TOP).blif: $(SRC)
 	yosys -p "read_verilog -I$(INC) $(DEFINES) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
 
