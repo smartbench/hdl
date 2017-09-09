@@ -99,12 +99,18 @@ module top_level #(
     // Ext
     input ext_trigger,
 
+`ifdef USING_UART
+    // UART interface
+    input rx_uart,
+    output tx_uart,
+`else
     // FT245 interface
     inout [FT245_DATA_WIDTH-1:0] in_out_245,
     input rxf_245,
     output rx_245,
     input txe_245,
     output wr_245,
+`endif
 
     // I2C
     //inout SDA,
@@ -297,12 +303,11 @@ module top_level #(
         .trig_ack(tx_trigger_status_ack)
     );
 
-wire over_run, frame_err; //NOT USED
 `ifdef USING_UART
-    module uart #(
+    uart #(
         .CLOCK (99000000), // clock frequency in hz
         .BAUDRATE (921600) // baudrate in bps
-    )(
+    ) uart_u (
         .clk (clk_100M),
         .rst (global_rst),
 
@@ -323,11 +328,6 @@ wire over_run, frame_err; //NOT USED
         // external uart signals
         .rx (rx_uart),
         .tx (tx_uart),
-
-        // optional ( not used )
-        .rx_over_run (over_run),
-        .rx_frame_err (frame_err)
-
     );
 `else
     ft245_interface #(

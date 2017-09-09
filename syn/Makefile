@@ -1,6 +1,6 @@
 
 TOP = top_level
-SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../modules/**/*.v ../top/$(TOP).v) )
+SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../top/$(TOP).v ../modules/**/*.v ) )
 INC = ../inc/
 
 # PNR OPT
@@ -9,7 +9,7 @@ DEVICE = 8k
 PCF = top_level.pcf
 
 all: syn pnr pack
-.phony: show, prog, load-cram, clean
+.phony: show prog load-cram clean
 
 syn: $(TOP).blif
 pnr : $(TOP).asc
@@ -19,7 +19,7 @@ show:
 	echo $(SRC)
 
 $(TOP).blif: $(SRC)
-	yosys -p "read_verilog -I$(INC) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
+	yosys -p "read_verilog -DUSING_UART=1 -I$(INC) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
 
 $(TOP).asc: $(TOP).blif $(PCF)
 	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
