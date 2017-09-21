@@ -317,7 +317,7 @@ module top_level_uart #(
 
         // external uart signals
         .rx (rx_uart),
-        .tx (tx_uart),
+        .tx (tx_uart)
     );
 
 
