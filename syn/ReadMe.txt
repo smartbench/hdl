@@ -29,8 +29,8 @@ only FAKE_ADC has to be defines.
 b) a simple counter. To choose this one, FAKE_ADC and FAKE_ADC_ALT have to be defined.
 The defines are added as parameters in the Makefile.
 Examples:
-make syn -DEF=FAKE_ADC
-make syn -DEF="FAKE_ADC FAKE_ADC_ALT"
+make syn DEF=FAKE_ADC
+make syn DEF="FAKE_ADC FAKE_ADC_ALT"
 
 To check if the fake adc is correctly set, you can do:
 make syn -DEF=FAKE_ADC | grep "FAKE_ADC ON"
