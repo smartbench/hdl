@@ -21,7 +21,10 @@
 //  make syn DEF="FAKE_ADC FAKE_ADC_ALT"    # `define FAKE_ADC_ALT
 /////////////////////////////
 
-`define CLOCK_PERIOD_NS 10
+`define CLK_FREQ        99000000
+`define CLOCK_PERIOD_NS 10          // <-- correct this one
+
+`define BAUDRATE        921600
 
 `define __ADC_DF_WIDTH  32
 `define __RAM_SIZE_CH   (4096*4)          // RAM for each channel

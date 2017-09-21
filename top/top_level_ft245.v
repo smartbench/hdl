@@ -25,7 +25,7 @@
 
 `timescale 1ns/1ps
 
-module top_level #(
+module top_level_ft245 #(
     parameter BITS_ADC = `__BITS_ADC,
     parameter BITS_DAC = `__BITS_DAC,
     parameter RAM_DATA_WIDTH = `__BITS_ADC,
@@ -451,7 +451,7 @@ module top_level #(
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
-            $dumpvars (0,top_level);
+            $dumpvars (0,top_level_ft245);
             #1;
         end
     `endif
