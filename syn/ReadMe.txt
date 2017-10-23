@@ -35,7 +35,7 @@ b) a simple counter. To choose this one, FAKE_ADC and FAKE_ADC_ALT have to be de
         make syn DEF="FAKE_ADC FAKE_ADC_ALT"
 
     To check if the fake adc is correctly set, you can do:
-        make syn -DEF=FAKE_ADC | grep "FAKE_ADC ON"
+        make syn DEF=FAKE_ADC | grep "FAKE_ADC ON"
 
 By default, ft245 interface is used.
 To force the use of a specific interface:
