@@ -39,14 +39,12 @@ $(TOP).bin: $(TOP).asc
 	icepack $(TOP).asc $(TOP).bin
 
 prog: $(TOP).bin
-	@echo "Writing $(TOP).bin into the flash memory (interface=$(INT))"
+	@echo "Writing $(TOP).bin into the flash memory"
 	iceprog $(TOP).bin
-	@echo ">>> Interface = $(INT) <<<"
 
 load-cram: $(TOP).bin
-	@echo "Loading $(TOP).bin into the CRAM (interface=$(INT))"
+	@echo "Loading $(TOP).bin into the CRAM"
 	iceprog -S $(TOP).bin
-	@echo ">>> Interface = $(INT) <<<"
 
 clean:
 	rm $(TOP).bin $(TOP).asc $(TOP).blif --force

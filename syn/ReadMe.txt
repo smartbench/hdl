@@ -19,9 +19,6 @@ Configure CRAM:
 Top level file should be in ../top/
 PCF file should be in ./
 
-To change the top level, make TOP=<name_without_extension>
-The pcf file should have the same name as the top level file.
-
 To synthetise with a fake adc (testing purpose until having the mainboard),
 there are two alternatives:
 
@@ -37,22 +34,6 @@ b) a simple counter. To choose this one, FAKE_ADC and FAKE_ADC_ALT have to be de
     To check if the fake adc is correctly set, you can do:
         make syn DEF=FAKE_ADC | grep "FAKE_ADC ON"
 
-By default, ft245 interface is used.
-To force the use of a specific interface:
-    FT245:
-        make (syn/prog/load-cram/etc.) INT=ft245
-    UART:
-        make (syn/prog/load-cram/etc.) INT=uart
-
-Common instructions:
-# load cram with ft245 interface and fake adc
-    make load-cram DEF=FAKE_ADC INT=ft245
-
-# load cram with uart interface and fake adc
-    make load-cram DEF=FAKE_ADC INT=uart
-
-# load cram with ft245 interface and real adc
-    make load-cram INT=ft245
-
-# load cram with uart interface and real adc
-    make load-cram INT=uart
+Useful commands:
+# Program ROM using fake adc
+    make prog DEF=FAKE_ADC
