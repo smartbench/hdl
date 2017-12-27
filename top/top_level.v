@@ -25,7 +25,7 @@
 
 `timescale 1ns/1ps
 
-module top_level_uart #(
+module top_level #(
     parameter BITS_ADC = `__BITS_ADC,
     parameter BITS_DAC = `__BITS_DAC,
     parameter RAM_DATA_WIDTH = `__BITS_ADC,
@@ -73,42 +73,46 @@ module top_level_uart #(
     //parameter DEFAULT_ADC_DF_DV_REG = (`__DEFAULT_ADC_CLK_DIV_H << 16) | (`__DEFAULT_ADC_CLK_DIV_L),
   )(
     // Basic
-    input clk_i,
-    input rst_i,
+    input   wire clk_i,
+    input   wire rst_i,
 
     // Channel 1 - ADC
-    input [BITS_ADC-1:0] chA_adc_in,
-    output chA_adc_oe,
-    output chA_adc_clk_o,
+    input   wire [BITS_ADC-1:0] chA_adc_in,
+    output  wire                chA_adc_oe,
+    output  wire                chA_adc_clk_o,
     // Channel 1 - Analog
-    output [2:0] chA_gain_sel,
-    output [2:0] chA_att_sel,
-    output chA_dc_coupling_sel,
-    output chA_on_sel,
+    output  wire [2:0]          chA_gain_sel,
+    output  wire [2:0]          chA_att_sel,
+    output  wire                chA_dc_coupling_sel,
+    output  wire                chA_on_sel,
 
     // Channel 2 - ADC
-    input [BITS_ADC-1:0] chB_adc_in,
-    output chB_adc_oe,
-    output chB_adc_clk_o,
+    input   wire [BITS_ADC-1:0] chB_adc_in,
+    output  wire                chB_adc_oe,
+    output  wire                chB_adc_clk_o,
     // Channel 2 - Analog
-    output [2:0] chB_gain_sel,
-    output [2:0] chB_att_sel,
-    output chB_dc_coupling_sel,
-    output chB_on_sel,
+    output  wire [2:0]          chB_gain_sel,
+    output  wire [2:0]          chB_att_sel,
+    output  wire                chB_dc_coupling_sel,
+    output  wire                chB_on_sel,
 
     // Ext
-    input ext_trigger,
+    input wire                  ext_trigger,
 
-    // UART interface
-    input rx_uart,
-    output tx_uart,
+    // FT245 interface
+    inout   wire [FT245_DATA_WIDTH-1:0] in_out_245,
+    input   wire                rxf_245,
+    output  wire                rx_245,
+    input   wire                txe_245,
+    output  wire                wr_245,
+    output  wire                siwu,
 
     // I2C
     //inout SDA,
     //inout SCL,
 
-    output clk_o,
-    output reg [7:0] leds
+    output  wire                clk_o,
+    output  reg [7:0]           leds
 
 );
 
@@ -294,31 +298,51 @@ module top_level_uart #(
         .trig_ack(tx_trigger_status_ack)
     );
 
-    uart #(
-        .CLOCK (`CLK_FREQ), // clock frequency in hz
-        .BAUDRATE (`BAUDRATE) // baudrate in bps
-    ) uart_u (
-        .clk (clk_100M),
-        .rst (global_rst),
 
-        // tx internal simple interface
-        .tx_data(si_ft245_tx_data),
-        .tx_rdy(si_ft245_tx_rdy),
-        .tx_ack(si_ft245_tx_ack),
+    ft245_interface #(
+        .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
+    ) ft245_u (
+        .clk(clk_100M),
+        .rst(global_rst),
 
-        // rx internal simple interface
-        .rx_data(si_ft245_rx_data),
-        .rx_rdy(si_ft245_rx_rdy),
-        .rx_ack(si_ft245_rx_ack),
+        .rx_data_245(in_245),
+        .rxf_245(rxf_245),
+        .rx_245(rx_245),
 
-        // always enabled both tx and rx
-        .tx_enable (1'b1),
-        .rx_enable (1'b1),
+        .tx_data_245(out_245),
+        .txe_245(txe_245),
+        .wr_245(wr_245),
+        .tx_oe_245(tx_oe_245),
 
-        // external uart signals
-        .rx (rx_uart),
-        .tx (tx_uart)
+        .rx_data_si(si_ft245_rx_data),
+        .rx_rdy_si(si_ft245_rx_rdy),
+        .rx_ack_si(si_ft245_rx_ack),
+
+        .tx_data_si(si_ft245_tx_data),
+        .tx_rdy_si(si_ft245_tx_rdy),
+        .tx_ack_si(si_ft245_tx_ack)
     );
+
+    genvar h;
+    generate
+        for (h=0 ; h<8 ; h=h+1) begin
+            SB_IO #(
+                .PIN_TYPE(6'b101001),
+                .PULLUP(1'b0)
+            ) IO_PIN_INST (
+                .PACKAGE_PIN (in_out_245[h]),
+                .LATCH_INPUT_VALUE (),
+                .CLOCK_ENABLE (),
+                .INPUT_CLK (),
+                .OUTPUT_CLK (),
+                .OUTPUT_ENABLE (tx_oe_245),
+                .D_OUT_0 (out_245[h]),
+                .D_OUT_1 (),
+                .D_IN_0 (in_245[h]),
+                .D_IN_1 ()
+            );
+        end
+    endgenerate
 
 
     // Channel Block
@@ -428,7 +452,7 @@ module top_level_uart #(
     `ifdef COCOTB_SIM                                                        // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
-            $dumpvars (0,top_level_uart);
+            $dumpvars (0,top_level);
             #1;
         end
     `endif

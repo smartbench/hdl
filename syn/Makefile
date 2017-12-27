@@ -1,13 +1,12 @@
 
-INT := ft245
-TOP := top_level_$(INT)
+TOP := top_level
 SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../modules/**/*.v ../top/$(TOP).v) )
 INC := ../inc/
 DEFINES := $(addprefix -D, $(DEF))
 
 
 # PNR OPT
-PACKAGE = ct256
+PACKAGE = tq144:4k
 DEVICE = 8k
 PCF = $(TOP).pcf
 
