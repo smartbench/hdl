@@ -57,7 +57,7 @@ set_io chB_on_sel 84
 set_io ext_trigger 85
 
 set_io chB_adc_in[0] 130
-set_io chB_adc_in[1] <<<NO: 129>>> 87
+set_io chB_adc_in[1] 87
 set_io chB_adc_in[2] 128
 set_io chB_adc_in[3] 125
 set_io chB_adc_in[4] 124
