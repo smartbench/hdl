@@ -106,8 +106,8 @@
 *******************************************************************************/
 
 `define __DEFAULT_REQUESTS               16'd0
-`define __DEFAULT_SETTINGS_CHA           16'b0000000011100001
-`define __DEFAULT_SETTINGS_CHB           16'b0000000011100001
+`define __DEFAULT_SETTINGS_CHA           16'b0000000000000011
+`define __DEFAULT_SETTINGS_CHB           16'b0000000000000011
 `define __DEFAULT_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
 `define __DEFAULT_DAC_CHB                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
 `define __DEFAULT_TRIGGER_SETTINGS       16'd0
