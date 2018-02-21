@@ -73,10 +73,10 @@
 `define __ADDR_PRETRIGGER               8
 `define __ADDR_ADC_CLK_DIV_CHA_L        9
 `define __ADDR_ADC_CLK_DIV_CHA_H        10
-`define __ADDR_ADC_CLK_DIV_CHB_L        11
-`define __ADDR_ADC_CLK_DIV_CHB_H        12
+`define __ADDR_ADC_CLK_DIV_CHB_L        9/*11*/
+`define __ADDR_ADC_CLK_DIV_CHB_H        10/*12*/
 `define __ADDR_N_MOVING_AVERAGE_CHA     13
-`define __ADDR_N_MOVING_AVERAGE_CHB     14
+`define __ADDR_N_MOVING_AVERAGE_CHB     13/*14*/
 
 /*******************************************************************************
                                 BIT FIELDS
