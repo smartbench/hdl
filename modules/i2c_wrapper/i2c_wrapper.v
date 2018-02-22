@@ -37,7 +37,7 @@ module i2c_wrapper #(
 
     SB_IO #(
         .PIN_TYPE(6'b101001),
-        .PULLUP(1'b1)
+        .PULLUP(1'b0)
     ) IO_PIN_INST (
         .PACKAGE_PIN (sda_io),
         .LATCH_INPUT_VALUE (),
@@ -50,6 +50,7 @@ module i2c_wrapper #(
         .D_IN_0 (sda_in),
         .D_IN_1 ()
     );
+
 
     /* DAC_A and DAC_B register VALUES */
 
