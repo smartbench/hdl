@@ -75,7 +75,7 @@ module top_level_uart #(
     // Basic
     input clk_i,
     input rst_i,
-
+/*
     // Channel 1 - ADC
     input [BITS_ADC-1:0] chA_adc_in,
     output chA_adc_oe,
@@ -99,18 +99,45 @@ module top_level_uart #(
     // Ext
     input ext_trigger,
 
+    output clk_o,
+*/
     // UART interface
     input rx_uart,
     output tx_uart,
 
     // I2C
-    //inout SDA,
-    //inout SCL,
+    inout sda_io,
+    output scl,
 
-    output clk_o,
     output reg [7:0] leds
 
 );
+
+// Channel 1 - ADC
+wire [BITS_ADC-1:0] chA_adc_in;
+wire chA_adc_oe;
+wire chA_adc_clk_o;
+// Channel 1 - Analog
+wire [2:0] chA_gain_sel;
+wire [2:0] chA_att_sel;
+wire chA_dc_coupling_sel;
+wire chA_on_sel;
+
+// Channel 2 - ADC
+wire [BITS_ADC-1:0] chB_adc_in;
+wire chB_adc_oe;
+wire chB_adc_clk_o;
+// Channel 2 - Analog
+wire [2:0] chB_gain_sel;
+wire [2:0] chB_att_sel;
+wire chB_dc_coupling_sel;
+wire chB_on_sel;
+
+// Ext
+wire ext_trigger;
+
+wire clk_o;
+
 
     // PLL output clock
     wire clk_100M;
@@ -421,8 +448,31 @@ module top_level_uart #(
         .tx_ack(tx_chB_ack)
     );
 
+
+    i2c_wrapper #(
+        .REGISTER_ADDR_WIDTH(`__REG_ADDR_WIDTH),
+        .REGISTER_DATA_WIDTH(`__REG_DATA_WIDTH),
+        .DAC_I2C_REGISTER_ADDR(`__ADDR_DAC_I2C),
+        .DAC_I2C_REGISTER_DEFAULT(`__DEFAULT_DAC_I2C),
+        .I2C_CLOCK_DIVIDER(1000),
+        .I2C_FIFO_LENGTH(4)
+    ) i2c_instance (
+        .clk(clk_100M),
+        .rst(global_rst),
+        .register_addr(reg_addr),
+        .register_data(reg_data),
+        .register_rdy(reg_rdy),
+        .scl(scl),
+        .sda_io(sda_io)
+    );
+
     always @(posedge clk_100M) begin
-        if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        //if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        if(register_addr==`__ADDR_DAC_I2C) begin
+          if(register_rdy==1'b1) begin
+            leds <= leds + 8'd1;
+          end
+        end
     end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro

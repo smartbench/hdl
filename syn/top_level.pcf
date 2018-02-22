@@ -1,0 +1,66 @@
+set_io clk_i 94
+set_io rst_i 97
+
+set_io leds[0] 73
+set_io leds[1] 74
+set_io leds[2] 75
+set_io leds[3] 76
+set_io leds[4] 78
+set_io leds[5] 79
+set_io leds[6] 80
+set_io leds[7] 81
+
+set_io in_out_245[0] 64
+set_io in_out_245[1] 63
+set_io in_out_245[2] 62
+set_io in_out_245[3] 61
+set_io in_out_245[4] 60
+set_io in_out_245[5] 56
+set_io in_out_245[6] 55
+set_io in_out_245[7] 52
+
+set_io rxf_245 49
+set_io rx_245 47
+set_io txe_245 48
+set_io wr_245 45
+set_io siwu 44
+
+set_io chA_adc_in[0] 142
+set_io chA_adc_in[1] 141
+set_io chA_adc_in[2] 139
+set_io chA_adc_in[3] 138
+set_io chA_adc_in[4] 137
+set_io chA_adc_in[5] 136
+set_io chA_adc_in[6] 135
+set_io chA_adc_in[7] 134
+
+set_io chA_gain_sel[0] 116
+set_io chA_gain_sel[1] 115
+set_io chA_gain_sel[2] 114
+set_io chA_att_sel[0] 105
+set_io chA_att_sel[1] 106
+set_io chA_att_sel[2] 107
+set_io chA_dc_coupling_sel 98
+
+set_io chB_gain_sel[0] 113
+set_io chB_gain_sel[1] 112
+set_io chB_gain_sel[2] 110
+set_io chB_att_sel[0] 101
+set_io chB_att_sel[1] 102
+set_io chB_att_sel[2] 104
+set_io chB_dc_coupling_sel 99
+
+set_io chA_adc_clk_o 119
+set_io clk_o 82
+set_io chA_on_sel 83
+set_io chB_on_sel 84
+set_io ext_trigger 85
+
+set_io chB_adc_in[0] 130
+set_io chB_adc_in[1] 87
+set_io chB_adc_in[2] 128
+set_io chB_adc_in[3] 125
+set_io chB_adc_in[4] 124
+set_io chB_adc_in[5] 122
+set_io chB_adc_in[6] 121
+set_io chB_adc_in[7] 120

@@ -13,3 +13,6 @@ set_io rx_uart B10
 set_io tx_uart B12
 
 set_io rst_i A10
+
+set_io scl C16
+set_io sda_io D16
