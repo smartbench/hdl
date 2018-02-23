@@ -1,15 +1,21 @@
 
-INT := ft245
+INT ?= ft245
+BOARD ?= mainboard
 TOP := top_level_$(INT)
 SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../modules/**/*.v ../top/$(TOP).v) )
 INC := ../inc/
-DEFINES := $(addprefix -D, $(DEF))
+DEFINES := $(addprefix -D, $(DEF)) -D$(BOARD)
+PCF = $(TOP)_$(BOARD).pcf
 
 
-# PNR OPT
-PACKAGE = ct256
-DEVICE = 8k
-PCF = $(TOP).pcf
+ifeq ($(BOARD),breakout)
+	PACKAGE = ct256
+	DEVICE = 8k
+else
+	PACKAGE = tq144:4k
+	DEVICE = 8k
+endif
+
 
 all: syn pnr pack
 .phony: show, prog, load-cram, clean
@@ -30,8 +36,8 @@ show-blocks: $(SRC)
 	yosys -p "read_verilog -I$(INC) $(DEFINES) ../top/$(TOP).v; show -format svg -prefix ./show"
 
 $(TOP).blif: $(SRC)
+	echo pirulo $(PACKAGE)
 	yosys -p "read_verilog -I$(INC) $(DEFINES) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
-	#-DUSING_UART=1
 
 $(TOP).asc: $(TOP).blif $(PCF)
 	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
