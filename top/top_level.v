@@ -48,8 +48,8 @@ module top_level #(
     parameter ADDR_N_MOVING_AVERAGE_CHB = `__ADDR_N_MOVING_AVERAGE_CHB,
     parameter ADDR_SETTINGS_CHA = `__ADDR_SETTINGS_CHA,
     parameter ADDR_SETTINGS_CHB = `__ADDR_SETTINGS_CHB,
-    parameter ADDR_DAC_CHA = `__ADDR_DAC_CHA,
-    parameter ADDR_DAC_CHB = `__ADDR_DAC_CHB,
+    parameter ADDR_DAC_CHA = `__ADDR_DAC_I2C,   // < DELETE PARAM
+    parameter ADDR_DAC_CHB = `__ADDR_DAC_I2C,   // < DELETE PARAM
     parameter ADDR_PRETRIGGER = `__ADDR_PRETRIGGER,
     parameter ADDR_NUM_SAMPLES = `__ADDR_NUM_SAMPLES,
     parameter ADDR_TRIGGER_VALUE = `__ADDR_TRIGGER_VALUE,
@@ -63,8 +63,8 @@ module top_level #(
     parameter DEFAULT_N_MOVING_AVERAGE_CHB = `__DEFAULT_N_MOVING_AVERAGE_CHB,
     parameter DEFAULT_SETTINGS_CHA = `__DEFAULT_SETTINGS_CHA,
     parameter DEFAULT_SETTINGS_CHB = `__DEFAULT_SETTINGS_CHB,
-    parameter DEFAULT_DAC_CHA = `__DEFAULT_DAC_CHA,
-    parameter DEFAULT_DAC_CHB = `__DEFAULT_DAC_CHB,
+    parameter DEFAULT_DAC_CHA = `__DEFAULT_DAC_I2C, // < DELETE PARAM
+    parameter DEFAULT_DAC_CHB = `__DEFAULT_DAC_I2C, // < DELETE PARAM
     parameter DEFAULT_PRETRIGGER = `__DEFAULT_PRETRIGGER,
     parameter DEFAULT_NUM_SAMPLES = `__DEFAULT_NUM_SAMPLES,
     parameter DEFAULT_TRIGGER_VALUE = `__DEFAULT_TRIGGER_VALUE,
@@ -107,9 +107,8 @@ module top_level #(
     output  wire                wr_245,
     output  wire                siwu,
 
-    // I2C
-    //inout SDA,
-    //inout SCL,
+    inout   wire                sda_io,
+    output  wire                scl,
 
     output  wire                clk_o,
     output  reg [7:0]           leds
@@ -445,8 +444,40 @@ module top_level #(
         .tx_ack(tx_chB_ack)
     );
 
+
+    i2c_wrapper #(
+        .REGISTER_ADDR_WIDTH(`__REG_ADDR_WIDTH),
+        .REGISTER_DATA_WIDTH(`__REG_DATA_WIDTH),
+        .DAC_I2C_REGISTER_ADDR(`__ADDR_DAC_I2C),
+        .DAC_I2C_REGISTER_DEFAULT(`__DEFAULT_DAC_I2C),
+        .I2C_CLOCK_DIVIDER(1000),
+        .I2C_FIFO_LENGTH(4)
+    ) i2c_instance (
+        .clk(clk_100M),
+        .rst(global_rst),
+        .register_addr(reg_addr),
+        .register_data(reg_data),
+        .register_rdy(reg_rdy),
+        .scl(scl),
+        .sda_io(sda_io)
+    );
+
+
     always @(posedge clk_100M) begin
-        if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        // if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        /*if(reg_rdy==1'b1) begin
+            leds <= { {(8-REG_ADDR_WIDTH){1'b0}} , {reg_addr} };
+        end*/
+        if(scl==1'b0) begin
+            leds[7:6] <= ~leds[7:6];
+            leds[5] <= 1'b0;
+        end
+        /*if(register_addr==`__ADDR_DAC_I2C) begin
+            if(register_rdy==1'b1) begin
+                leds <= 8'hAA;
+            end
+        end
+        */
     end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro

@@ -43,7 +43,7 @@
 `define __FT245_DATA_WIDTH          8
 `define __RX_WIDTH                  8       // Register and address width are a multiple of __RX_WIDTH
 `define __TX_WIDTH                  8       //
-`define __NUM_REGS                  10
+`define __NUM_REGS                  15
 `define __NUM_REQUEST_REGS          1
 `define __NUM_REGS_TOTAL            ( `__NUM_REGS + `__NUM_REQUEST_REGS )
 `define __REG_DATA_WIDTH            16                                          // Register width
@@ -65,18 +65,19 @@
 // Conf regs addresses
 `define __ADDR_SETTINGS_CHA             1
 `define __ADDR_SETTINGS_CHB             2
-`define __ADDR_DAC_CHA                  3
-`define __ADDR_DAC_CHB                  4
+`define __ADDR_DAC_I2C                  3
+// `define __ADDR_DAC_CHA                  3
+// `define __ADDR_DAC_CHB                  4
 `define __ADDR_TRIGGER_SETTINGS         5
 `define __ADDR_TRIGGER_VALUE            6
 `define __ADDR_NUM_SAMPLES              7
 `define __ADDR_PRETRIGGER               8
 `define __ADDR_ADC_CLK_DIV_CHA_L        9
 `define __ADDR_ADC_CLK_DIV_CHA_H        10
-`define __ADDR_ADC_CLK_DIV_CHB_L        9/*11*/
-`define __ADDR_ADC_CLK_DIV_CHB_H        10/*12*/
+`define __ADDR_ADC_CLK_DIV_CHB_L        9
+`define __ADDR_ADC_CLK_DIV_CHB_H        10
 `define __ADDR_N_MOVING_AVERAGE_CHA     13
-`define __ADDR_N_MOVING_AVERAGE_CHB     13/*14*/
+`define __ADDR_N_MOVING_AVERAGE_CHB     13
 
 /*******************************************************************************
                                 BIT FIELDS
@@ -108,8 +109,9 @@
 `define __DEFAULT_REQUESTS               16'd0
 `define __DEFAULT_SETTINGS_CHA           16'b0000000000000011
 `define __DEFAULT_SETTINGS_CHB           16'b0000000000000011
-`define __DEFAULT_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
-`define __DEFAULT_DAC_CHB                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
+// `define __DEFAULT_DAC_CHA                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
+// `define __DEFAULT_DAC_CHB                (1 << (`__BITS_DAC-1)) // 16'b1000000000000000
+`define __DEFAULT_DAC_I2C                16'd0
 `define __DEFAULT_TRIGGER_SETTINGS       16'd0
 `define __DEFAULT_TRIGGER_VALUE          (1 << (`__BITS_ADC-1)) // 16'b10000000
 `define __DEFAULT_NUM_SAMPLES            16'd128

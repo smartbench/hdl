@@ -43,7 +43,8 @@ module fully_associative_register #(
     output si_ack,
 
     // Register value
-    output reg [REG_DATA_WIDTH-1:0] data
+    output reg [REG_DATA_WIDTH-1:0] data,
+    output reg new_data = 1'b0
 );
 
     // Asynchronous acknowledge.
@@ -52,9 +53,12 @@ module fully_associative_register #(
     always @( posedge(clk) ) begin
         if ( rst == 1'b1 ) begin
             data <= MY_RESET_VALUE;
+            new_data <= 1'b0;
         end else begin
+            new_data <= 1'b0;
             if ( si_rdy == 1'b1 && si_addr == MY_ADDR ) begin
                 data <= si_data;
+                new_data <= 1'b1;
             end
         end
     end

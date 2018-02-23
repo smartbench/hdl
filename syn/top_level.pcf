@@ -64,3 +64,6 @@ set_io chB_adc_in[4] 124
 set_io chB_adc_in[5] 122
 set_io chB_adc_in[6] 121
 set_io chB_adc_in[7] 120
+
+set_io scl 117
+set_io sda_io 118
