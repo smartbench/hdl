@@ -59,7 +59,7 @@ module requests_handler  #(
         for( i=0 ; i<REG_DATA_WIDTH ; i=i+1)
             rqst_array[i] <= 1'b0;
         if(rst == 1'b1) begin
-            // ...
+            rqst_array <= 0; // ...
         end else begin
             if(si_rdy == 1'b1 && si_addr == MY_ADDR) begin
                 for( i=0 ; i<16 ; i=i+1)
