@@ -110,6 +110,19 @@ def test (dut):
     si_rx.write(0x99)
     si_rx.write(0x88)
 
+    si_rx.write(0xFF)
+    si_rx.write(0xFF)
+    si_rx.write(0xFF)
+
+    si_rx.write(0xEE)
+    si_rx.write(0xEE)
+    si_rx.write(0xEE)
+
+    si_rx.write(8)
+    si_rx.write(0x77)
+    si_rx.write(0x66)
+
+
     cocotb.fork( si_rx.driver() )
     cocotb.fork( reg_10.monitor() )
     cocotb.fork( reg_13.monitor() )

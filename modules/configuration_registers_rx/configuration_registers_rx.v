@@ -36,7 +36,9 @@ module configuration_registers_rx #(
     // Simple interface register data
     output [REG_DATA_WIDTH-1:0] register_data,      // data
     output [REG_ADDR_WIDTH-1:0] register_addr,      // ready
-    output reg register_rdy                         // ready
+    output reg register_rdy,                         // ready
+
+    output reg rst_seq
 );
 
     // Register data is formed by REG_DATA_PACKETS number of  FIFO data
@@ -58,9 +60,10 @@ module configuration_registers_rx #(
     // States local parameters
     localparam ST_RECEIVING_ADDR = 0;
     localparam ST_RECEIVING_DATA = 1;
+    localparam ST_RESET          = 2;
 
     // State register
-    reg state;
+    reg [1:0] state;
 
     // Flattened the arrays of packets in the data bits (this is why register_data and register_addr are wires)
     genvar i;
@@ -72,14 +75,24 @@ module configuration_registers_rx #(
     // Asynch assigment of rx_ack; equal rx_rdy except we are waiting to be acknowledged
     assign rx_ack = rx_rdy;
 
+    // Reset Sequence Detector
+    localparam BUFFER_SIZE = 3;//((REG_ADDR_WIDTH + REG_DATA_WIDTH) / RX_DATA_WIDTH);
+
+    reg [RX_DATA_WIDTH-1:0] buffer [0:BUFFER_SIZE-1];
+
     always @(posedge(clk)) begin
 
-        register_rdy <= 1'b0;
+        register_rdy    <= 1'b0;
+        rst_seq         <= 1'b0;
 
         if ( rst == 1'b1 ) begin
             count <= 0;
+            buffer[0] <= 8'h00;
+            buffer[1] <= 8'h00;
+            buffer[2] <= 8'h00;
             state <= ST_RECEIVING_ADDR;
         end else begin
+
             case (state)
 
                 ST_RECEIVING_ADDR:
@@ -109,9 +122,54 @@ module configuration_registers_rx #(
                     end
                 end
 
+                ST_RESET:
+                begin
+                    if(rx_rdy==1'b1) begin
+                        if( rx_data == 8'hEE && buffer[0] == 8'hEE && buffer[1] == 8'hEE ) begin
+                            count           <= 0;
+                            register_rdy    <= 0;
+                            rst_seq         <= 1'b1;
+                            state           <= ST_RECEIVING_ADDR;
+                        end
+                    end
+                end
+
+                default:
+                begin
+                    count           <= 0;
+                    register_rdy    <= 0;
+                    state           <= ST_RECEIVING_ADDR;
+                end
+
             endcase
+
+            if(rx_rdy==1'b1) begin
+                // usar generate!
+                buffer[0] <= rx_data;
+                buffer[1] <= buffer[0];
+                //buffer[2] <= buffer[1];
+                if( rx_data == 8'hFF && buffer[0] == 8'hFF && buffer[1] == 8'hFF && state != ST_RESET ) begin
+                    count           <= 0;
+                    register_rdy    <= 0;
+                    state           <= ST_RESET;
+                end
+            end
+
         end
     end
+
+    // If the reset sequence (0xFFFFFF) is detected, the device will remain in
+    // a reset state until a wake up sequence (0xFEFEFE).
+    /*
+    if(buffer[0] == 8'hFF && buffer[1] == 8'hFF && buffer[2] == 8'hFF) begin
+        count           <= 0;
+        register_rdy    <= 0;
+        state           <= ST_RESET;
+    end else if(buffer[0] == 8'hEE && buffer[1] == 8'hEE && buffer[2] == 8'hEE) begin
+        count           <= 0;
+        register_rdy    <= 0;
+        state           <= ST_RECEIVING_ADDR;
+    end*/
 
     `ifdef COCOTB_SIM           // COCOTB macro
         initial begin
