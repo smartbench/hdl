@@ -33,7 +33,7 @@ $(TOP).blif: $(SRC)
 	#-DUSING_UART=1
 
 $(TOP).asc: $(TOP).blif $(PCF)
-	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
+	arachne-pnr -r -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
 
 $(TOP).bin: $(TOP).asc
 	icepack $(TOP).asc $(TOP).bin
