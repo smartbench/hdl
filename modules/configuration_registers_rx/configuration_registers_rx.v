@@ -58,6 +58,7 @@ module configuration_registers_rx #(
     // States local parameters
     localparam ST_RECEIVING_ADDR = 0;
     localparam ST_RECEIVING_DATA = 1;
+    localparam ST_RESET          = 2;
 
     // State register
     reg state;
@@ -72,6 +73,12 @@ module configuration_registers_rx #(
     // Asynch assigment of rx_ack; equal rx_rdy except we are waiting to be acknowledged
     assign rx_ack = rx_rdy;
 
+    // Reset Sequence Detector
+    localparam BUFFER_SIZE = 3;//((REG_ADDR_WIDTH + REG_DATA_WIDTH) / RX_DATA_WIDTH);
+
+    reg [RX_DATA_WIDTH-1:0] buffer [0:BUFFER_SIZE-1];
+
+
     always @(posedge(clk)) begin
 
         register_rdy <= 1'b0;
@@ -80,6 +87,7 @@ module configuration_registers_rx #(
             count <= 0;
             state <= ST_RECEIVING_ADDR;
         end else begin
+
             case (state)
 
                 ST_RECEIVING_ADDR:
@@ -109,9 +117,40 @@ module configuration_registers_rx #(
                     end
                 end
 
+                ST_RESET:
+                begin
+                    /* Nothing here */
+                end
+
+                default:
+                begin
+                    /* Nothing here */
+                end
+
             endcase
+
+            // If the reset sequence (0xFFFFFF) is detected, the device will remain in
+            // a reset state until a wake up sequence (0xFEFEFE).
+            if(buffer[0] == 8'hFF && buffer[1] == 8'hFF && buffer[2] == 8'hFF) begin
+                count           <= 0;
+                register_rdy    <= 0;
+                state           <= ST_RESET;
+            end else if(buffer[0] == 8'hEE && buffer[1] == 8'hEE && buffer[2] == 8'hEE) begin
+                count           <= 0;
+                register_rdy    <= 0;
+                state           <= ST_RECEIVING_ADDR;
+            end
+
+            if(rx_rdy==1'b1) begin
+                // usar generate!
+                buffer[0] <= rx_data;
+                buffer[1] <= buffer[0];
+                buffer[2] <= buffer[1];
+            end
+
         end
     end
+
 
     `ifdef COCOTB_SIM           // COCOTB macro
         initial begin

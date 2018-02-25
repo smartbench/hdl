@@ -468,16 +468,19 @@ module top_level #(
         /*if(reg_rdy==1'b1) begin
             leds <= { {(8-REG_ADDR_WIDTH){1'b0}} , {reg_addr} };
         end*/
-        if(scl==1'b0) begin
+        /*if(scl==1'b0) begin
             leds[7:6] <= ~leds[7:6];
             leds[5] <= 1'b0;
-        end
+        end*/
         /*if(register_addr==`__ADDR_DAC_I2C) begin
             if(register_rdy==1'b1) begin
                 leds <= 8'hAA;
             end
         end
         */
+        if(si_ft245_rx_rdy == 1'b1) begin
+            leds <= si_ft245_rx_data;
+        end
     end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro
