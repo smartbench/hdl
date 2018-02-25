@@ -183,7 +183,10 @@ module top_level #(
         pll_reset <= ~pll_lock_i;
     end
 
-    assign global_rst = pll_reset | rqst_reset | rst_i;
+    wire rst_seq;
+    wire rst_comm;
+    assign rst_comm = pll_reset | rqst_reset | rst_i;
+    assign global_rst = pll_reset | rqst_reset | rst_i | rst_seq;
 
     // PLL instantiation
     // Sources of info
@@ -213,7 +216,7 @@ module top_level #(
         .DEFAULT_REQUESTS(DEFAULT_REQUESTS)
     ) rx_block_u (
         .clk(clk_100M),
-        .rst(global_rst),
+        .rst(rst_comm), //global_rst
         .rx_data(si_ft245_rx_data),
         .rx_rdy(si_ft245_rx_rdy),
         .rx_ack(si_ft245_rx_ack),
@@ -225,7 +228,8 @@ module top_level #(
         .reset_o(rqst_reset),
         .rqst_ch1(rqst_chA_data),
         .rqst_ch2(rqst_chB_data),
-        .rqst_trigger_status_o(rqst_trigger_status)
+        .rqst_trigger_status_o(rqst_trigger_status),
+        .rst_seq(rst_seq)
     );
 
     trigger_block  #(
@@ -302,7 +306,7 @@ module top_level #(
         .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
     ) ft245_u (
         .clk(clk_100M),
-        .rst(global_rst),
+        .rst(rst_comm), //global_rst
 
         .rx_data_245(in_245),
         .rxf_245(rxf_245),

@@ -47,7 +47,9 @@ module registers_rx_block  #(
     output rqst_ch1,
     output rqst_ch2,
     output rqst_trigger_status_o,
-    output reset_o
+    output reset_o,
+
+    output rst_seq
 );
 
     configuration_registers_rx #(
@@ -62,7 +64,8 @@ module registers_rx_block  #(
         .rx_ack(rx_ack),
         .register_data(register_data),
         .register_addr(register_addr),
-        .register_rdy(register_rdy)
+        .register_rdy(register_rdy),
+        .rst_seq(rst_seq)
     );
 
     requests_handler  #(
