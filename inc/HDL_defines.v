@@ -27,7 +27,8 @@
 `define BAUDRATE        921600
 
 `define __ADC_DF_WIDTH  32
-`define __RAM_SIZE_CH   (4096*4)          // RAM for each channel
+`define __RAM_SIZE_CH   (4096*4)          // RAM for each channel in bits
+`define __RAM_SIZE_CH_BYTES = (`__RAM_SIZE_CH / 8)
 `define __MA_ACUM_WIDTH 12
 
 /*******************************************************************************
