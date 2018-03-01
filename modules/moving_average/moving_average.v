@@ -60,10 +60,10 @@ module moving_average  #(
     //      MAX_DECIM_FACTOR = 1 << (BITS_ACUM-BITS_ADC);
     localparam BIT_DIFF = BITS_ACUM - BITS_ADC;
 
-    wire [BIT_DIFF-1:0] DF;
+    wire [BIT_DIFF:0] DF;
     wire [BITS_ACUM-1:0] sum_tmp;
 
-    reg [BIT_DIFF-1:0] count; // IDEALLY, WOULD BE ONE (1)
+    reg [BIT_DIFF:0] count;
     reg [BITS_ACUM-1:0] acum;
 
     // Decimation Factor = 2^k = 1 << k
