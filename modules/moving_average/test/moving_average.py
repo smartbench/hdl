@@ -14,10 +14,10 @@ class SI_MASTER:
         self.fifo = []
         self.data = data
         self.rdy = rdy
-    
+
     def write(self, value):
         self.fifo.append(value)
-    
+
     @cocotb.coroutine
     def driver(self):
         while True:
@@ -26,7 +26,7 @@ class SI_MASTER:
                 self.rdy <= 1
             yield RisingEdge(self.clk)
             self.rdy <= 0
-    
+
 class SI_SLAVE:
     def __init__ ( self, clk, rst , data, rdy):
         self.clk = clk
@@ -34,7 +34,7 @@ class SI_SLAVE:
         self.fifo = []
         self.data = data
         self.rdy = rdy
-        
+
     @cocotb.coroutine
     def monitor (self):
         while True:
@@ -53,38 +53,38 @@ def Reset (dut):
 
 @cocotb.test()
 def test (dut):
-    
+
     k = 1
     n = (1 << k)
     dut.k <= k
-    
+
     fifo_test = []
     acum = 0
-    
+
     si_master = SI_MASTER( dut.clk, dut.rst , dut.sample_in, dut.rdy_in )
     si_slave = SI_SLAVE( dut.clk, dut.rst , dut.sample_out, dut.rdy_out)
 
     cocotb.fork( Clock(dut.clk,10,units='ns').start() )
     yield Reset(dut)
 
+    print("n={}".format(n))
     for i in range(100):
-        aux = 10*(i+1)
+        aux = 10*(i+1) % 256
         si_master.write(aux)
 #        print "i%n=" + repr(i%n) + "  i=" + repr(i)
-        if(i % n == 0):
-            fifo_test.append(acum + aux)
-            acum <= 0
+        if((i+1) % n == 0):
+            fifo_test.append((acum + aux) >> k)
+            acum = 0
         else:
-            acum <= acum + aux
+            acum = acum + aux
 
     cocotb.fork( si_master.driver() )
     cocotb.fork( si_slave.monitor() )
-    
+
     for i in range(500): yield RisingEdge(dut.clk)
-    
+
     print repr(n)
     print "-------------------- CORRECT --------------------"
     print fifo_test
     print "-------------------- READ --------------------"
     print si_slave.fifo
-
