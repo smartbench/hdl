@@ -54,7 +54,7 @@ def Reset (dut):
 @cocotb.test()
 def test (dut):
 
-    k = 1
+    k = 4
     n = (1 << k)
     dut.k <= k
 

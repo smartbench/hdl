@@ -36,7 +36,7 @@ module moving_average  #(
     input rst,                      // synch reset              input           1
 
     // Config. Parameters
-    input [$clog2(BITS_ACUM-BITS_ADC)-1:0] k,   // k=log2(decimation_factor)
+    input [$clog2(BITS_ACUM-BITS_ADC):0] k,   // k=log2(decimation_factor)
 
     // Input samples
     input [BITS_ADC-1:0] sample_in,     // input value              input           BITS_ADC (def. 8)
