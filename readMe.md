@@ -20,17 +20,15 @@ The main features of the oscilloscope are:
 ## Mainboard
 The mainboard sources are split in three parts:
 - Hardware (KiCad PCB Schematic, fab. files)
-    https://github.com/smartbench/mainboard.git
+    > https://github.com/smartbench/mainboard.git
 - FPGA Firmware (Verilog)
-    https://github.com/smartbench/hdl.git
+    > https://github.com/smartbench/hdl.git
 - Software (Python)
-    https://github.com/smartbench/software.git
+    > https://github.com/smartbench/software.git
 
 # Smartbench - Firmware
 
 The HDL loaded to the FPGA. The HDL used is Verilog, and the FPGA is a Lattice iCE40HX4K. The work flow consists on synthesis, place and route, and program the FPGA. The tools for that are open source, credits to Clifford.
-
-## Installing the framework
 
 ## Installing the framework - FPGA tools
 The tools used for synthetize, place and route and load to the FPGA are well described in
