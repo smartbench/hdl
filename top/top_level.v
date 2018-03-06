@@ -454,8 +454,8 @@ module top_level #(
         .REGISTER_DATA_WIDTH(`__REG_DATA_WIDTH),
         .DAC_I2C_REGISTER_ADDR(`__ADDR_DAC_I2C),
         .DAC_I2C_REGISTER_DEFAULT(`__DEFAULT_DAC_I2C),
-        .I2C_CLOCK_DIVIDER(1000),
-        .I2C_FIFO_LENGTH(4)
+        .I2C_CLOCK_DIVIDER(`__I2C_CLOCK_DIVIDER),
+        .I2C_FIFO_LENGTH(`__I2C_FIFO_LENGTH)
     ) i2c_instance (
         .clk(clk_100M),
         .rst(global_rst),

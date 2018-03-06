@@ -5,6 +5,8 @@
 * The computer directly sent the 4 bytes needed ( 2 bytes per message ).
 * This module detec */
 
+`timescale 1ns/1ps
+
 `include "HDL_defines.v"
 
 module i2c_wrapper #(
@@ -12,8 +14,8 @@ module i2c_wrapper #(
     parameter REGISTER_DATA_WIDTH = `__REG_DATA_WIDTH,
     parameter DAC_I2C_REGISTER_ADDR = `__ADDR_DAC_I2C,
     parameter DAC_I2C_REGISTER_DEFAULT = `__DEFAULT_DAC_I2C,
-    parameter I2C_CLOCK_DIVIDER = 1000,
-    parameter I2C_FIFO_LENGTH = 4
+    parameter I2C_CLOCK_DIVIDER = `__I2C_CLOCK_DIVIDER,
+    parameter I2C_FIFO_LENGTH = `__I2C_FIFO_LENGTH
 )(
     input clk,
     input rst,
@@ -55,14 +57,6 @@ module i2c_wrapper #(
 
     wire [REGISTER_DATA_WIDTH-1:0] data;
     wire rdy;
-    wire [7:0] fifo_in;
-    reg start;
-    reg data_start_d;
-
-    always @(posedge clk) data_start_d <= data[8];
-    always @* start <= ~data_start_d & data[8];
-    assign fifo_in = data[7:0];
-
 
     fully_associative_register #(
         .REG_ADDR_WIDTH     (REGISTER_ADDR_WIDTH),
@@ -90,10 +84,9 @@ module i2c_wrapper #(
         .clk        (clk),
         .rst        (rst),
 
-        .fifo_in    (fifo_in),
+        .fifo_in    (data),
         .rdy        (rdy),
-
-        .start      (start),
+        .fifo_overflow (),
 
         .sda_out    (sda_out),
         .sda_in     (sda_in),
