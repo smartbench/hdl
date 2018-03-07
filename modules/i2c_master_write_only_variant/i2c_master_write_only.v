@@ -1,5 +1,7 @@
 /*
-*   Author: Iván Paunovic
+*   Authors:
+*       Iván Paunovic
+*       Ariel Kukulanski
 *
 *   This is a simple I2C masters that only writes to slaves devices.
 *   It can't read and also it's not allowed a multimaster solution.
@@ -7,9 +9,9 @@
 *   Internal interface:
 *
 *   input fifo_in[7:0]
-*   input data_rdy
+*   input n_bytes[7:0]
+*   input rdy
 *
-*   input start
 *   output ended
 *   output ack
 *
@@ -21,33 +23,26 @@
 *
 *   Behaviour:
 *
-*   When data_rdy is HIGH, the controller save fifo_in byte in an internal
-*   fifo. Fifo full error is not checked ( correct fifo sizing is part of
-*   designer work). An internal fifo_write_direction pointer is increased in each
+*   When rdy is HIGH, the controller save fifo_in byte in an internal
+*   fifo. An internal fifo_write_direction pointer is increased in each
 *   data input.
-*   When START bit is raised, an start bit is generated, and the fifo bytes are
-*   written in I2C bus, waiting for an ack after each byte. When the internal
-*   fifo_read_direction pointer reaches the write_direction_pointer the stop
-*   bit is writen on the bus and ENDED bit and ACK bit are asserted HIGH during one clock.
+*   The value stored in n_bytes is only checked in the first byte frame and indicates how many bytes after that one will complete the i2c frames from start to stop.
+*   When all the bytes of a frame are available, the transmission is started.
+*   The transmission ends when all of those frame were sent, or when a byte was not acknowledged by the slave.
 *
-*   Fifo data could be writen after START bit is asserted, and this bytes will
-*   be part of the same message without an stop bit in the middle. If you want
-*   to start a new message after an stop bit you must wait to END bit being
-*   asserted.
 *
 *   Restart condition is not implemented.
 *
-*   Slave address and R/W bit is part of the bytes message writen on the fifo
-*   and not supervised by this simple controller.
+*   Slave address and R/W bit is part of the bytes message written
+*   on the fifo and not supervised by this simple controller.
 *
-*   If a NOT ACK is received in the middle of the message, ENDED bit will be
-*   asserted HIGH and ACK bit will be asserted low during one clock. */
+*/
 
 `timescale 1ns/1ps
 
 `include "HDL_defines.v"
 
-module i2c #(
+module i2c_alt #(
     parameter I2C_CLOCK_DIVIDER = `__I2C_CLOCK_DIVIDER,
     parameter FIFO_LENGTH = `__I2C_FIFO_LENGTH //,
 
@@ -55,7 +50,8 @@ module i2c #(
     input clk,
     input rst,
 
-    input wire [15:0] fifo_in,
+    input wire [7:0] fifo_in,
+    input wire [7:0] n_bytes,
     input wire rdy,
     output reg fifo_overflow,
 
@@ -71,6 +67,7 @@ module i2c #(
 
 /* fifo and fifo pointers */
 reg [7:0] fifo [0:FIFO_LENGTH-1];
+reg [7:0] fifo_n_bytes [0:FIFO_LENGTH-1];
 
 localparam POINTER_WIDTH = $clog2(FIFO_LENGTH);
 reg [POINTER_WIDTH-1:0] read_pointer;
@@ -114,7 +111,7 @@ reg [CLOCK_DIVISOR_COUNTER_WIDTH-1:0] clock_divisor_counter;
 reg scl_d;
 
 wire [7:0] bytes_to_wait;
-assign bytes_to_wait = fifo[read_pointer][15:8];
+assign bytes_to_wait = fifo_n_bytes[read_pointer];
 localparam ONE_WIDTH_POINTER = { { (POINTER_WIDTH-1) {1'b0} }, 1'b1 };
 
 /* Counters and clock division logic logic */
@@ -156,12 +153,14 @@ generate
 for( i=0; i<FIFO_LENGTH; i = i+1 ) begin: fifo_register
     always @( posedge clk ) begin
         if( rst ) begin
-            fifo[i] <= 8'b0;
+            fifo[i]         <= 8'd0;
+            fifo_n_bytes[i] <= 8'd0;
         end else begin
             if ( rdy ) begin
                 // fifo registers are writen in a fully associative way
                 if( write_pointer == i ) begin
-                    fifo[i] = fifo_in;
+                    fifo[i]         <= fifo_in;
+                    fifo_n_bytes[i] <= n_bytes;
                 end
             end
         end
@@ -181,14 +180,17 @@ reg [POINTER_WIDTH-1:0] count;
 always @( posedge clk ) begin
     if( rst ) begin
         sda_out <= 1'b1;
-        ended <= 1'b1;
-        read_pointer <= { POINTER_WIDTH { 1'b0 } };
-        nbit <= 3'd7;
+        ended   <= 1'b0;
+        nbit    <= 3'd7;
+        state   <= ST_IDLE;
+        ack     <= 1'b0;
+        count   <= 0;
+        aaa     <= 0;
         clock_enable <= 1'b0;
-        state <= ST_IDLE;
-        ack <= 1'b0;
+        read_pointer <= { POINTER_WIDTH { 1'b0 } };
     end else begin
-
+        ended   <= 1'b0;
+        ack     <= 1'b0;
         // sending state machine logic
         case( state )
 
@@ -200,7 +202,6 @@ always @( posedge clk ) begin
                     state       <= ST_START;
                     sda_out     <= 1'b0;
                     clock_enable <= 1'b1;
-                    ended       <= 1'b0;
                 end
             end
 
@@ -240,14 +241,15 @@ always @( posedge clk ) begin
                     if( !sda_in ) begin // acked
                         read_pointer    <= read_pointer + ONE_WIDTH_POINTER;
                         //if( read_pointer != (write_pointer - { { (POINTER_WIDTH-1) {1'b0} }, 1'b1 } ) ) begin
-                        if (count) begin // more bytes to send
-                            coun    <= count - ONE_WIDTH_POINTER;
+                        if (count > 0) begin // more bytes to send
+                            count   <= count - ONE_WIDTH_POINTER;
                             state   <= ST_START;
                         end else begin // all bytes already sent
                             state   <= ST_PREPAIRING_STOP;
                             ack     <= 1'b1;
                         end
                     end else begin  // not acked
+                        read_pointer <= read_pointer + count + 1;
                         state       <= ST_PREPAIRING_STOP;
                         ack         <= 1'b0;
                     end
@@ -267,18 +269,28 @@ always @( posedge clk ) begin
                 if( scl_posedge ) begin
                     sda_out         <= 1'b1;
                     clock_enable    <= 1'b0;
-                    state           <= ST_IDLE;
+                    // state           <= ST_IDLE;
                     ended           <= 1'b1;
+                    aaa             <= MAX_CLOCK_DIVISOR_COUNT-1;
+                end
+                if( ~clock_enable) begin
+                    if( aaa>0 ) begin
+                        aaa         <= aaa - 1;
+                    end else begin
+                        state       <= ST_IDLE;
+                    end
                 end
             end
         endcase
     end
 end
 
+reg [31:0] aaa;
+
 `ifdef COCOTB_SIM
 initial begin
   $dumpfile ("waveform.vcd");
-  $dumpvars (0,i2c);
+  $dumpvars (0,i2c_alt);
   #1;
 end
 `endif
