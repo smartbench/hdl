@@ -48,8 +48,8 @@ module top_level #(
     parameter ADDR_N_MOVING_AVERAGE_CHB = `__ADDR_N_MOVING_AVERAGE_CHB,
     parameter ADDR_SETTINGS_CHA = `__ADDR_SETTINGS_CHA,
     parameter ADDR_SETTINGS_CHB = `__ADDR_SETTINGS_CHB,
-    parameter ADDR_DAC_CHA = `__ADDR_DAC_CHA,
-    parameter ADDR_DAC_CHB = `__ADDR_DAC_CHB,
+    parameter ADDR_DAC_CHA = `__ADDR_DAC_I2C,   // < DELETE PARAM
+    parameter ADDR_DAC_CHB = `__ADDR_DAC_I2C,   // < DELETE PARAM
     parameter ADDR_PRETRIGGER = `__ADDR_PRETRIGGER,
     parameter ADDR_NUM_SAMPLES = `__ADDR_NUM_SAMPLES,
     parameter ADDR_TRIGGER_VALUE = `__ADDR_TRIGGER_VALUE,
@@ -63,8 +63,8 @@ module top_level #(
     parameter DEFAULT_N_MOVING_AVERAGE_CHB = `__DEFAULT_N_MOVING_AVERAGE_CHB,
     parameter DEFAULT_SETTINGS_CHA = `__DEFAULT_SETTINGS_CHA,
     parameter DEFAULT_SETTINGS_CHB = `__DEFAULT_SETTINGS_CHB,
-    parameter DEFAULT_DAC_CHA = `__DEFAULT_DAC_CHA,
-    parameter DEFAULT_DAC_CHB = `__DEFAULT_DAC_CHB,
+    parameter DEFAULT_DAC_CHA = `__DEFAULT_DAC_I2C, // < DELETE PARAM
+    parameter DEFAULT_DAC_CHB = `__DEFAULT_DAC_I2C, // < DELETE PARAM
     parameter DEFAULT_PRETRIGGER = `__DEFAULT_PRETRIGGER,
     parameter DEFAULT_NUM_SAMPLES = `__DEFAULT_NUM_SAMPLES,
     parameter DEFAULT_TRIGGER_VALUE = `__DEFAULT_TRIGGER_VALUE,
@@ -73,45 +73,45 @@ module top_level #(
     //parameter DEFAULT_ADC_DF_DV_REG = (`__DEFAULT_ADC_CLK_DIV_H << 16) | (`__DEFAULT_ADC_CLK_DIV_L),
   )(
     // Basic
-    input clk_i,
-    input rst_i,
+    input   wire clk_i,
+    input   wire rst_i,
 
     // Channel 1 - ADC
-    input [BITS_ADC-1:0] chA_adc_in,
-    output chA_adc_oe,
-    output chA_adc_clk_o,
+    input   wire [BITS_ADC-1:0] chA_adc_in,
+    output  wire                chA_adc_oe,
+    output  wire                chA_adc_clk_o,
     // Channel 1 - Analog
-    output [2:0] chA_gain_sel,
-    output [2:0] chA_att_sel,
-    output chA_dc_coupling_sel,
-    output chA_on_sel,
+    output  wire [2:0]          chA_gain_sel,
+    output  wire [2:0]          chA_att_sel,
+    output  wire                chA_dc_coupling_sel,
+    output  wire                chA_on_sel,
 
     // Channel 2 - ADC
-    input [BITS_ADC-1:0] chB_adc_in,
-    output chB_adc_oe,
-    output chB_adc_clk_o,
+    input   wire [BITS_ADC-1:0] chB_adc_in,
+    output  wire                chB_adc_oe,
+    output  wire                chB_adc_clk_o,
     // Channel 2 - Analog
-    output [2:0] chB_gain_sel,
-    output [2:0] chB_att_sel,
-    output chB_dc_coupling_sel,
-    output chB_on_sel,
+    output  wire [2:0]          chB_gain_sel,
+    output  wire [2:0]          chB_att_sel,
+    output  wire                chB_dc_coupling_sel,
+    output  wire                chB_on_sel,
 
     // Ext
-    input ext_trigger,
+    input wire                  ext_trigger,
 
     // FT245 interface
-    inout [FT245_DATA_WIDTH-1:0] in_out_245,
-    input rxf_245,
-    output rx_245,
-    input txe_245,
-    output wr_245,
+    inout   wire [FT245_DATA_WIDTH-1:0] in_out_245,
+    input   wire                rxf_245,
+    output  wire                rx_245,
+    input   wire                txe_245,
+    output  wire                wr_245,
+    output  wire                siwu,
 
-    // I2C
-    //inout SDA,
-    //inout SCL,
+    inout   wire                sda_io,
+    output  wire                scl,
 
-    output clk_o,
-    output reg [7:0] leds
+    output  wire                clk_o,
+    output  reg [7:0]           leds
 
 );
 
@@ -183,7 +183,10 @@ module top_level #(
         pll_reset <= ~pll_lock_i;
     end
 
-    assign global_rst = pll_reset | rqst_reset | rst_i;
+    wire rst_seq;
+    wire rst_comm;
+    assign rst_comm = pll_reset | rqst_reset | rst_i;
+    assign global_rst = pll_reset | rqst_reset | rst_i | rst_seq;
 
     // PLL instantiation
     // Sources of info
@@ -213,7 +216,7 @@ module top_level #(
         .DEFAULT_REQUESTS(DEFAULT_REQUESTS)
     ) rx_block_u (
         .clk(clk_100M),
-        .rst(global_rst),
+        .rst(rst_comm), //global_rst
         .rx_data(si_ft245_rx_data),
         .rx_rdy(si_ft245_rx_rdy),
         .rx_ack(si_ft245_rx_ack),
@@ -225,7 +228,8 @@ module top_level #(
         .reset_o(rqst_reset),
         .rqst_ch1(rqst_chA_data),
         .rqst_ch2(rqst_chB_data),
-        .rqst_trigger_status_o(rqst_trigger_status)
+        .rqst_trigger_status_o(rqst_trigger_status),
+        .rst_seq(rst_seq)
     );
 
     trigger_block  #(
@@ -302,7 +306,7 @@ module top_level #(
         .CLOCK_PERIOD_NS(`CLOCK_PERIOD_NS)
     ) ft245_u (
         .clk(clk_100M),
-        .rst(global_rst),
+        .rst(rst_comm), //global_rst
 
         .rx_data_245(in_245),
         .rxf_245(rxf_245),
@@ -444,8 +448,43 @@ module top_level #(
         .tx_ack(tx_chB_ack)
     );
 
+
+    i2c_wrapper #(
+        .REGISTER_ADDR_WIDTH(`__REG_ADDR_WIDTH),
+        .REGISTER_DATA_WIDTH(`__REG_DATA_WIDTH),
+        .DAC_I2C_REGISTER_ADDR(`__ADDR_DAC_I2C),
+        .DAC_I2C_REGISTER_DEFAULT(`__DEFAULT_DAC_I2C),
+        .I2C_CLOCK_DIVIDER(`__I2C_CLOCK_DIVIDER),
+        .I2C_FIFO_LENGTH(`__I2C_FIFO_LENGTH)
+    ) i2c_instance (
+        .clk(clk_100M),
+        .rst(global_rst),
+        .register_addr(reg_addr),
+        .register_data(reg_data),
+        .register_rdy(reg_rdy),
+        .scl(scl),
+        .sda_io(sda_io)
+    );
+
+
     always @(posedge clk_100M) begin
-        if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        // if(si_ft245_rx_rdy) leds <= si_ft245_rx_data;
+        /*if(reg_rdy==1'b1) begin
+            leds <= { {(8-REG_ADDR_WIDTH){1'b0}} , {reg_addr} };
+        end*/
+        /*if(scl==1'b0) begin
+            leds[7:6] <= ~leds[7:6];
+            leds[5] <= 1'b0;
+        end*/
+        /*if(register_addr==`__ADDR_DAC_I2C) begin
+            if(register_rdy==1'b1) begin
+                leds <= 8'hAA;
+            end
+        end
+        */
+        if(si_ft245_rx_rdy == 1'b1) begin
+            leds <= si_ft245_rx_data;
+        end
     end
 
     `ifdef COCOTB_SIM                                                        // COCOTB macro

@@ -43,7 +43,7 @@
 
 module adc_interface  #(
     parameter DATA_WIDTH = 8,//`__BITS_ADC,     // TI ADC1175 data width
-    parameter CLK_DIV_WIDTH   = 32               // Decimation up to 4294967296 factor
+    parameter CLK_DIV_WIDTH   = 32              // Decimation up to 4294967296 factor
 )(
     // Basic
     input clk_i,                // fpga clock
@@ -61,7 +61,7 @@ module adc_interface  #(
 
     // Configuration
     input [CLK_DIV_WIDTH-1:0] decimation_factor  // frec_clk_i/frec_clock_o-1
-                                // actual decimation_factor is decimation_factor+1 !!!!
+                                // actual decimation_factor is decimation_factor*2 !!!!
                                 // example: decimation_factor=0 then frec_clk_o=frec_clk_i
 
 );

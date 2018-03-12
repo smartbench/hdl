@@ -4,10 +4,11 @@ SRC := $(filter-out $(wildcard ../modules/test_modules/*.v), $(wildcard ../modul
 INC := ../inc/
 DEFINES := $(addprefix -D, $(DEF))
 
+
 # PNR OPT
-PACKAGE = ct256
+PACKAGE = tq144:4k
 DEVICE = 8k
-PCF = top_level.pcf
+PCF = $(TOP).pcf
 
 all: syn pnr pack
 .phony: show, prog, load-cram, clean
@@ -22,19 +23,27 @@ show:
 show-defines:
 	echo $(DEFINES)
 
+show-blocks: $(SRC)
+	# http://www.clifford.at/yosys/cmd_show.html
+	#yosys -p "read_verilog -I$(INC) $(DEFINES) ../top/$(TOP).v; show"
+	yosys -p "read_verilog -I$(INC) $(DEFINES) ../top/$(TOP).v; show -format svg -prefix ./show"
+
 $(TOP).blif: $(SRC)
 	yosys -p "read_verilog -I$(INC) $(DEFINES) $(SRC); synth_ice40 -top $(TOP) -blif $(TOP).blif"
+	#-DUSING_UART=1
 
 $(TOP).asc: $(TOP).blif $(PCF)
-	arachne-pnr -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
+	arachne-pnr -r -d $(DEVICE) -P $(PACKAGE) -p $(PCF) $(TOP).blif -o $(TOP).asc
 
 $(TOP).bin: $(TOP).asc
 	icepack $(TOP).asc $(TOP).bin
 
 prog: $(TOP).bin
+	@echo "Writing $(TOP).bin into the flash memory"
 	iceprog $(TOP).bin
 
 load-cram: $(TOP).bin
+	@echo "Loading $(TOP).bin into the CRAM"
 	iceprog -S $(TOP).bin
 
 clean:
