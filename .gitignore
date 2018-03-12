@@ -10,7 +10,5 @@
 *.vvp
 *.gtkw
 *log.txt
-*/.dot
-*/.svg
-*/show.dot
-*/show.svg
+*.dot
+*.svg
