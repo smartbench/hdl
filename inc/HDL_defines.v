@@ -56,7 +56,7 @@
 `define __ADC_CLK_DIV_WIDTH         32
 `define __MOVING_AVERAGE_ACUM_WIDTH 12
 
-`define __I2C_CLOCK_DIVIDER         10
+`define __I2C_CLOCK_DIVIDER         1000
 `define __I2C_FIFO_LENGTH           16
 
 /*******************************************************************************

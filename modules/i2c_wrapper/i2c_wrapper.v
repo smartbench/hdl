@@ -77,14 +77,15 @@ module i2c_wrapper #(
 
     wire ended, ack;
 
-    i2c #(
+    i2c_alt #(
         .I2C_CLOCK_DIVIDER      (I2C_CLOCK_DIVIDER),
         .FIFO_LENGTH            (I2C_FIFO_LENGTH) //,
-    ) i2c_i(
+    ) i2c_alt_i(
         .clk        (clk),
         .rst        (rst),
 
-        .fifo_in    (data),
+        .fifo_in    (data[7:0]),
+        .n_bytes    (data[15:8]),
         .rdy        (rdy),
         .fifo_overflow (),
 
