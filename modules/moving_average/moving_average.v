@@ -36,7 +36,7 @@ module moving_average  #(
     input rst,                      // synch reset              input           1
 
     // Config. Parameters
-    input [$clog2(BITS_ACUM-BITS_ADC)-1:0] k,   // k=log2(decimation_factor)
+    input [$clog2(BITS_ACUM-BITS_ADC):0] k,   // k=log2(decimation_factor)
 
     // Input samples
     input [BITS_ADC-1:0] sample_in,     // input value              input           BITS_ADC (def. 8)
@@ -60,10 +60,10 @@ module moving_average  #(
     //      MAX_DECIM_FACTOR = 1 << (BITS_ACUM-BITS_ADC);
     localparam BIT_DIFF = BITS_ACUM - BITS_ADC;
 
-    wire [BIT_DIFF-1:0] DF;
+    wire [BIT_DIFF:0] DF;
     wire [BITS_ACUM-1:0] sum_tmp;
 
-    reg [BIT_DIFF-1:0] count; // IDEALLY, WOULD BE ONE (1)
+    reg [BIT_DIFF:0] count;
     reg [BITS_ACUM-1:0] acum;
 
     // Decimation Factor = 2^k = 1 << k
@@ -76,30 +76,30 @@ module moving_average  #(
     // Carga DF en el contador y luego se resta. Mejor para cuando se cambia
     //  DF sobre la marcha, porque la comparación es contra una cte.
     always @( posedge(clk) ) begin
-        rdy_out <= 1'b0;
-        sample_out <= 0;
+        rdy_out     <= 1'b0;
+        sample_out  <= 0;
         if(count == 0) count <= 1;  //just in case everything goes to hell.
                                     // remove later...
         if ( rst == 1'b1 ) begin
-            acum <= 0;
-            count <= DF; // Starts from DF
+            acum    <= 0;
+            count   <= DF; // Starts from DF
         end else begin
             if(rdy_in == 1'b1) begin
                 if( count != 1 ) begin
-                    count <= count - 1;
-                    acum <= sum_tmp;
+                    count   <= count - 1;
+                    acum    <= sum_tmp;
                 end else begin
-                    acum <= 0;
+                    acum    <= 0;
                     //sample_out <= sum_tmp[BITS_ACUM-1:BIT_DIFF];
                     sample_out <= (sum_tmp >> k);
                     rdy_out <= 1'b1;
-                    count <= DF;
+                    count   <= DF;
                 end
             end
         end
     end
 
-    `ifdef COCOTB_SIM                                                        // COCOTB macro
+    `ifdef COCOTB_SIM       // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,moving_average);
