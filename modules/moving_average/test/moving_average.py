@@ -9,11 +9,14 @@ def nsTimer (t):
 
 class SI_MASTER:
     def __init__ ( self, clk, rst , data, rdy):
-        self.clk = clk
-        self.rst = rst
-        self.fifo = []
-        self.data = data
-        self.rdy = rdy
+        self.clk    = clk
+        self.rst    = rst
+        self.fifo   = []
+        self.data   = data
+        self.rdy    = rdy
+
+        self.data   <= 0
+        self.rdy    <= 0
 
     def write(self, value):
         self.fifo.append(value)
@@ -22,18 +25,18 @@ class SI_MASTER:
     def driver(self):
         while True:
             if(len(self.fifo) > 0):
-                self.data <= self.fifo.pop(0)
-                self.rdy <= 1
+                self.data   <= self.fifo.pop(0)
+                self.rdy    <= 1
             yield RisingEdge(self.clk)
-            self.rdy <= 0
+            self.rdy    <= 0
 
 class SI_SLAVE:
     def __init__ ( self, clk, rst , data, rdy):
-        self.clk = clk
-        self.rst = rst
-        self.fifo = []
-        self.data = data
-        self.rdy = rdy
+        self.clk    = clk
+        self.rst    = rst
+        self.fifo   = []
+        self.data   = data
+        self.rdy    = rdy
 
     @cocotb.coroutine
     def monitor (self):
@@ -61,8 +64,8 @@ def test (dut):
     fifo_test = []
     acum = 0
 
-    si_master = SI_MASTER( dut.clk, dut.rst , dut.sample_in, dut.rdy_in )
-    si_slave = SI_SLAVE( dut.clk, dut.rst , dut.sample_out, dut.rdy_out)
+    si_master   = SI_MASTER( dut.clk, dut.rst, dut.sample_in, dut.rdy_in )
+    si_slave    = SI_SLAVE( dut.clk, dut.rst, dut.sample_out, dut.rdy_out)
 
     cocotb.fork( Clock(dut.clk,10,units='ns').start() )
     yield Reset(dut)

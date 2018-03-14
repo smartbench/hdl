@@ -76,30 +76,30 @@ module moving_average  #(
     // Carga DF en el contador y luego se resta. Mejor para cuando se cambia
     //  DF sobre la marcha, porque la comparación es contra una cte.
     always @( posedge(clk) ) begin
-        rdy_out <= 1'b0;
-        sample_out <= 0;
+        rdy_out     <= 1'b0;
+        sample_out  <= 0;
         if(count == 0) count <= 1;  //just in case everything goes to hell.
                                     // remove later...
         if ( rst == 1'b1 ) begin
-            acum <= 0;
-            count <= DF; // Starts from DF
+            acum    <= 0;
+            count   <= DF; // Starts from DF
         end else begin
             if(rdy_in == 1'b1) begin
                 if( count != 1 ) begin
-                    count <= count - 1;
-                    acum <= sum_tmp;
+                    count   <= count - 1;
+                    acum    <= sum_tmp;
                 end else begin
-                    acum <= 0;
+                    acum    <= 0;
                     //sample_out <= sum_tmp[BITS_ACUM-1:BIT_DIFF];
                     sample_out <= (sum_tmp >> k);
                     rdy_out <= 1'b1;
-                    count <= DF;
+                    count   <= DF;
                 end
             end
         end
     end
 
-    `ifdef COCOTB_SIM                                                        // COCOTB macro
+    `ifdef COCOTB_SIM       // COCOTB macro
         initial begin
             $dumpfile ("waveform.vcd");
             $dumpvars (0,moving_average);
