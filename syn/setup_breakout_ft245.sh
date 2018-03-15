@@ -1,12 +1,13 @@
 #!/bin/bash
 
-ARGS="BOARD=breakout INT=uart"
+ARGS="BOARD=breakout INTERFACE=ft245"
+export $ARGS
 
 # syn
 # make syn $ARGS
 
 # place and route
-make pnr $ARGS
+# make pnr $ARGS
 
 # program flash
 # make prog $ARGS

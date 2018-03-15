@@ -11,6 +11,13 @@ This interface requires a modification of the board, connecting a few
 unused pins of the fpga to some pins in the FT2232H (see .pcf file and
 FT2232H's datasheet to know how to connect).
 
+To switch easily between boards and interfaces, you can set the enviromental
+variables BOARD and INTERFACE with one of the following instructions:
+    source setup_breakout_uart.sh
+    source setup_breakout_ft245.sh
+    source setup_mainboard.sh
+
+
 In the breakout board, you can choose to program the flash memory or to load
 the configuration directly to the CRAM, by changing a few jumpers. Use the
 appropiate instruction of this Makefile in each case (prog / load-cram)
