@@ -1,5 +1,5 @@
 
-INT ?= ft245
+INT ?= uart
 BOARD ?= mainboard
 
 ifeq ($(BOARD),breakout)
