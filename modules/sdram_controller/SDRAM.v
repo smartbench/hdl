@@ -1,4 +1,4 @@
-
+/*
 // Between read and write/ write and read, one clock with rdy low is needed.
 // Change FSM using write after read and read after write functionalities if this behaviour is not wanted.
 
@@ -15,12 +15,12 @@ module SDRAM #(
 
     input [ADDR_WIDTH-1:0] waddr,
     input [DATA_WIDTH-1:0] wdata,
-        
+
     input we,
-    
+
     input [ADDR_WIDTH-1:0] raddr,
     output reg [DATA_WIDTH-1:0] rdata,
-    
+
     // Simple interface ready/ack logic
     input rdy,
     output reg ack,
@@ -38,7 +38,7 @@ module SDRAM #(
     output reg rasn,
     output reg casn,
     output reg wen,
-    
+
     output reg LDQM,
     output reg UDQM
 );
@@ -77,53 +77,53 @@ module SDRAM #(
     localparam RST_SEQUENCE_STATE_FINISHED = 9;
     localparam NUM_RST_SEQUENCE_STATES = 10;
     localparam RST_SEQUENCE_STATE_WIDTH = $clog2( NUM_RST_SEQUENCE_STATES );
-    
+
     reg [RST_SEQUENCE_STATE_WIDTH-1:0] rst_sequence_state = 0;
-    
+
     // Operation state machine, states parameters and register
-    
+
     localparam STATE_IDLE = 0;
     localparam STATE_WAITING_ACTIVE = 1;
     localparam STATE_READING = 2;
     localparam STATE_WRITING = 3;
     localparam STATE_EXITING_WRITE = 4;
     localparam STATE_PRECHARGING = 5;
-    
+
     localparam NUM_STATES = 6;
     localparam STATE_WIDTH = $clog2( NUM_STATES );
-    
+
     reg [STATE_WIDTH-1:0] state;
-    
+
     // After command waiting counter
-    
+
     localparam COUNTER_WIDTH = $clog2( WAIT_CNT_200us -1);
     reg [COUNTER_WIDTH-1:0] cnt;
 
     // Autorefresh period counter
     localparam REFRESH_COUNTER_WIDTH = $clog2( WAIT_CNT_REFRESH-1 );
     reg [REFRESH_COUNTER_WIDTH-1:0] refresh_cnt = WAIT_CNT_AR-1;
-    
+
     // Active to precharge counter
     localparam ATOP_COUNTER_WIDTH = $clog2( WAIT_CNT_ACTIVE_TO_PRECHARGE_MAX-1 );
     reg [ ATOP_COUNTER_WIDTH-1:0 ] atop_cnt;
 
-    
+
     // Active row and bank
     reg [11:0] last_row;
     wire [11:0] row; //actual row
 
     // Actual column
     wire [7:0] column;
-    
+
     // Actual bank
     wire bank;
-    
+
     // Commands
     task INHIBIT;
     begin
         csn <= 1'b1;
     end
-    endtask 
+    endtask
 
     task NOP;
     begin
@@ -159,7 +159,7 @@ module SDRAM #(
         wen <= 1'b1;
     end
     endtask
-    
+
     task ACTIVATE;
     begin
         rasn <= 1'b0;
@@ -182,7 +182,7 @@ module SDRAM #(
         UDQM <= 1'b0;
     end
     endtask
-    
+
     task WRITE;
     begin
         rasn <= 1'b1;
@@ -193,7 +193,7 @@ module SDRAM #(
         addr[11] <= bank;
     end
     endtask
-    
+
     task READ;
     begin
         rasn = 1'b1;
@@ -204,30 +204,30 @@ module SDRAM #(
         addr[11] <= bank;
     end
     endtask
-    
+
     assign clk_o = clk_i; // RAM clock generation
-    
+
     assign row = we ? waddr[11:0] : raddr[11:0]; // Actual row
     assign column = we ? waddr[7:0] : raddr[7:0]; // Actual row
     assign bank = row[11];
-    
+
     // COUNTERS
     always @( posedge clk_i ) begin
         if( !rst ) begin
             if( cnt ) begin
                 cnt <= cnt - 1;
             end
-            
+
             if( refresh_cnt ) begin
                 refresh_cnt <= refresh_cnt - 1;
             end
-            
+
             if( atop_cnt ) begin
                 atop_cnt <= atop_cnt - 1;
             end
-        end    
+        end
     end
-    
+
     // RESET SEQUENCE
     always @( posedge clk_i ) begin
         if( rst ) begin
@@ -238,9 +238,9 @@ module SDRAM #(
             MASK();
             NOP();
         end else begin
-            case( rst_sequence_state ) 
-                
-                RST_SEQUENCE_STATE_WAITING_200us: 
+            case( rst_sequence_state )
+
+                RST_SEQUENCE_STATE_WAITING_200us:
                 begin
                     if( !cnt ) begin
                         clke <= 1;
@@ -254,7 +254,7 @@ module SDRAM #(
                     cnt <= WAIT_CNT_PRCA-1;
                     rst_sequence_state <= RST_SEQUENCE_STATE_PRECHARGE_ALL_WAITING;
                 end
-                
+
                 RST_SEQUENCE_STATE_PRECHARGE_ALL_WAITING:
                 begin
                     NOP();
@@ -262,14 +262,14 @@ module SDRAM #(
                         rst_sequence_state <= RST_SEQUENCE_STATE_LOAD_MODE;
                     end
                 end
-                
+
                 RST_SEQUENCE_STATE_LOAD_MODE:
                 begin
                     LOAD_MODE( MODE_USED );
                     cnt <= WAIT_CNT_LM-1;
                     rst_sequence_state <= RST_SEQUENCE_STATE_LOAD_MODE_WAITING;
                 end
-                
+
                 RST_SEQUENCE_STATE_LOAD_MODE_WAITING:
                 begin
                     NOP();
@@ -313,12 +313,12 @@ module SDRAM #(
             endcase
         end
     end
-    
+
     // READ/WRITE STATE MACHINE
     always @( posedge clk_i ) begin
         if( !rst & rst_sequence_state == RST_SEQUENCE_STATE_FINISHED ) begin
-            
-            case( state )            
+
+            case( state )
                 STATE_IDLE:
                 begin
                     if( !refresh_cnt ) begin // REFRESH CYCLE, if a refresh is needed we return to iddle state after Autorefresh command.
@@ -334,7 +334,7 @@ module SDRAM #(
                         end
                     end
                 end
-                
+
                 STATE_WAITING_ACTIVE:
                 begin
                     NOP();
@@ -350,7 +350,7 @@ module SDRAM #(
                         end
                     end
                 end
-                                
+
                 STATE_READING:
                 begin
                     // Using read interrupted by a read.
@@ -359,7 +359,7 @@ module SDRAM #(
                     if( !refresh_cnt & !cnt & rdy & last_row == row ) begin
                         rdata <= data_i;
                         ack <= 1;
-                    end                    
+                    end
                     if( !rdy | last_row != row | !refresh_cnt ) begin
                         ack <= 0;
                         cnt <= WAIT_CNT_PRCA - 1;
@@ -367,7 +367,7 @@ module SDRAM #(
                         state <= STATE_PRECHARGING;
                     end
                 end
-                
+
                 STATE_WRITING:
                 begin
                     if( rdy & last_row == row & ! refresh_cnt ) begin
@@ -381,7 +381,7 @@ module SDRAM #(
                         state <= STATE_EXITING_WRITE;
                     end
                 end
-                
+
                 STATE_EXITING_WRITE:
                 begin
                     NOP();
@@ -403,3 +403,4 @@ module SDRAM #(
         end
     end
 endmodule
+*/

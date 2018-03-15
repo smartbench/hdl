@@ -1,4 +1,4 @@
-
+/*
 `include "HDL_defines.v"
 
 `timescale 1ns/1ps
@@ -88,3 +88,4 @@ module sdram_controller #(
     `endif
 
 endmodule
+*/
